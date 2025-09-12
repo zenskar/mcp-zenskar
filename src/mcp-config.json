@@ -4037,7 +4037,7 @@
         },
         {
           "name": "dataschema",
-          "description": "Data schema of raw metric (JSON object). Must include 'timestamp' and 'customer_id' fields. Supported data types: Bool, UUID, Int64, Date32, String, Decimal, Float64, DateTime64. Example: {\"data\": {\"field1\": \"String\", \"field2\": \"Int64\"}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}",
+          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' object contains your custom fields, while 'timestamp' and 'customer_id' are separate required fields. Supported data types: Bool, UUID, Int64, Date32, String, Decimal, Float64, DateTime64. Example: {\"data\": {\"usage_amount\": \"Decimal\", \"feature_id\": \"UUID\"}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}",
           "type": "object",
           "required": true,
           "position": "body"
