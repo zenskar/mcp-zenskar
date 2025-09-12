@@ -1,0 +1,105 @@
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  npm-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js for NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build package
+        run: pnpm run build:lib
+
+      - name: Extract version from package.json
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Publish to NPM
+        run: pnpm publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create package summary
+        run: |
+          echo "## 📦 Package Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package**: mcp-zenskar" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry**: NPM (Public)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Install Command" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install mcp-zenskar@${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 NPM Package" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View on NPM](https://www.npmjs.com/package/mcp-zenskar)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify Slack on success
+        if: success()
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          channel: '#frontend-package-releases'
+          config: .github/slack.yaml
+          message: |
+            
+            Successfully published mcp-zenskar to NPM (Public Registry).
+            
+            **Package**: mcp-zenskar
+            **Version**: ${{ steps.package-version.outputs.version }}
+            **Trigger**: ${{ github.event_name }}
+            **Repository**: ${{ github.repository }}
+            
+            ```
+            npm install mcp-zenskar@${{ steps.package-version.outputs.version }}
+            ```
+            
+            **🔗 Links**:
+            • [NPM Package](https://www.npmjs.com/package/mcp-zenskar)
+            • [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            • [GitHub Release](${{ github.event.release.html_url }})
+            
+            Now available publicly on NPM! 🌐
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: act10ns/slack@v1
+        with:
+          status: ${{ job.status }}
+          channel: '#frontend-package-releases'
+          config: .github/slack.yaml
+          message: |
+            Failed to publish mcp-zenskar to NPM.
+            
+            **Package**: mcp-zenskar
+            **Version**: ${{ steps.package-version.outputs.version }}
+            **Trigger**: ${{ github.event_name }}
+            **Repository**: ${{ github.repository }}
+            
+            **🔗 Links**:
+            • [Failed Workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            • [GitHub Release](${{ github.event.release.html_url }})
+            
+            Please check the workflow logs for details.
