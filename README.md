@@ -125,5 +125,5 @@ MIT
 ## Support
 
 For issues and support:
-- GitHub Issues: https://github.com/your-org/mcp-zenskar/issues
+- GitHub Issues: https://github.com/zenskar/mcp-zenskar/issues
 - Zenskar Documentation: https://docs.zenskar.com
