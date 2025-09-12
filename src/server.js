@@ -217,13 +217,11 @@ class ZenskarMcpServer {
   }
 }
 
-// Start the server
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const server = new ZenskarMcpServer();
-  server.run().catch(error => {
-    logger.error('Failed to start server:', error);
-    process.exit(1);
-  });
-}
+// Start the server when run directly
+const server = new ZenskarMcpServer();
+server.run().catch(error => {
+  logger.error('Failed to start server:', error);
+  process.exit(1);
+});
 
 export default ZenskarMcpServer;
