@@ -26,6 +26,44 @@ const logger = {
   debug: (message, data) => console.error(`[DEBUG] ${message}`, data || '')
 };
 
+const CLICKHOUSE_DATETIME_KEYS = ['DateTime64', 'DateTime', 'DateTime32'];
+
+function formatClickHouseDateTime(value) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return value
+    .replace('T', ' ')
+    .replace('t', ' ')
+    .replace(/Z$/i, '')
+    .trim();
+}
+
+function normalizeUsageEventPayload(eventPayload) {
+  if (!eventPayload || typeof eventPayload !== 'object' || Array.isArray(eventPayload)) {
+    return eventPayload;
+  }
+
+  const normalized = { ...eventPayload };
+
+  if (typeof normalized.timestamp === 'string') {
+    normalized.timestamp = formatClickHouseDateTime(normalized.timestamp);
+  }
+
+  if (normalized.data && typeof normalized.data === 'object' && !Array.isArray(normalized.data)) {
+    normalized.data = { ...normalized.data };
+
+    CLICKHOUSE_DATETIME_KEYS.forEach(key => {
+      if (typeof normalized.data[key] === 'string') {
+        normalized.data[key] = formatClickHouseDateTime(normalized.data[key]);
+      }
+    });
+  }
+
+  return normalized;
+}
+
 // User context validation schema
 const userContextSchema = z.object({
   organization: z.string().describe('Organization ID for multi-tenant API access'),
@@ -86,6 +124,12 @@ class ZenskarMcpServer {
           break;
         case 'boolean':
           schema = z.boolean();
+          break;
+        case 'object':
+          schema = z.record(z.any());
+          break;
+        case 'array':
+          schema = z.array(z.any());
           break;
         default:
           schema = z.string();
@@ -154,9 +198,49 @@ class ZenskarMcpServer {
       const bodyArgs = {};
       tool.args.forEach(arg => {
         if (arg.position === 'body' && toolArgs[arg.name] !== undefined) {
-          bodyArgs[arg.name] = toolArgs[arg.name];
+          if (tool.name === 'ingestRawMetricEvent' && arg.name === 'event') {
+            const eventPayload = normalizeUsageEventPayload(toolArgs[arg.name]);
+            if (eventPayload && typeof eventPayload === 'object' && !Array.isArray(eventPayload)) {
+              Object.entries(eventPayload).forEach(([key, value]) => {
+                if (value !== undefined) {
+                  bodyArgs[key] = value;
+                }
+              });
+            } else {
+              bodyArgs[arg.name] = eventPayload;
+            }
+          } else {
+            bodyArgs[arg.name] = toolArgs[arg.name];
+          }
         }
       });
+
+      if (tool.name === 'createRawMetric') {
+        if (!bodyArgs.connector) {
+          bodyArgs.connector = toolArgs.connector || 'push_to_zenskar';
+        }
+        if (!bodyArgs.api_type) {
+          bodyArgs.api_type = toolArgs.api_type || 'PUSH';
+        }
+        if (!bodyArgs.dataschema) {
+          bodyArgs.dataschema = {
+            customer_id: 'String',
+            timestamp: 'DateTime64',
+            data: {
+              String: 'String',
+              Int64: 'Int64',
+              Float64: 'Float64',
+              Date32: 'Date32',
+              DateTime64: 'DateTime64',
+              UUID: 'UUID',
+              Bool: 'Bool'
+            }
+          };
+        }
+        if (!bodyArgs.column_order) {
+          bodyArgs.column_order = ['timestamp'];
+        }
+      }
       
       if (Object.keys(bodyArgs).length > 0) {
         body = JSON.stringify(bodyArgs);
