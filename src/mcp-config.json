@@ -4008,57 +4008,87 @@
       }
     },
     {
-      "name": "createUsageEvent",
-      "description": "Create a new usage event (raw metric).",
+      "name": "createRawMetric",
+      "description": "Create a new raw metric (usage event schema) with column definitions and connectors.",
       "needsApproval": true,
       "approvalConfig": {
-        "title": "Create Usage Event",
-        "description": "This will create a new usage event. Please review the details carefully.",
-        "warningText": "This action will create a usage event which may affect billing calculations and metrics.",
-        "confirmText": "Create Usage Event",
+        "title": "Create Raw Metric",
+        "description": "This will create a new raw metric and provision its event schema. Please review the payload carefully.",
+        "warningText": "Ensure the dataschema and slug values are correct before continuing.",
+        "confirmText": "Create Raw Metric",
         "cancelText": "Cancel",
-        "sensitiveFields": ["name", "api_slug"]
+        "sensitiveFields": ["name", "api_slug", "dataschema", "column_order"]
       },
       "args": [
         {
           "name": "name",
-          "description": "Name of the raw metric. (required)",
+          "description": "Human-friendly name for the raw metric.",
           "type": "string",
           "required": true,
-          "position": "body",
-          "default": "New Usage Event"
+          "position": "body"
         },
         {
           "name": "api_slug",
-          "description": "Raw metric slug name.",
+          "description": "API slug used when ingesting events (lowercase, underscores).",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
+          "name": "connector",
+          "description": "Connector that owns this raw metric (e.g., push_to_zenskar).",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "default": "push_to_zenskar"
+        },
+        {
+          "name": "api_type",
+          "description": "API type for ingestion (typically PUSH).",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "default": "PUSH"
+        },
+        {
           "name": "dataschema",
-          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' object contains your custom fields, while 'timestamp' and 'customer_id' are separate required fields. Supported data types: Bool, UUID, Int64, Date32, String, Decimal, Float64, DateTime64. Example: {\"data\": {\"usage_amount\": \"Decimal\", \"feature_id\": \"UUID\"}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}",
+          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool).",
           "type": "object",
           "required": true,
-          "position": "body"
+          "position": "body",
+          "default": {
+            "customer_id": "String",
+            "timestamp": "DateTime64",
+            "data": {
+              "String": "String",
+              "Int64": "Int64",
+              "Float64": "Float64",
+              "Date32": "Date32",
+              "DateTime64": "DateTime64",
+              "UUID": "UUID",
+              "Bool": "Bool"
+            }
+          }
         },
         {
           "name": "column_order",
-          "description": "Order of the columns in the raw metric table (optional array of strings).",
+          "description": "Optional ordered list of columns for downstream processing.",
           "type": "array",
           "required": false,
-          "position": "body"
+          "position": "body",
+          "default": ["timestamp"]
         }
       ],
       "requestTemplate": {
-        "url": "/rawmetrics",
+        "url": "/rawmetric",
         "method": "POST",
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "apiversion": "20240301"
         }
       },
       "responseTemplate": {
-        "prependBody": "## Usage Event Created\n\nUsage event has been successfully created:\n\n"
+        "prependBody": "## Raw Metric Created\n\nThe raw metric was created successfully:\n\n"
       }
     },
     {
