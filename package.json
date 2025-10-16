@@ -1,6 +1,6 @@
 {
   "name": "mcp-zenskar",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Model Context Protocol (MCP) server for Zenskar API - customer management, invoicing, and billing operations",
   "type": "module",
   "main": "src/server.js",
