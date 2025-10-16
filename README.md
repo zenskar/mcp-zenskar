@@ -32,6 +32,8 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 }
 ```
 
+> You can omit one or both environment variables from the config, but the server will error until Claude supplies them in a tool call. Keeping them in the env block prevents repeated credential prompts.
+
 ### For Other AI Applications
 
 Install globally:
@@ -55,6 +57,8 @@ This MCP server requires two authentication parameters for every request:
 
 1. **Organization ID**: Available in your Zenskar dashboard settings
 2. **API Token**: Generate from Zenskar dashboard → Settings → API Keys
+
+At runtime the server looks for these values in the tool invocation first, then falls back to the `ZENSKAR_ORGANIZATION` and `ZENSKAR_AUTH_TOKEN` environment variables. Tokens that look like JWTs are sent as `Authorization: Bearer ...`; everything else is sent as an `x-api-key` header automatically.
 
 ## Usage
 
@@ -112,6 +116,31 @@ npm install
 
 # Run the server
 npm start
+```
+
+### Developing Locally Without Publishing
+
+If you want Claude Desktop to use a local checkout instead of the npm package:
+
+```bash
+# Install dependencies once
+npm install
+
+# Optional: install the local build globally
+npm install -g .
+```
+
+Then either point Claude to the globally-installed binary (usually `$(npm bin -g)/mcp-zenskar`) or call the repo copy directly:
+
+```json
+{
+  "command": "node",
+  "args": ["/absolute/path/to/mcp-zenskar/src/server.js"],
+  "env": {
+    "ZENSKAR_ORGANIZATION": "your-org-id",
+    "ZENSKAR_AUTH_TOKEN": "your-token"
+  }
+}
 ```
 
 ## Configuration
