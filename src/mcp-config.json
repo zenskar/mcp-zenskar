@@ -284,7 +284,16 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": ["draft", "approved", "edited", "discarded", "paid", "void", "partially_paid", "upcoming"]
+          "enum": [
+            "draft",
+            "approved",
+            "edited",
+            "discarded",
+            "paid",
+            "void",
+            "partially_paid",
+            "upcoming"
+          ]
         },
         {
           "name": "status__in",
@@ -947,11 +956,102 @@
         }
       ],
       "requestTemplate": {
-        "url": "/rawmetrics",
+        "url": "/rawmetric",
         "method": "GET"
       },
       "responseTemplate": {
         "prependBody": "## Usage Events List\n\nHere is the list of usage events:\n\n"
+      }
+    },
+    {
+      "name": "createRawMetric",
+      "description": "Create a new raw metric (usage event schema) with column definitions and connectors.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Create Raw Metric",
+        "description": "This will create a new raw metric and provision its event schema. Please review the payload carefully.",
+        "warningText": "Ensure the dataschema and slug values are correct before continuing.",
+        "confirmText": "Create Raw Metric",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "name",
+          "api_slug",
+          "dataschema",
+          "column_order"
+        ]
+      },
+      "args": [
+        {
+          "name": "name",
+          "description": "Human-friendly name for the raw metric.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "api_slug",
+          "description": "API slug used when ingesting events (lowercase, underscores).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "connector",
+          "description": "Connector that owns this raw metric (e.g., push_to_zenskar).",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "default": "push_to_zenskar"
+        },
+        {
+          "name": "api_type",
+          "description": "API type for ingestion (typically PUSH).",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "default": "PUSH"
+        },
+        {
+          "name": "dataschema",
+          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool).",
+          "type": "object",
+          "required": true,
+          "position": "body",
+          "default": {
+            "customer_id": "String",
+            "timestamp": "DateTime64",
+            "data": {
+              "String": "String",
+              "Int64": "Int64",
+              "Float64": "Float64",
+              "Date32": "Date32",
+              "DateTime64": "DateTime64",
+              "UUID": "UUID",
+              "Bool": "Bool"
+            }
+          }
+        },
+        {
+          "name": "column_order",
+          "description": "Optional ordered list of columns for downstream processing.",
+          "type": "array",
+          "required": false,
+          "position": "body",
+          "default": [
+            "timestamp"
+          ]
+        }
+      ],
+      "requestTemplate": {
+        "url": "/rawmetric",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "apiversion": "20240301"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Raw Metric Created\n\nThe raw metric was created successfully:\n\n"
       }
     },
     {
@@ -967,7 +1067,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/rawmetrics/{rawMetricId}",
+        "url": "/rawmetric/{rawMetricId}",
         "method": "GET"
       },
       "responseTemplate": {
@@ -987,7 +1087,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/rawmetrics/{rawMetricId}/logs",
+        "url": "/rawmetric/{rawMetricId}/logs",
         "method": "GET"
       },
       "responseTemplate": {
@@ -1007,7 +1107,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/rawmetrics/slug/{rawMetricSlug}",
+        "url": "/rawmetric/slug/{rawMetricSlug}",
         "method": "GET"
       },
       "responseTemplate": {
@@ -1167,7 +1267,21 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": ["card", "cash", "check", "charge_back", "bank_transfer", "direct_debit", "amazon_payments", "paypal_express_checkout", "upi", "netbanking_emandates", "other", "credits", "ach_credit_transfer"]
+          "enum": [
+            "card",
+            "cash",
+            "check",
+            "charge_back",
+            "bank_transfer",
+            "direct_debit",
+            "amazon_payments",
+            "paypal_express_checkout",
+            "upi",
+            "netbanking_emandates",
+            "other",
+            "credits",
+            "ach_credit_transfer"
+          ]
         },
         {
           "name": "type",
@@ -1175,7 +1289,13 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": ["payment", "refund", "payment_reversal", "authorization", "tax_withheld"]
+          "enum": [
+            "payment",
+            "refund",
+            "payment_reversal",
+            "authorization",
+            "tax_withheld"
+          ]
         },
         {
           "name": "amount__gte",
@@ -1225,7 +1345,20 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": ["in_progress", "requires_action", "pending_charge", "authorized", "created", "success", "voided", "failed", "canceled", "refunded", "partially_refunded", "other"]
+          "enum": [
+            "in_progress",
+            "requires_action",
+            "pending_charge",
+            "authorized",
+            "created",
+            "success",
+            "voided",
+            "failed",
+            "canceled",
+            "refunded",
+            "partially_refunded",
+            "other"
+          ]
         },
         {
           "name": "autocharge",
@@ -1323,14 +1456,18 @@
     {
       "name": "createContractPrompt",
       "description": "Create a new contract prompt and save it to the system.",
-      "needsApproval": true,
+      "needsApproval": false,
       "approvalConfig": {
         "title": "Create Contract Prompt",
         "description": "This will create a new AI contract prompt. Please verify the prompt content.",
         "warningText": "This will save a new contract prompt that may be used for AI-generated content.",
         "confirmText": "Create Prompt",
         "cancelText": "Cancel",
-        "sensitiveFields": ["prompt_name", "prompt_text", "document_id"]
+        "sensitiveFields": [
+          "prompt_name",
+          "prompt_text",
+          "document_id"
+        ]
       },
       "args": [
         {
@@ -1357,7 +1494,10 @@
         {
           "name": "prompt_schema",
           "description": "Optional schema for the prompt (e.g., 'billing_schema'). Can be null.",
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "required": false,
           "position": "body"
         }
@@ -1664,7 +1804,13 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": ["draft", "active", "paused", "expired", "disputed"]
+          "enum": [
+            "draft",
+            "active",
+            "paused",
+            "expired",
+            "disputed"
+          ]
         },
         {
           "name": "status__in",
@@ -1692,7 +1838,11 @@
         "warningText": "This action will create a new entitlement record that may affect billing and access control.",
         "confirmText": "Create Entitlement",
         "cancelText": "Cancel",
-        "sensitiveFields": ["name", "description", "product_id"]
+        "sensitiveFields": [
+          "name",
+          "description",
+          "product_id"
+        ]
       },
       "args": [
         {
@@ -1715,7 +1865,11 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": ["Quantity", "Feature", "Access"]
+          "enum": [
+            "Quantity",
+            "Feature",
+            "Access"
+          ]
         },
         {
           "name": "units",
@@ -1761,7 +1915,11 @@
         "warningText": "This action will approve the invoice and may trigger billing processes. This cannot be easily undone.",
         "confirmText": "Approve Invoice",
         "cancelText": "Cancel",
-        "sensitiveFields": ["invoiceId", "customer_id", "actor"]
+        "sensitiveFields": [
+          "invoiceId",
+          "customer_id",
+          "actor"
+        ]
       },
       "args": [
         {
@@ -1809,7 +1967,9 @@
         "warningText": "This action will process revenue recognition which may affect financial reporting and accounting records.",
         "confirmText": "Recognise Revenue",
         "cancelText": "Cancel",
-        "sensitiveFields": ["end_date"]
+        "sensitiveFields": [
+          "end_date"
+        ]
       },
       "args": [
         {
@@ -1841,7 +2001,12 @@
         "warningText": "This action will create a new business entity record that may affect billing and organizational structure.",
         "confirmText": "Create Business Entity",
         "cancelText": "Cancel",
-        "sensitiveFields": ["name", "email", "phone_number", "address"]
+        "sensitiveFields": [
+          "name",
+          "email",
+          "phone_number",
+          "address"
+        ]
       },
       "args": [
         {
@@ -1959,7 +2124,11 @@
         "warningText": "This action will create a new customer record in your system.",
         "confirmText": "Create Customer",
         "cancelText": "Cancel",
-        "sensitiveFields": ["customer_name", "email", "phone_number"]
+        "sensitiveFields": [
+          "customer_name",
+          "email",
+          "phone_number"
+        ]
       },
       "args": [
         {
@@ -2073,2014 +2242,59 @@
       }
     },
     {
-      "name": "updateCustomer",
-      "description": "Updates an existing customer in the system with various attributes including address, tax info, and contact details.",
+      "name": "ingestRawMetricEvent",
+      "description": "Ingest a usage event for the specified raw metric slug.",
       "needsApproval": true,
       "approvalConfig": {
-        "title": "Update Customer",
-        "description": "This will update an existing customer in your system. Please review the changes carefully.",
-        "warningText": "This action will modify an existing customer record in your system.",
-        "confirmText": "Update Customer",
+        "title": "Ingest Usage Event",
+        "description": "This will ingest a usage event for the selected raw metric. Review the payload carefully.",
+        "warningText": "Ensure the data payload matches the raw metric schema before proceeding.",
+        "confirmText": "Ingest Usage Event",
         "cancelText": "Cancel",
-        "sensitiveFields": ["customer_name", "email", "phone_number"]
+        "sensitiveFields": [
+          "rawMetricSlug",
+          "event",
+          "key"
+        ]
       },
       "args": [
         {
-          "name": "customerId",
-          "description": "The unique ID of the customer to update.",
+          "name": "rawMetricSlug",
+          "description": "Slug of the raw metric (e.g., api_usage_events).",
           "type": "string",
           "required": true,
           "position": "path"
         },
         {
-          "name": "external_id",
-          "description": "External customer ID (optional).",
+          "name": "key",
+          "description": "Request key used for idempotency / replay protection (maps to ?key=).",
           "type": "string",
           "required": false,
-          "position": "body"
+          "position": "query"
         },
         {
-          "name": "customer_name",
-          "description": "Customer name (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "email",
-          "description": "Customer primary email address (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "phone_number",
-          "description": "Customer phone number (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "communications_enabled",
-          "description": "Enable/disable communications (optional).",
-          "type": "boolean",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "auto_charge_enabled",
-          "description": "Enable/disable auto-charge (optional).",
-          "type": "boolean",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "business_entity_id",
-          "description": "Business entity ID (UUID format, optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/customers/{customerId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Customer Updated\n\nCustomer has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateContact",
-      "description": "Updates an existing contact with the provided details.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Contact",
-        "description": "This will update an existing contact in your system. Please review the changes carefully.",
-        "warningText": "This action will modify an existing contact record in your system.",
-        "confirmText": "Update Contact",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contact_id"]
-      },
-      "args": [
-        {
-          "name": "contactId",
-          "description": "The unique ID of the contact to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contacts/{contactId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contact Updated\n\nContact has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateBusinessEntity",
-      "description": "Updates an existing business entity with the provided details.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Business Entity",
-        "description": "This will update an existing business entity in your system. Please review the changes carefully.",
-        "warningText": "This action will modify an existing business entity record that may affect billing and organizational structure.",
-        "confirmText": "Update Business Entity",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["entity_id"]
-      },
-      "args": [
-        {
-          "name": "entityId",
-          "description": "The unique ID of the business entity to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/business_entities/{entityId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Business Entity Updated\n\nBusiness entity has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateAggregate",
-      "description": "Updates an existing billable metric (aggregate) by its ID.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Billable Metric",
-        "description": "This will update an existing billable metric in your system. Please review the changes carefully.",
-        "warningText": "This action will modify a billable metric that may affect billing calculations.",
-        "confirmText": "Update Billable Metric",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["aggregateId"]
-      },
-      "args": [
-        {
-          "name": "aggregateId",
-          "description": "The unique ID of the billable metric to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "name",
-          "description": "Name of the aggregate (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "dataschema",
-          "description": "Data schema of aggregate (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "aggregation_query",
-          "description": "Aggregate query (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "cust_agg_query",
-          "description": "Customer aggregate query (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "visual_query_builder",
-          "description": "Visual query builder (optional).",
-          "type": "object",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "datasource",
-          "description": "Data source UUID (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/aggregates/{aggregateId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Billable Metric Updated\n\nBillable metric has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateContract",
-      "description": "Updates an already existing contract.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Contract",
-        "description": "This will update an existing contract in your system. Please review the changes carefully.",
-        "warningText": "This action will modify an existing contract that may affect billing and terms.",
-        "confirmText": "Update Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}",
-        "method": "PUT",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Updated\n\nContract has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "pauseContract",
-      "description": "Pauses an existing contract or edits the pause of an existing contract.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Pause Contract",
-        "description": "This will pause an existing contract or modify the pause settings. Please review carefully.",
-        "warningText": "This action will pause a contract which may affect billing and service delivery.",
-        "confirmText": "Pause Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to pause.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}/pause",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Paused\n\nContract has been successfully paused:\n\n"
-      }
-    },
-    {
-      "name": "resumeContract",
-      "description": "Resumes a paused contract.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Resume Contract",
-        "description": "This will resume a paused contract. Please review carefully.",
-        "warningText": "This action will resume a contract which may restart billing and service delivery.",
-        "confirmText": "Resume Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to resume.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}/resume",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Resumed\n\nContract has been successfully resumed:\n\n"
-      }
-    },
-    {
-      "name": "expireContract",
-      "description": "Expires an existing contract.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Expire Contract",
-        "description": "This will expire an existing contract. Please review carefully.",
-        "warningText": "This action will expire a contract which will end billing and service delivery.",
-        "confirmText": "Expire Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to expire.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}/expire",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Expired\n\nContract has been successfully expired:\n\n"
-      }
-    },
-    {
-      "name": "voidInvoice",
-      "description": "Voids an existing invoice.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Void Invoice",
-        "description": "This will void an existing invoice. Please review the invoice details carefully.",
-        "warningText": "This action will void an invoice which cannot be easily undone and may affect financial records.",
-        "confirmText": "Void Invoice",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["invoiceId"]
-      },
-      "args": [
-        {
-          "name": "invoiceId",
-          "description": "The unique ID of the invoice to void.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/invoices/{invoiceId}/void",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Invoice Voided\n\nInvoice has been successfully voided:\n\n"
-      }
-    },
-    {
-      "name": "createCreditNoteFromInvoice",
-      "description": "Creates a credit note against an existing invoice.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Credit Note from Invoice",
-        "description": "This will create a credit note against an existing invoice. Please review the details carefully.",
-        "warningText": "This action will create a credit note which affects financial records and customer accounts.",
-        "confirmText": "Create Credit Note",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["invoiceId"]
-      },
-      "args": [
-        {
-          "name": "invoiceId",
-          "description": "The unique ID of the invoice to create a credit note for.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/invoices/{invoiceId}/create_credit_note",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Credit Note Created from Invoice\n\nCredit note has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "updatePayment",
-      "description": "Updates an existing payment record.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Payment",
-        "description": "This will update an existing payment record. Please review the changes carefully.",
-        "warningText": "This action will modify a payment record which may affect financial records and reconciliation.",
-        "confirmText": "Update Payment",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["paymentId"]
-      },
-      "args": [
-        {
-          "name": "paymentId",
-          "description": "The unique ID of the payment to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/payments/{paymentId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Payment Updated\n\nPayment has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateEntitlement",
-      "description": "Updates an existing entitlement in the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Entitlement",
-        "description": "This will update an existing entitlement in your system. Please review the changes carefully.",
-        "warningText": "This action will modify an entitlement record that may affect billing and access control.",
-        "confirmText": "Update Entitlement",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["entitlementId"]
-      },
-      "args": [
-        {
-          "name": "entitlementId",
-          "description": "The unique ID of the entitlement to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/entitlements/{entitlementId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Entitlement Updated\n\nEntitlement has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateCloseDate",
-      "description": "Update the close date for an organisation.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Close Date",
-        "description": "This will update the accounting close date for the organisation. Please review carefully.",
-        "warningText": "This action will modify the accounting close date which may affect financial reporting periods.",
-        "confirmText": "Update Close Date",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/accounting_new/close_date",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Close Date Updated\n\nAccounting close date has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateJournalEntry",
-      "description": "Update a journal entry by its unique identifier for an organisation.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Journal Entry",
-        "description": "This will update an existing journal entry. Please review the changes carefully.",
-        "warningText": "This action will modify a journal entry which may affect accounting records.",
-        "confirmText": "Update Journal Entry",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["journalEntryId"]
-      },
-      "args": [
-        {
-          "name": "journalEntryId",
-          "description": "The unique ID of the journal entry to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/accounting_new/journal_entry/{journalEntryId}",
-        "method": "PUT",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Journal Entry Updated\n\nJournal entry has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateCreditNote",
-      "description": "Update credit note by ID.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Credit Note",
-        "description": "This will update an existing credit note. Please review the changes carefully.",
-        "warningText": "This action will modify a credit note which may affect financial records and customer accounts.",
-        "confirmText": "Update Credit Note",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["creditNoteId"]
-      },
-      "args": [
-        {
-          "name": "creditNoteId",
-          "description": "The unique ID of the credit note to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/credit_notes/{creditNoteId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Credit Note Updated\n\nCredit note has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateCustomAttributeDefinition",
-      "description": "Update custom attribute definition.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Custom Attribute Definition",
-        "description": "This will update a custom attribute definition. Please review the changes carefully.",
-        "warningText": "This action will modify a custom attribute definition which may affect data collection and validation.",
-        "confirmText": "Update Custom Attribute",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["definitionId"]
-      },
-      "args": [
-        {
-          "name": "definitionId",
-          "description": "The unique ID of the custom attribute definition to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/custom_attributes/{definitionId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Custom Attribute Definition Updated\n\nCustom attribute definition has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateCustomerConnector",
-      "description": "Patch Customer Connector Id.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Customer Connector",
-        "description": "This will update a customer's connector configuration. Please review the changes carefully.",
-        "warningText": "This action will modify customer connector settings which may affect integrations and data flow.",
-        "confirmText": "Update Customer Connector",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["customerId"]
-      },
-      "args": [
-        {
-          "name": "customerId",
-          "description": "The unique ID of the customer whose connector to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/customers/{customerId}/connector",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Customer Connector Updated\n\nCustomer connector has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateDataSource",
-      "description": "Update data-source connector.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Data Source",
-        "description": "This will update a data source connector. Please review the changes carefully.",
-        "warningText": "This action will modify a data source connector which may affect data ingestion and billing calculations.",
-        "confirmText": "Update Data Source",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["datasourceId"]
-      },
-      "args": [
-        {
-          "name": "datasourceId",
-          "description": "The unique ID of the data source to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/datasources/{datasourceId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Data Source Updated\n\nData source has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateCustomerEntitlement",
-      "description": "Update customer entitlement.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Customer Entitlement",
-        "description": "This will update a customer's entitlement. Please review the changes carefully.",
-        "warningText": "This action will modify a customer entitlement which may affect access control and billing.",
-        "confirmText": "Update Customer Entitlement",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["entitlementId", "customerId", "ecId"]
-      },
-      "args": [
-        {
-          "name": "entitlementId",
-          "description": "The unique ID of the entitlement.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "customerId",
-          "description": "The unique ID of the customer.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "ecId",
-          "description": "The unique ID of the entitlement-customer relationship.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/entitlements/{entitlementId}/customer/{customerId}/{ecId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Customer Entitlement Updated\n\nCustomer entitlement has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateManualPayment",
-      "description": "Edit manual payment.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Manual Payment",
-        "description": "This will update a manual payment record. Please review the changes carefully.",
-        "warningText": "This action will modify a manual payment record which may affect financial records and reconciliation.",
-        "confirmText": "Update Manual Payment",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["paymentId"]
-      },
-      "args": [
-        {
-          "name": "paymentId",
-          "description": "The unique ID of the manual payment to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/payments/manual_payment/{paymentId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Manual Payment Updated\n\nManual payment has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updatePlan",
-      "description": "Update plan.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Plan",
-        "description": "This will update an existing plan. Please review the changes carefully.",
-        "warningText": "This action will modify a plan which may affect pricing and billing for customers.",
-        "confirmText": "Update Plan",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}",
-        "method": "PUT",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Updated\n\nPlan has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updatePlanPhase",
-      "description": "Update plan phase.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Plan Phase",
-        "description": "This will update a plan phase. Please review the changes carefully.",
-        "warningText": "This action will modify a plan phase which may affect pricing and billing for customers.",
-        "confirmText": "Update Plan Phase",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId", "phaseId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phaseId",
-          "description": "The unique ID of the phase to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/phases/{phaseId}",
-        "method": "PUT",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Phase Updated\n\nPlan phase has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updatePlanPhasePricing",
-      "description": "Update plan phase pricing.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Plan Phase Pricing",
-        "description": "This will update plan phase pricing. Please review the changes carefully.",
-        "warningText": "This action will modify plan phase pricing which may affect billing calculations for customers.",
-        "confirmText": "Update Plan Phase Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId", "phaseId", "phasePricingId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phaseId",
-          "description": "The unique ID of the phase.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phasePricingId",
-          "description": "The unique ID of the phase pricing to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/phases/{phaseId}/pricing/{phasePricingId}",
-        "method": "PUT",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Phase Pricing Updated\n\nPlan phase pricing has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateProduct",
-      "description": "Update product.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Product",
-        "description": "This will update an existing product. Please review the changes carefully.",
-        "warningText": "This action will modify a product which may affect pricing and billing for customers.",
-        "confirmText": "Update Product",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/{productId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Updated\n\nProduct has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateProductPricing",
-      "description": "Update product pricing.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Product Pricing",
-        "description": "This will update product pricing. Please review the changes carefully.",
-        "warningText": "This action will modify product pricing which may affect billing calculations for customers.",
-        "confirmText": "Update Product Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId", "pricingId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "pricingId",
-          "description": "The unique ID of the pricing to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/{productId}/pricing/{pricingId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Pricing Updated\n\nProduct pricing has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateProductBundlePricing",
-      "description": "Update product bundle pricing.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Product Bundle Pricing",
-        "description": "This will update product bundle pricing. Please review the changes carefully.",
-        "warningText": "This action will modify product bundle pricing which may affect billing calculations for customers.",
-        "confirmText": "Update Product Bundle Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId", "pricingId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product bundle.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "pricingId",
-          "description": "The unique ID of the bundle pricing to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/bundle/{productId}/pricing/{pricingId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Bundle Pricing Updated\n\nProduct bundle pricing has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "updateUsageEvent",
-      "description": "Update usage event.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Update Usage Event",
-        "description": "This will update a usage event (raw metric). Please review the changes carefully.",
-        "warningText": "This action will modify a usage event which may affect billing calculations and metrics.",
-        "confirmText": "Update Usage Event",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["rawMetricId"]
-      },
-      "args": [
-        {
-          "name": "rawMetricId",
-          "description": "The unique ID of the usage event to update.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/rawmetrics/{rawMetricId}",
-        "method": "PATCH",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Usage Event Updated\n\nUsage event has been successfully updated:\n\n"
-      }
-    },
-    {
-      "name": "createAccount",
-      "description": "Create a new account for an organisation.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Account",
-        "description": "This will create a new accounting account. Please review the details carefully.",
-        "warningText": "This action will create a new accounting account which may affect financial reporting.",
-        "confirmText": "Create Account",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/accounting_new/accounts",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Account Created\n\nAccounting account has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createCloseDateEntry",
-      "description": "Create close date entry for an organisation.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Close Date Entry",
-        "description": "This will create a new accounting close date entry. Please review carefully.",
-        "warningText": "This action will create a close date entry which may affect financial reporting periods.",
-        "confirmText": "Create Close Date Entry",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/accounting_new/close_date",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Close Date Entry Created\n\nClose date entry has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createJournalEntry",
-      "description": "Create a new journal entry for an organisation.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Journal Entry",
-        "description": "This will create a new journal entry. Please review the details carefully.",
-        "warningText": "This action will create a journal entry which affects accounting records.",
-        "confirmText": "Create Journal Entry",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/accounting_new/journal_entry",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Journal Entry Created\n\nJournal entry has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createBillableMetric",
-      "description": "Create a new billable metric (aggregate).",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Billable Metric",
-        "description": "This will create a new billable metric. Please review the details carefully.",
-        "warningText": "This action will create a billable metric which may affect billing calculations.",
-        "confirmText": "Create Billable Metric",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["name", "datasource"]
-      },
-      "args": [
-        {
-          "name": "name",
-          "description": "Name of the aggregate.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "dataschema",
-          "description": "Data schema of aggregate.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "aggregation_query",
-          "description": "Aggregate query.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "cust_agg_query",
-          "description": "Customer aggregate query.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "visual_query_builder",
-          "description": "Visual query builder (JSON object).",
-          "type": "object",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "datasource",
-          "description": "Data source UUID.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/aggregates",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Billable Metric Created\n\nBillable metric has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createContact",
-      "description": "Create a new contact in the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Contact",
-        "description": "This will create a new contact. Please review the details carefully.",
-        "warningText": "This action will create a new contact record in your system.",
-        "confirmText": "Create Contact",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["customer", "email"]
-      },
-      "args": [
-        {
-          "name": "customer",
-          "description": "Customer ID to associate contact with.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "email",
-          "description": "Contact email address.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "first_name",
-          "description": "Contact first name (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "last_name",
-          "description": "Contact last name (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "send_contract",
-          "description": "Send contract to contact (optional).",
-          "type": "boolean",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "send_invoice",
-          "description": "Send invoice to contact (optional).",
-          "type": "boolean",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contacts",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contact Created\n\nContact has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createContract",
-      "description": "Create a new contract in the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Contract",
-        "description": "This will create a new contract. Please review the details carefully.",
-        "warningText": "This action will create a new contract which may affect billing and service delivery.",
-        "confirmText": "Create Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["name", "customer_id", "currency"]
-      },
-      "args": [
-        {
-          "name": "name",
-          "description": "Contract name.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "status",
-          "description": "Contract status.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "currency",
-          "description": "Currency for the contract.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "start_date",
-          "description": "Contract start date.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "customer_id",
-          "description": "Customer ID for the contract.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "id",
-          "description": "Contract ID (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "description",
-          "description": "Contract description (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "end_date",
-          "description": "Contract end date (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "anchor_date",
-          "description": "Anchor date (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "plan_id",
-          "description": "Plan ID (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Created\n\nContract has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createContractPhase",
-      "description": "Create a new phase for an existing contract.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Contract Phase",
-        "description": "This will create a new phase for a contract. Please review the details carefully.",
-        "warningText": "This action will create a contract phase which may affect billing and service delivery.",
-        "confirmText": "Create Contract Phase",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to add a phase to.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}/phases",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Phase Created\n\nContract phase has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "pauseContractPost",
-      "description": "Pause a contract (POST version).",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Pause Contract",
-        "description": "This will pause a contract. Please review carefully.",
-        "warningText": "This action will pause a contract which may affect billing and service delivery.",
-        "confirmText": "Pause Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to pause.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}/pause",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Paused\n\nContract has been successfully paused:\n\n"
-      }
-    },
-    {
-      "name": "createContractPhasePricing",
-      "description": "Create pricing for a contract phase.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Contract Phase Pricing",
-        "description": "This will create pricing for a contract phase. Please review the details carefully.",
-        "warningText": "This action will create contract phase pricing which may affect billing calculations.",
-        "confirmText": "Create Contract Phase Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId", "phaseId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phaseId",
-          "description": "The unique ID of the phase.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}/phases/{phaseId}/pricing",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Phase Pricing Created\n\nContract phase pricing has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createCreditNote",
-      "description": "Create a new credit note.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Credit Note",
-        "description": "This will create a new credit note. Please review the details carefully.",
-        "warningText": "This action will create a credit note which affects financial records and customer accounts.",
-        "confirmText": "Create Credit Note",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/credit_notes",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Credit Note Created\n\nCredit note has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createCustomAttributeDefinition",
-      "description": "Create a new custom attribute definition.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Custom Attribute Definition",
-        "description": "This will create a new custom attribute definition. Please review the details carefully.",
-        "warningText": "This action will create a custom attribute definition which may affect data collection and validation.",
-        "confirmText": "Create Custom Attribute Definition",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/custom_attributes",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Custom Attribute Definition Created\n\nCustom attribute definition has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createPaymentMethod",
-      "description": "Create a new payment method for a customer.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Payment Method",
-        "description": "This will create a new payment method for a customer. Please review the details carefully.",
-        "warningText": "This action will create a payment method which may affect billing and payment processing.",
-        "confirmText": "Create Payment Method",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["customerId"]
-      },
-      "args": [
-        {
-          "name": "customerId",
-          "description": "The unique ID of the customer.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/customers/{customerId}/payment_methods",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Payment Method Created\n\nPayment method has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createDataSource",
-      "description": "Create a new data-source connector.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Data Source",
-        "description": "This will create a new data source connector. Please review the details carefully.",
-        "warningText": "This action will create a data source connector which may affect data ingestion and billing calculations.",
-        "confirmText": "Create Data Source",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/datasources",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Data Source Created\n\nData source has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createEntitlementCustomer",
-      "description": "Create entitlement customer relationship.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Entitlement Customer",
-        "description": "This will create an entitlement-customer relationship. Please review the details carefully.",
-        "warningText": "This action will create an entitlement-customer relationship which may affect access control and billing.",
-        "confirmText": "Create Entitlement Customer",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["entitlementId"]
-      },
-      "args": [
-        {
-          "name": "entitlementId",
-          "description": "The unique ID of the entitlement.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/entitlements/{entitlementId}/customer",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Entitlement Customer Created\n\nEntitlement-customer relationship has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createPayment",
-      "description": "Create a new payment record.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Payment",
-        "description": "This will create a new payment record. Please review the details carefully.",
-        "warningText": "This action will create a payment record which affects financial records and reconciliation.",
-        "confirmText": "Create Payment",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/payments",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Payment Created\n\nPayment has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createInvoiceCharge",
-      "description": "Create a charge for an invoice.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Invoice Charge",
-        "description": "This will create a charge for an invoice. Please review the details carefully.",
-        "warningText": "This action will create an invoice charge which affects billing and financial records.",
-        "confirmText": "Create Invoice Charge",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["invoiceId"]
-      },
-      "args": [
-        {
-          "name": "invoiceId",
-          "description": "The unique ID of the invoice.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/payments/invoice/{invoiceId}/charge",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Invoice Charge Created\n\nInvoice charge has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "refundPayment",
-      "description": "Refund a payment.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Refund Payment",
-        "description": "This will refund a payment. Please review the details carefully.",
-        "warningText": "This action will refund a payment which affects financial records and customer accounts.",
-        "confirmText": "Refund Payment",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["paymentId"]
-      },
-      "args": [
-        {
-          "name": "paymentId",
-          "description": "The unique ID of the payment to refund.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/payments/{paymentId}/refund",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Payment Refunded\n\nPayment has been successfully refunded:\n\n"
-      }
-    },
-    {
-      "name": "createPlan",
-      "description": "Create a new plan.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Plan",
-        "description": "This will create a new plan. Please review the details carefully.",
-        "warningText": "This action will create a plan which may affect pricing and billing for customers.",
-        "confirmText": "Create Plan",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["name"]
-      },
-      "args": [
-        {
-          "name": "name",
-          "description": "Plan name.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "status",
-          "description": "Plan status.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "schedule",
-          "description": "Duration/schedule of the plan.",
-          "type": "object",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "description",
-          "description": "Plan description (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "phases",
-          "description": "Plan phases (optional).",
-          "type": "array",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Created\n\nPlan has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createPlanPhase",
-      "description": "Create a new phase for a plan.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Plan Phase",
-        "description": "This will create a new phase for a plan. Please review the details carefully.",
-        "warningText": "This action will create a plan phase which may affect pricing and billing for customers.",
-        "confirmText": "Create Plan Phase",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/phases",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Phase Created\n\nPlan phase has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createPlanPhasePricing",
-      "description": "Create pricing for a plan phase.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Plan Phase Pricing",
-        "description": "This will create pricing for a plan phase. Please review the details carefully.",
-        "warningText": "This action will create plan phase pricing which may affect billing calculations for customers.",
-        "confirmText": "Create Plan Phase Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId", "phaseId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phaseId",
-          "description": "The unique ID of the phase.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/phases/{phaseId}/pricing",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Phase Pricing Created\n\nPlan phase pricing has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createPlanVersion",
-      "description": "Create a new version of an existing plan.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Plan Version",
-        "description": "This will create a new version of an existing plan. Please review the details carefully.",
-        "warningText": "This action will create a new plan version which may affect pricing and billing for customers.",
-        "confirmText": "Create Plan Version",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/new_version",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Version Created\n\nNew plan version has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createProduct",
-      "description": "Create a new product.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Product",
-        "description": "This will create a new product. Please review the details carefully.",
-        "warningText": "This action will create a product which may affect pricing and billing for customers.",
-        "confirmText": "Create Product",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["name", "type"]
-      },
-      "args": [
-        {
-          "name": "name",
-          "description": "Product name.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "type",
-          "description": "Product type.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "description",
-          "description": "Product description (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "sku",
-          "description": "Product SKU (optional).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "is_active",
-          "description": "Is product active (optional).",
-          "type": "boolean",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Created\n\nProduct has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createProductPricing",
-      "description": "Create pricing for a product.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Product Pricing",
-        "description": "This will create pricing for a product. Please review the details carefully.",
-        "warningText": "This action will create product pricing which may affect billing calculations for customers.",
-        "confirmText": "Create Product Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/{productId}/pricing",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Pricing Created\n\nProduct pricing has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "createProductBundlePricing",
-      "description": "Create pricing for a product bundle.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Product Bundle Pricing",
-        "description": "This will create pricing for a product bundle. Please review the details carefully.",
-        "warningText": "This action will create product bundle pricing which may affect billing calculations for customers.",
-        "confirmText": "Create Product Bundle Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product bundle.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/bundle/{productId}/pricing",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Bundle Pricing Created\n\nProduct bundle pricing has been successfully created:\n\n"
-      }
-    },
-    {
-      "name": "upsertTags",
-      "description": "Upsert tags in the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Upsert Tags",
-        "description": "This will create or update tags in the system. Please review the details carefully.",
-        "warningText": "This action will create or update tags which may affect categorization and filtering.",
-        "confirmText": "Upsert Tags",
-        "cancelText": "Cancel",
-        "sensitiveFields": []
-      },
-      "args": [],
-      "requestTemplate": {
-        "url": "/tags",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Tags Upserted\n\nTags have been successfully created/updated:\n\n"
-      }
-    },
-    {
-      "name": "createRawMetric",
-      "description": "Create a new raw metric (usage event schema) with column definitions and connectors.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Create Raw Metric",
-        "description": "This will create a new raw metric and provision its event schema. Please review the payload carefully.",
-        "warningText": "Ensure the dataschema and slug values are correct before continuing.",
-        "confirmText": "Create Raw Metric",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["name", "api_slug", "dataschema", "column_order"]
-      },
-      "args": [
-        {
-          "name": "name",
-          "description": "Human-friendly name for the raw metric.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "api_slug",
-          "description": "API slug used when ingesting events (lowercase, underscores).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "connector",
-          "description": "Connector that owns this raw metric (e.g., push_to_zenskar).",
-          "type": "string",
-          "required": true,
-          "position": "body",
-          "default": "push_to_zenskar"
-        },
-        {
-          "name": "api_type",
-          "description": "API type for ingestion (typically PUSH).",
-          "type": "string",
-          "required": false,
-          "position": "body",
-          "default": "PUSH"
-        },
-        {
-          "name": "dataschema",
-          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool).",
+          "name": "event",
+          "description": "Usage event payload containing customer_id, timestamp, and data map with schema-compliant types.",
           "type": "object",
           "required": true,
           "position": "body",
           "default": {
-            "customer_id": "String",
-            "timestamp": "DateTime64",
+            "customer_id": "example_customer",
+            "timestamp": "2025-01-01 00:00:00",
             "data": {
-              "String": "String",
-              "Int64": "Int64",
-              "Float64": "Float64",
-              "Date32": "Date32",
-              "DateTime64": "DateTime64",
-              "UUID": "UUID",
-              "Bool": "Bool"
+              "String": "sample value",
+              "Int64": 10,
+              "Float64": 42.5,
+              "Date32": "2025-01-01",
+              "DateTime64": "2025-01-01 12:00:00",
+              "UUID": "00000000-0000-0000-0000-000000000000",
+              "Bool": true
             }
           }
-        },
-        {
-          "name": "column_order",
-          "description": "Optional ordered list of columns for downstream processing.",
-          "type": "array",
-          "required": false,
-          "position": "body",
-          "default": ["timestamp"]
         }
       ],
       "requestTemplate": {
-        "url": "/rawmetric",
+        "url": "/usage/{rawMetricSlug}",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json",
@@ -4088,529 +2302,7 @@
         }
       },
       "responseTemplate": {
-        "prependBody": "## Raw Metric Created\n\nThe raw metric was created successfully:\n\n"
-      }
-    },
-    {
-      "name": "ingestUsageEvent",
-      "description": "Ingest usage event by raw metric slug.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Ingest Usage Event",
-        "description": "This will ingest a usage event. Please review the details carefully.",
-        "warningText": "This action will ingest a usage event which may affect billing calculations and metrics.",
-        "confirmText": "Ingest Usage Event",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["rawMetricSlug"]
-      },
-      "args": [
-        {
-          "name": "rawMetricSlug",
-          "description": "The slug of the raw metric.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/usage_events/{rawMetricSlug}",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Usage Event Ingested\n\nUsage event has been successfully ingested:\n\n"
-      }
-    },
-    {
-      "name": "deleteAggregate",
-      "description": "Delete a billable metric (aggregate).",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Billable Metric",
-        "description": "This will permanently delete a billable metric. Please review carefully.",
-        "warningText": "This action will permanently delete a billable metric which may affect billing calculations. This cannot be undone.",
-        "confirmText": "Delete Billable Metric",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["aggregateId"]
-      },
-      "args": [
-        {
-          "name": "aggregateId",
-          "description": "The unique ID of the billable metric to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/aggregates/{aggregateId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Billable Metric Deleted\n\nBillable metric has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteContact",
-      "description": "Delete a contact from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Contact",
-        "description": "This will permanently delete a contact. Please review carefully.",
-        "warningText": "This action will permanently delete a contact record. This cannot be undone.",
-        "confirmText": "Delete Contact",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contactId"]
-      },
-      "args": [
-        {
-          "name": "contactId",
-          "description": "The unique ID of the contact to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contacts/{contactId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contact Deleted\n\nContact has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteContract",
-      "description": "Delete a contract from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Contract",
-        "description": "This will permanently delete a contract. Please review carefully.",
-        "warningText": "This action will permanently delete a contract which may affect billing and service delivery. This cannot be undone.",
-        "confirmText": "Delete Contract",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["contractId"]
-      },
-      "args": [
-        {
-          "name": "contractId",
-          "description": "The unique ID of the contract to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/contract_v2/{contractId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Contract Deleted\n\nContract has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteCustomAttributeDefinition",
-      "description": "Delete a custom attribute definition from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Custom Attribute Definition",
-        "description": "This will permanently delete a custom attribute definition. Please review carefully.",
-        "warningText": "This action will permanently delete a custom attribute definition which may affect data collection and validation. This cannot be undone.",
-        "confirmText": "Delete Custom Attribute Definition",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["definitionId"]
-      },
-      "args": [
-        {
-          "name": "definitionId",
-          "description": "The unique ID of the custom attribute definition to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/custom_attributes/{definitionId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Custom Attribute Definition Deleted\n\nCustom attribute definition has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteCustomer",
-      "description": "Delete a customer from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Customer",
-        "description": "This will permanently delete a customer. Please review carefully.",
-        "warningText": "This action will permanently delete a customer record which may affect billing and service delivery. This cannot be undone.",
-        "confirmText": "Delete Customer",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["customerId"]
-      },
-      "args": [
-        {
-          "name": "customerId",
-          "description": "The unique ID of the customer to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/customers/{customerId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Customer Deleted\n\nCustomer has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteCustomerConnector",
-      "description": "Delete third-party connector for a customer.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Customer Connector",
-        "description": "This will permanently delete a customer's third-party connector. Please review carefully.",
-        "warningText": "This action will permanently delete a customer connector which may affect integrations and data flow. This cannot be undone.",
-        "confirmText": "Delete Customer Connector",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["customerId"]
-      },
-      "args": [
-        {
-          "name": "customerId",
-          "description": "The unique ID of the customer whose connector to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/customers/connector/{customerId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Customer Connector Deleted\n\nCustomer connector has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteEntitlement",
-      "description": "Delete an entitlement from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Entitlement",
-        "description": "This will permanently delete an entitlement. Please review carefully.",
-        "warningText": "This action will permanently delete an entitlement which may affect access control and billing. This cannot be undone.",
-        "confirmText": "Delete Entitlement",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["entitlementId"]
-      },
-      "args": [
-        {
-          "name": "entitlementId",
-          "description": "The unique ID of the entitlement to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/entitlements/{entitlementId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Entitlement Deleted\n\nEntitlement has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteCustomerEntitlement",
-      "description": "Delete customer entitlement relationship.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Customer Entitlement",
-        "description": "This will permanently delete a customer entitlement relationship. Please review carefully.",
-        "warningText": "This action will permanently delete a customer entitlement which may affect access control and billing. This cannot be undone.",
-        "confirmText": "Delete Customer Entitlement",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["entitlementId", "customerId", "ecId"]
-      },
-      "args": [
-        {
-          "name": "entitlementId",
-          "description": "The unique ID of the entitlement.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "customerId",
-          "description": "The unique ID of the customer.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "ecId",
-          "description": "The unique ID of the entitlement-customer relationship.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/entitlements/{entitlementId}/customer/{customerId}/{ecId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Customer Entitlement Deleted\n\nCustomer entitlement has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deletePayment",
-      "description": "Delete a manual payment.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Payment",
-        "description": "This will permanently delete a payment record. Please review carefully.",
-        "warningText": "This action will permanently delete a payment record which may affect financial records and reconciliation. This cannot be undone.",
-        "confirmText": "Delete Payment",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["paymentId"]
-      },
-      "args": [
-        {
-          "name": "paymentId",
-          "description": "The unique ID of the payment to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/payments/{paymentId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Payment Deleted\n\nPayment has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deletePlan",
-      "description": "Delete a plan from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Plan",
-        "description": "This will permanently delete a plan. Please review carefully.",
-        "warningText": "This action will permanently delete a plan which may affect pricing and billing for customers. This cannot be undone.",
-        "confirmText": "Delete Plan",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Deleted\n\nPlan has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deletePlanPhase",
-      "description": "Delete a plan phase.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Plan Phase",
-        "description": "This will permanently delete a plan phase. Please review carefully.",
-        "warningText": "This action will permanently delete a plan phase which may affect pricing and billing for customers. This cannot be undone.",
-        "confirmText": "Delete Plan Phase",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId", "phaseId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phaseId",
-          "description": "The unique ID of the phase to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/phases/{phaseId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Phase Deleted\n\nPlan phase has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deletePlanPhasePricing",
-      "description": "Delete plan phase pricing.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Plan Phase Pricing",
-        "description": "This will permanently delete plan phase pricing. Please review carefully.",
-        "warningText": "This action will permanently delete plan phase pricing which may affect billing calculations for customers. This cannot be undone.",
-        "confirmText": "Delete Plan Phase Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["planId", "phaseId", "pricingId"]
-      },
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique ID of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "phaseId",
-          "description": "The unique ID of the phase.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "pricingId",
-          "description": "The unique ID of the pricing to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/plans/{planId}/phases/{phaseId}/pricing/{pricingId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Phase Pricing Deleted\n\nPlan phase pricing has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteProduct",
-      "description": "Delete a product from the system.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Product",
-        "description": "This will permanently delete a product. Please review carefully.",
-        "warningText": "This action will permanently delete a product which may affect pricing and billing for customers. This cannot be undone.",
-        "confirmText": "Delete Product",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/{productId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Deleted\n\nProduct has been permanently deleted:\n\n"
-      }
-    },
-    {
-      "name": "deleteProductPricing",
-      "description": "Delete product pricing.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Delete Product Pricing",
-        "description": "This will permanently delete product pricing. Please review carefully.",
-        "warningText": "This action will permanently delete product pricing which may affect billing calculations for customers. This cannot be undone.",
-        "confirmText": "Delete Product Pricing",
-        "cancelText": "Cancel",
-        "sensitiveFields": ["productId", "pricingId"]
-      },
-      "args": [
-        {
-          "name": "productId",
-          "description": "The unique ID of the product.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "pricingId",
-          "description": "The unique ID of the pricing to delete.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/products/{productId}/pricing/{pricingId}",
-        "method": "DELETE",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Product Pricing Deleted\n\nProduct pricing has been permanently deleted:\n\n"
+        "prependBody": "## Usage Event Ingested\n\nThe usage event was ingested successfully:\n\n"
       }
     }
   ]
