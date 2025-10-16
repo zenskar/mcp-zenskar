@@ -64,11 +64,44 @@ function normalizeUsageEventPayload(eventPayload) {
   return normalized;
 }
 
-// User context validation schema
-const userContextSchema = z.object({
-  organization: z.string().describe('Organization ID for multi-tenant API access'),
-  authorization: z.string().describe('Bearer token for API authentication'),
-}).describe('Required authentication context for Zenskar API');
+function resolveCredentialValue(providedValue, envValue) {
+  if (typeof providedValue === 'string' && providedValue.trim().length > 0) {
+    return providedValue.trim();
+  }
+
+  if (typeof envValue === 'string' && envValue.trim().length > 0) {
+    return envValue.trim();
+  }
+
+  return null;
+}
+
+function buildAuthHeaders(rawToken) {
+  if (!rawToken) {
+    return {};
+  }
+
+  const token = rawToken.trim();
+  if (!token) {
+    return {};
+  }
+
+  if (token.toLowerCase().startsWith('bearer ')) {
+    return { 'Authorization': token };
+  }
+
+  // Basic JWT heuristic: three dot-separated segments
+  const isLikelyJwt = token.split('.').length === 3;
+  if (isLikelyJwt) {
+    return { 'Authorization': `Bearer ${token}` };
+  }
+
+  if (token.toLowerCase().startsWith('x-api-key ')) {
+    return { 'x-api-key': token.substring('x-api-key '.length).trim() };
+  }
+
+  return { 'x-api-key': token };
+}
 
 class ZenskarMcpServer {
   constructor() {
@@ -107,8 +140,8 @@ class ZenskarMcpServer {
 
   generateInputSchema(tool) {
     const schemaObj = {
-      organization: z.string().describe("Organization ID for multi-tenant API access (required)"),
-      authorization: z.string().describe("Bearer token for API authentication (required)")
+      organization: z.string().describe("Organization ID for multi-tenant API access (defaults to ZENSKAR_ORGANIZATION env when omitted)").optional(),
+      authorization: z.string().describe("Auth token (JWT -> Authorization Bearer, API key -> x-api-key). Defaults to ZENSKAR_AUTH_TOKEN env when omitted").optional()
     };
 
     // Add tool-specific arguments
@@ -151,23 +184,27 @@ class ZenskarMcpServer {
     // Extract authentication from arguments
     const { organization, authorization, ...toolArgs } = args;
 
+    const resolvedOrganization = resolveCredentialValue(organization, process.env.ZENSKAR_ORGANIZATION);
+    const resolvedAuthorization = resolveCredentialValue(authorization, process.env.ZENSKAR_AUTH_TOKEN);
+
     // Validate required authentication
-    if (!organization) {
-      throw new Error('Organization ID is required for API access');
+    if (!resolvedOrganization) {
+      throw new Error('Organization ID is required for API access. Provide it in the tool input or set ZENSKAR_ORGANIZATION in the environment.');
     }
-    if (!authorization) {
-      throw new Error('Authorization token is required for API access');
+    if (!resolvedAuthorization) {
+      throw new Error('Authorization token is required for API access. Provide it in the tool input or set ZENSKAR_AUTH_TOKEN in the environment.');
     }
 
-    logger.info(`[${tool.name}] Executing with organization: ${organization.substring(0, 10)}...`);
+    logger.info(`[${tool.name}] Executing with organization: ${resolvedOrganization.substring(0, 10)}...`);
 
     // Build headers
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'organisation': organization, // Note: API uses 'organisation' not 'organization'
-      'Authorization': authorization.startsWith('Bearer ') ? authorization : `Bearer ${authorization}`
+      'organisation': resolvedOrganization // Note: API uses 'organisation' not 'organization'
     };
+
+    Object.assign(headers, buildAuthHeaders(resolvedAuthorization));
 
     // Build URL from requestTemplate
     let url = `${config.server.baseUrl}${tool.requestTemplate.url}`;
