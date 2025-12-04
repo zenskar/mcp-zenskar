@@ -431,7 +431,11 @@ async function executeAPICall(tool, args) {
   const authToken = userContext?.authorization ||
                     userContext?.headers?.['authorization'] ||
                     userContext?.headers?.['Authorization'] ||
-                    (process.env.ZENSKAR_AUTH_TOKEN ? `Bearer ${process.env.ZENSKAR_AUTH_TOKEN}` : null);
+                    process.env.ZENSKAR_AUTH_TOKEN;
+  const apiKey = userContext?.apiKey ||
+                 userContext?.headers?.['x-api-key'] ||
+                 process.env.ZENSKAR_API_KEY ||
+                 process.env.ZENSKAR_AUTH_TOKEN; // Fallback: use AUTH_TOKEN as API key if it looks like one
 
   if (orgId) {
     headers['organisation'] = orgId;
@@ -440,18 +444,16 @@ async function executeAPICall(tool, args) {
     throw new Error('Organization ID is required for API access. Set ZENSKAR_ORGANIZATION env var or provide in user context.');
   }
 
-  if (authToken) {
+  // Determine auth method: Bearer token for JWT, x-api-key for sandbox keys
+  if (authToken && authToken.startsWith('eyJ')) {
+    // JWT token - use Bearer auth
     headers['Authorization'] = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+  } else if (apiKey) {
+    // API key (sandbox_* or other) - use x-api-key header
+    headers['x-api-key'] = apiKey;
   } else {
-    logger.error(`[${tool.name}] SECURITY ERROR: No authorization token provided`);
-    throw new Error('Authorization token is required for API access. Set ZENSKAR_AUTH_TOKEN env var or provide in user context.');
-  }
-
-  // Also support legacy x-api-key if provided (optional)
-  if (userContext?.apiKey) {
-    headers['x-api-key'] = userContext.apiKey;
-  } else if (userContext?.headers?.['x-api-key']) {
-    headers['x-api-key'] = userContext.headers['x-api-key'];
+    logger.error(`[${tool.name}] SECURITY ERROR: No authorization provided`);
+    throw new Error('Authorization is required. Set ZENSKAR_AUTH_TOKEN (JWT) or ZENSKAR_API_KEY env var.');
   }
 
   // Add any other headers from user context
