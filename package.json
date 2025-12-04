@@ -1,8 +1,7 @@
 {
   "name": "mcp-zenskar",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Model Context Protocol (MCP) server for Zenskar API - customer management, invoicing, and billing operations",
-  "type": "module",
   "main": "src/server.js",
   "bin": {
     "mcp-zenskar": "src/server.js"
@@ -26,6 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
+    "uuid": "^9.0.1",
     "zod": "^3.22.0"
   },
   "engines": {
