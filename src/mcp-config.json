@@ -1013,7 +1013,7 @@
         },
         {
           "name": "dataschema",
-          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool).",
+          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool); use 'Bool' instead of 'Boolean'.",
           "type": "object",
           "required": true,
           "position": "body",
@@ -1033,7 +1033,7 @@
         },
         {
           "name": "column_order",
-          "description": "Optional ordered list of columns for downstream processing.",
+          "description": "Optional ordered list of columns for downstream processing. Locked to ['timestamp'] in production; leave as-is unless backend explicitly requests a schema change.",
           "type": "array",
           "required": false,
           "position": "body",
@@ -2117,7 +2117,7 @@
     {
       "name": "createCustomer",
       "description": "Creates a new customer in the system with various attributes including address, tax info, and contact details.",
-      "needsApproval": true,
+      "needsApproval": false,
       "approvalConfig": {
         "title": "Create New Customer",
         "description": "This will create a new customer in your system. Please review the details carefully.",
@@ -2231,7 +2231,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/customers",
+        "url": "/customer",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -2253,8 +2253,7 @@
         "cancelText": "Cancel",
         "sensitiveFields": [
           "rawMetricSlug",
-          "event",
-          "key"
+          "event"
         ]
       },
       "args": [
@@ -2266,15 +2265,8 @@
           "position": "path"
         },
         {
-          "name": "key",
-          "description": "Request key used for idempotency / replay protection (maps to ?key=).",
-          "type": "string",
-          "required": false,
-          "position": "query"
-        },
-        {
           "name": "event",
-          "description": "Usage event payload containing customer_id, timestamp, and data map with schema-compliant types.",
+          "description": "Usage event payload containing customer_id, timestamp, and data map with schema-compliant types. Before constructing the event, fetch the schema via getRawMetricBySlug (or reuse the response from createRawMetric) so you only include fields that exist in the raw metric. Use the provided type buckets such as String/Int64 or the exact column names returned by sample logs; do not invent new keys.",
           "type": "object",
           "required": true,
           "position": "body",
@@ -2303,6 +2295,172 @@
       },
       "responseTemplate": {
         "prependBody": "## Usage Event Ingested\n\nThe usage event was ingested successfully:\n\n"
+      }
+    },
+    {
+      "name": "extractContractFromRaw",
+      "description": "Extract structured contract data from raw text content using AI. This tool analyzes natural language contract descriptions and extracts key fields like dates, products, pricing, and billing terms. The extracted data can then be used to create a customer and contract via createCustomer and createContract tools.",
+      "needsApproval": false,
+      "args": [
+        {
+          "name": "content",
+          "description": "The raw text content describing the contract (e.g., 'Contract starts on 1st Jan 2025 and ends on 31 Dec 2025 with a single product called chat subscription, cost is $10 per month prepaid.').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "name",
+          "description": "A name for the contract being extracted.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "organization_id",
+          "description": "The organization ID for the contract extraction (will be auto-populated from user context if not provided).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "https://ai.zenskar.com/api/contracts/extract/raw",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Extraction Result\n\nThe AI has extracted the following contract data from your raw text. You can use this to create a customer (if missing_fields includes customer info) and then create the contract:\n\n"
+      }
+    },
+    {
+      "name": "createContract",
+      "description": "Create a new contract in Zenskar. Use this after extracting contract data via extractContractFromRaw and creating a customer via createCustomer. The contract includes customer details, pricing phases, products, and billing configuration.",
+      "needsApproval": false,
+      "approvalConfig": {
+        "title": "Create New Contract",
+        "description": "This will create a new contract in your system. Please review the contract details carefully including customer, dates, pricing, and billing terms.",
+        "warningText": "This action will create a new contract record that may trigger billing processes.",
+        "confirmText": "Create Contract",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "name",
+          "customer_id",
+          "start_date",
+          "end_date",
+          "phases"
+        ]
+      },
+      "args": [
+        {
+          "name": "name",
+          "description": "Contract name (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Contract description (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "status",
+          "description": "Contract status (defaults to 'draft').",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "default": "draft",
+          "enum": ["draft", "active", "paused", "expired", "disputed"]
+        },
+        {
+          "name": "currency",
+          "description": "Currency code for the contract (e.g., 'USD', 'EUR').",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "default": "USD"
+        },
+        {
+          "name": "start_date",
+          "description": "Contract start date in ISO 8601 format (e.g., '2025-01-01T00:00:00.000000').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "Contract end date in ISO 8601 format (e.g., '2025-12-31T23:59:59.999999').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "anchor_date",
+          "description": "Anchor date for billing cycles in ISO 8601 format (defaults to start_date).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "customer_id",
+          "description": "The ID of the customer for this contract (required, UUID format).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "renewal_policy",
+          "description": "Contract renewal policy (defaults to 'do_not_renew').",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "default": "do_not_renew",
+          "enum": ["do_not_renew", "auto_renew", "manual"]
+        },
+        {
+          "name": "bill_parent_customer",
+          "description": "Whether to bill the parent customer (defaults to false).",
+          "type": "boolean",
+          "required": false,
+          "position": "body",
+          "default": false
+        },
+        {
+          "name": "phases",
+          "description": "Array of contract phases with pricing details. Each phase includes name, start_date, end_date, phase_type, and pricings array.",
+          "type": "array",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "source",
+          "description": "Source information for the contract (e.g., {source_type: 'ai', source_id: 'uuid'}).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_attributes",
+          "description": "Custom attributes for the contract as key-value pairs.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Created\n\nNew contract has been successfully created:\n\n"
       }
     }
   ]

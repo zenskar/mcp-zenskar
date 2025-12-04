@@ -1,5 +1,5 @@
 // Simple response processor for Zenskar API responses
-export default class ResponseProcessor {
+class ResponseProcessor {
   constructor() {
     // Minimal configuration
     this.maxResponseLength = 50000;
@@ -24,3 +24,5 @@ export default class ResponseProcessor {
     }
   }
 }
+
+module.exports = ResponseProcessor;
