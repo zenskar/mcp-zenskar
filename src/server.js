@@ -378,6 +378,32 @@ async function executeAPICall(tool, args) {
       }
     });
     
+    // Nest flat address_* fields into an address object for the Zenskar API
+    if (tool.name === 'createCustomer') {
+      const addressFieldMap = {
+        address_line1: 'line1',
+        address_line2: 'line2',
+        address_city: 'city',
+        address_state: 'state',
+        address_zipCode: 'zipCode',
+        address_country: 'country',
+        address_country_code: 'country_code'
+      };
+      const addressObj = {};
+      let hasAddress = false;
+      Object.entries(addressFieldMap).forEach(([flatKey, nestedKey]) => {
+        if (bodyParams[flatKey] !== undefined) {
+          addressObj[nestedKey] = bodyParams[flatKey];
+          delete bodyParams[flatKey];
+          hasAddress = true;
+        }
+      });
+      if (hasAddress) {
+        bodyParams.address = addressObj;
+        logger.debug(`[${tool.name}] Transformed flat address fields into address object`);
+      }
+    }
+
     // Smart defaults for helper tools
     if (tool.name === 'extractContractFromRaw') {
       // Auto-populate organization_id from user context or env var if not provided
