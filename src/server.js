@@ -378,29 +378,29 @@ async function executeAPICall(tool, args) {
       }
     });
     
-    // Nest flat address_* fields into a billing_address object for the Zenskar API
+    // Nest flat address_* fields into an address object for the Zenskar API
     if (tool.name === 'createCustomer') {
       const addressFieldMap = {
         address_line1: 'line1',
         address_line2: 'line2',
         address_city: 'city',
         address_state: 'state',
-        address_zipCode: 'zipcode',
+        address_zipCode: 'zipCode',
         address_country: 'country',
         address_country_code: 'country_code'
       };
-      const billingAddress = {};
+      const addressObj = {};
       let hasAddress = false;
       Object.entries(addressFieldMap).forEach(([flatKey, nestedKey]) => {
         if (bodyParams[flatKey] !== undefined) {
-          billingAddress[nestedKey] = bodyParams[flatKey];
+          addressObj[nestedKey] = bodyParams[flatKey];
           delete bodyParams[flatKey];
           hasAddress = true;
         }
       });
       if (hasAddress) {
-        bodyParams.billing_address = billingAddress;
-        logger.debug(`[${tool.name}] Transformed flat address fields into billing_address object`);
+        bodyParams.address = addressObj;
+        logger.debug(`[${tool.name}] Transformed flat address fields into address object`);
       }
     }
 
