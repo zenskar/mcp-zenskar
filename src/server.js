@@ -378,30 +378,35 @@ async function executeAPICall(tool, args) {
       }
     });
     
-    // Nest flat address_* fields into an address object for the Zenskar API
+    // Nest flat address fields into address/ship_to_address objects for the Zenskar API
     if (tool.name === 'createCustomer') {
-      const addressFieldMap = {
-        address_line1: 'line1',
-        address_line2: 'line2',
-        address_city: 'city',
-        address_state: 'state',
-        address_zipCode: 'zipCode',
-        address_country: 'country',
-        address_country_code: 'country_code'
-      };
-      const addressObj = {};
-      let hasAddress = false;
-      Object.entries(addressFieldMap).forEach(([flatKey, nestedKey]) => {
-        if (bodyParams[flatKey] !== undefined) {
-          addressObj[nestedKey] = bodyParams[flatKey];
-          delete bodyParams[flatKey];
-          hasAddress = true;
+      const nestAddress = (prefix, targetKey) => {
+        const fieldMap = {
+          [`${prefix}line1`]: 'line1',
+          [`${prefix}line2`]: 'line2',
+          [`${prefix}line3`]: 'line3',
+          [`${prefix}city`]: 'city',
+          [`${prefix}state`]: 'state',
+          [`${prefix}zipCode`]: 'zipCode',
+          [`${prefix}country`]: 'country',
+          [`${prefix}country_code`]: 'country_code'
+        };
+        const obj = {};
+        let has = false;
+        Object.entries(fieldMap).forEach(([flatKey, nestedKey]) => {
+          if (bodyParams[flatKey] !== undefined) {
+            obj[nestedKey] = bodyParams[flatKey];
+            delete bodyParams[flatKey];
+            has = true;
+          }
+        });
+        if (has) {
+          bodyParams[targetKey] = obj;
+          logger.debug(`[${tool.name}] Transformed flat ${prefix}* fields into ${targetKey} object`);
         }
-      });
-      if (hasAddress) {
-        bodyParams.address = addressObj;
-        logger.debug(`[${tool.name}] Transformed flat address fields into address object`);
-      }
+      };
+      nestAddress('address_', 'address');
+      nestAddress('ship_to_', 'ship_to_address');
     }
 
     // Smart defaults for helper tools

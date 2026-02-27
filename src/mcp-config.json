@@ -2174,6 +2174,13 @@
           "position": "body"
         },
         {
+          "name": "address_line3",
+          "description": "Address line 3 (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
           "name": "address_city",
           "description": "Address city (optional).",
           "type": "string",
@@ -2204,6 +2211,62 @@
         {
           "name": "address_country_code",
           "description": "Address country code (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line1",
+          "description": "Shipping address line 1 (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line2",
+          "description": "Shipping address line 2 (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line3",
+          "description": "Shipping address line 3 (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_city",
+          "description": "Shipping address city (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_state",
+          "description": "Shipping address state (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_zipCode",
+          "description": "Shipping address zip code (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_country",
+          "description": "Shipping address country (optional).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_country_code",
+          "description": "Shipping address country code (optional).",
           "type": "string",
           "required": false,
           "position": "body"
