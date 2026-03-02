@@ -409,6 +409,35 @@ async function executeAPICall(tool, args) {
       nestAddress('ship_to_', 'ship_to_address');
     }
 
+    // Same address nesting for createBusinessEntity
+    if (tool.name === 'createBusinessEntity') {
+      const nestAddress = (prefix, targetKey) => {
+        const fieldMap = {
+          [`${prefix}line1`]: 'line1',
+          [`${prefix}line2`]: 'line2',
+          [`${prefix}line3`]: 'line3',
+          [`${prefix}city`]: 'city',
+          [`${prefix}state`]: 'state',
+          [`${prefix}zipCode`]: 'zipCode',
+          [`${prefix}country`]: 'country'
+        };
+        const obj = {};
+        let has = false;
+        Object.entries(fieldMap).forEach(([flatKey, nestedKey]) => {
+          if (bodyParams[flatKey] !== undefined) {
+            obj[nestedKey] = bodyParams[flatKey];
+            delete bodyParams[flatKey];
+            has = true;
+          }
+        });
+        if (has) {
+          bodyParams[targetKey] = obj;
+          logger.debug(`[${tool.name}] Transformed flat ${prefix}* fields into ${targetKey} object`);
+        }
+      };
+      nestAddress('address_', 'address');
+    }
+
     // Smart defaults for helper tools
     if (tool.name === 'extractContractFromRaw') {
       // Auto-populate organization_id from user context or env var if not provided
@@ -447,6 +476,10 @@ async function executeAPICall(tool, args) {
     
     if (Object.keys(bodyParams).length > 0) {
       body = JSON.stringify(bodyParams);
+    } else if (method === 'PATCH' || method === 'POST' || method === 'PUT') {
+      // Always send at least an empty JSON body for non-GET methods
+      // Some endpoints (e.g., approveInvoice) require a body even when no body params are provided
+      body = '{}';
     }
   }
 

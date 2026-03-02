@@ -24,7 +24,14 @@
         },
         {
           "name": "search",
-          "description": "General search query (e.g., 'name=john,custom_data.key=john@zenskar.com').",
+          "description": "Advanced key-value search query. Format: 'field=value' or 'field1=value1,field2=value2'. Supports any customer field including nested JSON paths. Examples: 'customer_name=Acme', 'email=john@example.com', 'customer_name=Acme,external_id=EXT-100', 'custom_data.users=abc@dev.in'. String fields use case-insensitive contains matching. Do NOT pass plain text — always use field=value format.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search_name_external_id",
+          "description": "Quick relevance-ranked search across customer_name and external_id. Accepts plain text (e.g., 'Acme'). Results are ranked: exact match first, then starts-with, then contains. Simpler alternative to the 'search' parameter when you only need to find customers by name or external ID.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -38,14 +45,14 @@
           "position": "query"
         },
         {
-          "name": "sortKey",
+          "name": "sort_key",
           "description": "Key to sort the results by (e.g., 'id').",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "sortType",
+          "name": "sort_type",
           "description": "Sort order type (e.g., 'asc' for ascending).",
           "type": "string",
           "required": false,
@@ -108,7 +115,7 @@
           "position": "query"
         },
         {
-          "name": "phoneNumber__ilike",
+          "name": "phone_number__ilike",
           "description": "Case-insensitive partial match for phone number.",
           "type": "string",
           "required": false,
@@ -218,14 +225,14 @@
           "position": "query"
         },
         {
-          "name": "sortKey",
+          "name": "sort_key",
           "description": "Key to sort the results by (e.g., 'id').",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "sortType",
+          "name": "sort_type",
           "description": "Sort order type (e.g., 'asc').",
           "type": "string",
           "required": false,
@@ -265,14 +272,14 @@
       "description": "Retrieve a paginated list of invoices, with options for filtering by customer, status, amounts, due date, creation date, and related customer/contract details.",
       "args": [
         {
-          "name": "customerId",
+          "name": "customer_id",
           "description": "Filter invoices by a specific customer ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "customerExternalId",
+          "name": "customer_external_id",
           "description": "Filter invoices by a customer's external ID.",
           "type": "string",
           "required": false,
@@ -317,70 +324,70 @@
           "position": "query"
         },
         {
-          "name": "contractId",
+          "name": "contract_id",
           "description": "Filter by contract ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "externalId",
+          "name": "external_id",
           "description": "Filter by invoice external ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "invoiceTotal__gte",
+          "name": "invoice_total__gte",
           "description": "Filter by invoice total greater than or equal to.",
           "type": "number",
           "required": false,
           "position": "query"
         },
         {
-          "name": "invoiceTotal__lte",
+          "name": "invoice_total__lte",
           "description": "Filter by invoice total less than or equal to.",
           "type": "number",
           "required": false,
           "position": "query"
         },
         {
-          "name": "amountDue__gte",
+          "name": "amount_due__gte",
           "description": "Filter by amount due greater than or equal to.",
           "type": "number",
           "required": false,
           "position": "query"
         },
         {
-          "name": "amountDue__lte",
+          "name": "amount_due__lte",
           "description": "Filter by amount due less than or equal to.",
           "type": "number",
           "required": false,
           "position": "query"
         },
         {
-          "name": "dueDate__gte",
+          "name": "due_date__gte",
           "description": "Filter by due date greater than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "dueDate__lte",
+          "name": "due_date__lte",
           "description": "Filter by due date less than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "createdAt__gte",
+          "name": "created_at__gte",
           "description": "Filter by creation date greater than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "createdAt__lte",
+          "name": "created_at__lte",
           "description": "Filter by creation date less than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
@@ -421,7 +428,7 @@
           "position": "path"
         },
         {
-          "name": "customerId",
+          "name": "customer_id",
           "description": "The ID of the customer associated with the invoice (optional).",
           "type": "string",
           "required": false,
@@ -448,7 +455,7 @@
           "position": "path"
         },
         {
-          "name": "contractId",
+          "name": "contract_id",
           "description": "The ID of the contract associated with the invoice.",
           "type": "string",
           "required": true,
@@ -502,7 +509,7 @@
           "position": "query"
         },
         {
-          "name": "customerId",
+          "name": "customer_id",
           "description": "Optional customer ID associated with the invoice.",
           "type": "string",
           "required": false,
@@ -695,7 +702,7 @@
           "position": "query"
         },
         {
-          "name": "sortKey",
+          "name": "sort_key",
           "description": "Key to sort the results by (e.g., 'id').",
           "type": "string",
           "required": false,
@@ -703,7 +710,7 @@
           "position": "query"
         },
         {
-          "name": "sortType",
+          "name": "sort_type",
           "description": "Sort order type (e.g., 'asc').",
           "type": "string",
           "required": false,
@@ -732,7 +739,7 @@
           "position": "query"
         },
         {
-          "name": "createdAt__gte",
+          "name": "created_at__gte",
           "description": "Filter by creation date greater than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
@@ -764,35 +771,35 @@
       "description": "Get billable metric estimates based on the specified criteria.",
       "args": [
         {
-          "name": "aggregateId",
+          "name": "aggregate_id",
           "description": "The ID of the billable metric.",
           "type": "string",
           "required": true,
           "position": "query"
         },
         {
-          "name": "customerId",
+          "name": "customer_id",
           "description": "The ID of the customer.",
           "type": "string",
           "required": true,
           "position": "query"
         },
         {
-          "name": "startDate",
+          "name": "start_date",
           "description": "Start date of the estimate (YYYY-MM-DD).",
           "type": "string",
           "required": true,
           "position": "query"
         },
         {
-          "name": "endDate",
+          "name": "end_date",
           "description": "End date of the estimate (YYYY-MM-DD).",
           "type": "string",
           "required": true,
           "position": "query"
         },
         {
-          "name": "getSingle",
+          "name": "get_single",
           "description": "Whether to get a single estimate (defaults to true).",
           "type": "boolean",
           "required": false,
@@ -840,14 +847,14 @@
           "position": "path"
         },
         {
-          "name": "startDate",
+          "name": "start_date",
           "description": "Start date for filtering logs (YYYY-MM-DD).",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "endDate",
+          "name": "end_date",
           "description": "End date for filtering logs (YYYY-MM-DD).",
           "type": "string",
           "required": false,
@@ -861,14 +868,14 @@
           "position": "query"
         },
         {
-          "name": "customerId",
+          "name": "customer_id",
           "description": "Filter by customer ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "queryLimit",
+          "name": "query_limit",
           "description": "Limit the number of log entries (defaults to 100).",
           "type": "integer",
           "required": false,
@@ -911,7 +918,7 @@
           "position": "query"
         },
         {
-          "name": "sortKey",
+          "name": "sort_key",
           "description": "Key to sort the results by (e.g., 'created_at').",
           "type": "string",
           "required": false,
@@ -919,7 +926,7 @@
           "position": "query"
         },
         {
-          "name": "sortType",
+          "name": "sort_type",
           "description": "Sort order type (e.g., 'asc').",
           "type": "string",
           "required": false,
@@ -1212,14 +1219,14 @@
           "position": "query"
         },
         {
-          "name": "sortKey",
+          "name": "sort_key",
           "description": "Key to sort the results by (e.g., 'id').",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "sortType",
+          "name": "sort_type",
           "description": "Sort order type (e.g., 'asc').",
           "type": "string",
           "required": false,
@@ -1241,28 +1248,28 @@
           "position": "query"
         },
         {
-          "name": "customerId",
+          "name": "customer_id",
           "description": "Filter by customer ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "connectorId",
+          "name": "connector_id",
           "description": "Filter by connector ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "externalId__ilike",
+          "name": "external_id__ilike",
           "description": "Case-insensitive partial match for external ID.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "paymentMethod",
+          "name": "payment_method",
           "description": "Filter by payment method (e.g., 'card', 'cash', 'bank_transfer').",
           "type": "string",
           "required": false,
@@ -1326,14 +1333,14 @@
           "position": "query"
         },
         {
-          "name": "currencyCode__ilike",
+          "name": "currency_code__ilike",
           "description": "Case-insensitive partial match for currency code.",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "receiptNumber__ilike",
+          "name": "receipt_number__ilike",
           "description": "Case-insensitive partial match for receipt number.",
           "type": "string",
           "required": false,
@@ -1368,7 +1375,7 @@
           "position": "query"
         },
         {
-          "name": "parentId",
+          "name": "parent_id",
           "description": "Filter by parent payment ID.",
           "type": "string",
           "required": false,
@@ -1389,14 +1396,14 @@
           "position": "query"
         },
         {
-          "name": "createdAt__gte",
+          "name": "created_at__gte",
           "description": "Filter by creation date greater than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
           "position": "query"
         },
         {
-          "name": "createdAt__lte",
+          "name": "created_at__lte",
           "description": "Filter by creation date less than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
@@ -1868,7 +1875,7 @@
           "enum": [
             "Quantity",
             "Feature",
-            "Access"
+            "Credits"
           ]
         },
         {
@@ -2433,9 +2440,9 @@
         },
         {
           "name": "status",
-          "description": "Contract status (defaults to 'draft').",
+          "description": "Contract status (required, typically 'draft' for new contracts).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body",
           "default": "draft",
           "enum": ["draft", "active", "paused", "expired", "disputed"]
