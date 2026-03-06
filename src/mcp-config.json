@@ -2568,7 +2568,7 @@
     },
     {
       "name": "updateContract",
-      "description": "Update an existing contract. The API requires name, status, currency, start_date, and customer_id even for partial changes — fetch the contract first with getContractById to get current values, then send all required fields plus any changes. Status: draft, active, paused, expired, disputed. Renewal: renew_with_default_contract, renew_with_existing, do_not_renew.",
+      "description": "Update an existing contract. This is a PUT endpoint — you MUST fetch the contract first with getContractById, then send ALL required fields including phases. Without phases the API returns 500. Copy phases from the GET response (each phase needs name, start_date, end_date at minimum). Status: draft, active, paused, expired, disputed. Renewal: renew_with_default_contract, renew_with_existing, do_not_renew.",
       "args": [
         {
           "name": "contractId",
@@ -2656,9 +2656,9 @@
         },
         {
           "name": "phases",
-          "description": "Array of contract phases with pricing details. Each phase includes name, start_date, end_date, phase_type, and pricings.",
+          "description": "REQUIRED — Array of contract phases. Without this the API returns 500. Copy phases from getContractById response. Each phase needs at minimum: name, start_date, end_date. Include pricings array if the phase has pricing.",
           "type": "array",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
