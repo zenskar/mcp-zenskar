@@ -379,7 +379,7 @@ async function executeAPICall(tool, args) {
     });
     
     // Nest flat address fields into address/ship_to_address objects for the Zenskar API
-    if (tool.name === 'createCustomer') {
+    if (tool.name === 'createCustomer' || tool.name === 'updateCustomer') {
       const nestAddress = (prefix, targetKey) => {
         const fieldMap = {
           [`${prefix}line1`]: 'line1',

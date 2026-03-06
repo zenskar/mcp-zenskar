@@ -2532,6 +2532,2697 @@
       "responseTemplate": {
         "prependBody": "## Contract Created\n\nNew contract has been successfully created:\n\n"
       }
+    },
+    {
+      "name": "getContractById",
+      "description": "Retrieve a contract by its ID, including all phases, pricings, customer details, custom attributes, and renewal policy. Essential for cloning contracts for renewals, reviewing terms before amendments, and validating contract state.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to retrieve.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Details\n\n"
+      }
+    },
+    {
+      "name": "updateContract",
+      "description": "Update an existing contract. Use this for mid-contract upgrades, downgrades, amendments, changing renewal policy, updating custom attributes, or modifying contract terms. Required fields: name, status, currency, start_date, customer_id. Status enum: draft, active, paused, expired, disputed. Renewal policy enum: renew_with_default_contract, renew_with_existing, do_not_renew.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Human-readable name for the contract.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "status",
+          "description": "Contract status: draft, active, paused, expired, or disputed.",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "enum": ["draft", "active", "paused", "expired", "disputed"]
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO 4217 currency code (e.g. USD, EUR, GBP).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "start_date",
+          "description": "Contract start date in ISO 8601 format (e.g. 2026-01-01T00:00:00).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "customer_id",
+          "description": "UUID of the customer associated with this contract.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Detailed description of the contract terms.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "Contract end date in ISO 8601 format.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "anchor_date",
+          "description": "Reference date for billing cycle calculations.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_last_day_of_month",
+          "description": "When true, billing cycles always end on the last day of the month.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_attributes",
+          "description": "Key-value pairs for organization-specific metadata (e.g. automatic_renewal flag).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phases",
+          "description": "Array of contract phases with pricing details. Each phase includes name, start_date, end_date, phase_type, and pricings.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "renewal_policy",
+          "description": "Contract renewal behavior: renew_with_default_contract, renew_with_existing, or do_not_renew.",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "enum": ["renew_with_default_contract", "renew_with_existing", "do_not_renew"]
+        },
+        {
+          "name": "contract_link",
+          "description": "URL to external contract document or signed agreement.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "bill_parent_customer",
+          "description": "When true and customer has a parent relationship, invoices are sent to the parent.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "invoice_payer_customer_id",
+          "description": "Optional customer UUID who will receive and pay invoices for this contract.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "include_in_renewal",
+          "description": "When true, this contract is eligible for renewal processes.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tags",
+          "description": "List of tags for categorizing and filtering contracts.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "source",
+          "description": "Metadata about the originating system (e.g. {source_type: 'hubspot', source_id: 'deal_123'}).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}",
+        "method": "PUT",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Updated\n\n"
+      }
+    },
+    {
+      "name": "deleteContract",
+      "description": "Delete a contract by its ID. Only works on draft contracts. Returns the deleted contract object with a deleted_at timestamp.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Deleted\n\n"
+      }
+    },
+    {
+      "name": "getContractAmendments",
+      "description": "Retrieve all amendments for a contract. Shows history of changes, expansions, upgrades, and modifications made to the contract over time.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/amendments",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Amendments\n\n"
+      }
+    },
+    {
+      "name": "createContractPhase",
+      "description": "Add a new phase to an existing contract. Use this for add-on expansions, mid-contract changes, or creating distinct billing periods with different pricing. Phase type enum: active, pause, trial.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to add a phase to.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Name for this contract phase (e.g. 'Add-On Phase', 'Expansion Phase').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "start_date",
+          "description": "Phase start date in ISO 8601 format.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "Phase end date in ISO 8601 format.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phase_type",
+          "description": "Type of phase: active, pause, or trial.",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "enum": ["active", "pause", "trial"]
+        },
+        {
+          "name": "description",
+          "description": "Description of this phase.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "pricings",
+          "description": "Array of pricing configurations for this phase.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "source_plan_phase_id",
+          "description": "UUID of the plan phase template this was derived from.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phase_metadata",
+          "description": "Additional metadata for this phase as key-value pairs.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/phases",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Phase Created\n\n"
+      }
+    },
+    {
+      "name": "createContractPhasePricing",
+      "description": "Add pricing to a contract phase. Either pricing_id (reference existing product pricing) or pricing (inline pricing object) must be provided. Use product_id to associate with a product.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "phaseId",
+          "description": "The unique identifier (UUID) of the phase to add pricing to.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "pricing_id",
+          "description": "UUID of an existing product pricing to reference. Either this or inline pricing must be provided.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "product_id",
+          "description": "UUID of the product this pricing is for.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "pricing",
+          "description": "Inline pricing configuration object. Either this or pricing_id must be provided.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "product",
+          "description": "Inline product definition object (name, description, sku, tax_codes, etc.).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "start_date",
+          "description": "Pricing start date in ISO 8601 format.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "Pricing end date in ISO 8601 format.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "anchor_date",
+          "description": "Billing anchor date for this pricing.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "external_id",
+          "description": "External identifier for this pricing entry.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_data",
+          "description": "Custom metadata for this pricing.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description for this pricing entry.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "plan_id",
+          "description": "UUID of the plan template this pricing derives from.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/phases/{phaseId}/pricing",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Phase Pricing Created\n\n"
+      }
+    },
+    {
+      "name": "expireContract",
+      "description": "Expire an active contract. Only works on contracts with status 'active'. Optionally specify an expiry_date (defaults to today). The contract expires at end of day 23:59:59.999999.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to expire.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "expiry_date",
+          "description": "Date to expire the contract (e.g. 2026-12-31). Defaults to today if not provided.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/expire",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Expired\n\n"
+      }
+    },
+    {
+      "name": "voidInvoice",
+      "description": "Void an invoice by its ID. Only works on approved invoices that have not been fully paid. Voiding reverses the invoice and creates appropriate accounting entries.",
+      "args": [
+        {
+          "name": "invoiceId",
+          "description": "The unique identifier (UUID) of the invoice to void.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/invoices/{invoiceId}/void",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Invoice Voided\n\n"
+      }
+    },
+    {
+      "name": "createInvoiceCreditNote",
+      "description": "Create a credit note against a specific invoice. The credit_note_amount is in the invoice's currency (e.g. 25 for $25). The API stores amounts in cents internally. Returns the created credit note.",
+      "args": [
+        {
+          "name": "invoiceId",
+          "description": "The unique identifier (UUID) of the invoice to create a credit note against.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "credit_note_amount",
+          "description": "Amount for the credit note in the invoice's currency (e.g. 25 for $25.00).",
+          "type": "number",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "reason",
+          "description": "Reason for creating this credit note.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/invoices/{invoiceId}/credit_note",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Credit Note Created\n\n"
+      }
+    },
+    {
+      "name": "generateInvoice",
+      "description": "Generate an invoice for a customer given a contract and date range. Use this for billing replay or on-demand invoice generation.",
+      "args": [
+        {
+          "name": "contract_id",
+          "description": "UUID of the contract to generate the invoice for.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "customer_id",
+          "description": "UUID of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "from_date",
+          "description": "Start date of the billing period (e.g. 2026-03-01).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "to_date",
+          "description": "End date of the billing period (e.g. 2026-03-31).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/invoices/generate_invoice",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Invoice Generated\n\n"
+      }
+    },
+    {
+      "name": "listCreditNotes",
+      "description": "Retrieve a paginated list of credit notes. Supports cursor-based pagination.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of results per page (defaults to 10).",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Filter by customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "invoice_id",
+          "description": "Filter by invoice UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "status",
+          "description": "Filter by status: in_progress, issued, void, or paid.",
+          "type": "string",
+          "required": false,
+          "position": "query",
+          "enum": ["in_progress", "issued", "void", "paid"]
+        }
+      ],
+      "requestTemplate": {
+        "url": "/credit_notes",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Credit Notes\n\n"
+      }
+    },
+    {
+      "name": "createCreditNote",
+      "description": "Create a standalone credit note (not tied to a specific invoice). Status enum: in_progress, issued, void, paid. Repayment method enum: credits, invoice_adjusted, external_payment, credits_against_payment, original_payment_method.",
+      "args": [
+        {
+          "name": "amount",
+          "description": "Credit note amount in the specified currency.",
+          "type": "number",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "customer_id",
+          "description": "UUID of the customer this credit note is for.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "status",
+          "description": "Credit note status: in_progress, issued, void, or paid.",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "enum": ["in_progress", "issued", "void", "paid"]
+        },
+        {
+          "name": "repayment_method",
+          "description": "How the credit is applied: credits, invoice_adjusted, external_payment, credits_against_payment, or original_payment_method.",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "enum": ["credits", "invoice_adjusted", "external_payment", "credits_against_payment", "original_payment_method"]
+        },
+        {
+          "name": "line_items",
+          "description": "Line items object describing the credit note breakdown.",
+          "type": "object",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "invoice_id",
+          "description": "Optional invoice UUID to associate the credit note with.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/credit_notes",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Credit Note Created\n\n"
+      }
+    },
+    {
+      "name": "getCreditNoteById",
+      "description": "Retrieve a credit note by its ID, including amount, status, customer, invoice association, and line items URL.",
+      "args": [
+        {
+          "name": "creditNoteId",
+          "description": "The unique identifier (UUID) of the credit note.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/credit_notes/{creditNoteId}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Credit Note Details\n\n"
+      }
+    },
+    {
+      "name": "createPayment",
+      "description": "Record a payment against an invoice. Payment method enum: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, etc. Type enum: payment, refund, payment_reversal, authorization, tax_withheld. For manual payments use payment_method='other' and type='payment'. Note: customer_id is required.",
+      "args": [
+        {
+          "name": "invoice_id",
+          "description": "UUID of the invoice this payment is for.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "customer_id",
+          "description": "UUID of the customer making the payment.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "amount",
+          "description": "Payment amount in the currency specified.",
+          "type": "number",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "payment_method",
+          "description": "Payment method: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, ach_credit_transfer, etc. Use 'other' for manual payments.",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "enum": ["card", "cash", "check", "charge_back", "bank_transfer", "direct_debit", "amazon_payments", "paypal_express_checkout", "upi", "netbanking_emandates", "other", "credits", "ach_credit_transfer"]
+        },
+        {
+          "name": "currency_code",
+          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "type",
+          "description": "Payment type: payment, refund, payment_reversal, authorization, or tax_withheld.",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "default": "payment",
+          "enum": ["payment", "refund", "payment_reversal", "authorization", "tax_withheld"]
+        },
+        {
+          "name": "external_id",
+          "description": "External reference ID for this payment.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/payments",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Payment Created\n\n"
+      }
+    },
+    {
+      "name": "updatePayment",
+      "description": "Update a payment's details such as status.",
+      "args": [
+        {
+          "name": "paymentId",
+          "description": "The unique identifier (UUID) of the payment to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "status",
+          "description": "New payment status.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "amount",
+          "description": "Updated payment amount.",
+          "type": "number",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/payments/{paymentId}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Payment Updated\n\n"
+      }
+    },
+    {
+      "name": "deleteManualPayment",
+      "description": "Delete a manual payment. Only works on payments that are in an eligible status for deletion.",
+      "args": [
+        {
+          "name": "paymentId",
+          "description": "The unique identifier (UUID) of the payment to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/payments/{paymentId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Payment Deleted\n\n"
+      }
+    },
+    {
+      "name": "refundPayment",
+      "description": "Refund a payment (full or partial). Specify the refund amount, destination, and whether to write off associated invoices.",
+      "args": [
+        {
+          "name": "paymentId",
+          "description": "The unique identifier (UUID) of the payment to refund.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "amount",
+          "description": "Amount to refund.",
+          "type": "number",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "refund_destination",
+          "description": "Where to send the refund: original_payment_method, credits, etc.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "writeoff_invoices",
+          "description": "Whether to write off the associated invoices (true/false).",
+          "type": "boolean",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/payments/{paymentId}/refund",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Payment Refunded\n\n"
+      }
+    },
+    {
+      "name": "createInvoiceCharge",
+      "description": "Create an auto-charge for an invoice. Triggers payment collection via the customer's configured payment method.",
+      "args": [
+        {
+          "name": "invoiceId",
+          "description": "The unique identifier (UUID) of the invoice to charge.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/payments/invoice/{invoiceId}/charge",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Invoice Charge Created\n\n"
+      }
+    },
+    {
+      "name": "editManualPayment",
+      "description": "Edit a manual payment's details (amount, method, etc.). Uses the manual_payment-specific endpoint.",
+      "args": [
+        {
+          "name": "paymentId",
+          "description": "The unique identifier (UUID) of the manual payment to edit.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "amount",
+          "description": "Updated payment amount.",
+          "type": "number",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "payment_method",
+          "description": "Updated payment method.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "currency_code",
+          "description": "Updated currency code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/payments/manual_payment/{paymentId}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Manual Payment Edited\n\n"
+      }
+    },
+    {
+      "name": "updateCustomer",
+      "description": "Update an existing customer's details. Supports partial updates — only send fields you want to change. Can update name, email, address, phone, communications_enabled, auto_charge_enabled, etc.",
+      "args": [
+        {
+          "name": "customerId",
+          "description": "The unique identifier (UUID) of the customer to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "customer_name",
+          "description": "Updated customer name.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "email",
+          "description": "Updated email address.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phone_number",
+          "description": "Updated phone number.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "external_id",
+          "description": "Updated external identifier.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_line1",
+          "description": "Address line 1.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_line2",
+          "description": "Address line 2.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_city",
+          "description": "City.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_state",
+          "description": "State.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_zipCode",
+          "description": "ZIP/postal code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_country",
+          "description": "Country.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_country_code",
+          "description": "Country code (e.g. US, GB).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "communications_enabled",
+          "description": "Enable/disable invoice email communications.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "auto_charge_enabled",
+          "description": "Enable/disable auto-charge for this customer.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "business_entity_id",
+          "description": "UUID of the business entity to associate with.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customerId}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Customer Updated\n\n"
+      }
+    },
+    {
+      "name": "listProducts",
+      "description": "Retrieve a paginated list of products. Products define what is being sold and can be associated with pricing and contracts.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of results per page (defaults to 10).",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Search by product name.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/products",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Products\n\n"
+      }
+    },
+    {
+      "name": "getProductById",
+      "description": "Retrieve a product by its ID, including name, SKU, description, tax codes, pricing, and custom attributes.",
+      "args": [
+        {
+          "name": "productId",
+          "description": "The unique identifier (UUID) of the product.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/products/{productId}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Product Details\n\n"
+      }
+    },
+    {
+      "name": "getChartOfAccounts",
+      "description": "Retrieve the chart of accounts for the organization, listing all account categories and their hierarchical structure.",
+      "args": [],
+      "requestTemplate": {
+        "url": "/accounting_new/chart_of_accounts",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Chart of Accounts\n\n"
+      }
+    },
+    {
+      "name": "listAccounts",
+      "description": "Retrieve a paginated list of accounting accounts (GL accounts) with optional filtering.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of accounts to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Search query to filter accounts by name or other fields. Format: 'field=value'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/accounts",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Accounting Accounts\n\n"
+      }
+    },
+    {
+      "name": "createAccount",
+      "description": "Create a new accounting (GL) account.",
+      "args": [
+        {
+          "name": "name",
+          "description": "Name of the account.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "account_code",
+          "description": "Unique account code/number.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "account_type",
+          "description": "Type of account (e.g., 'asset', 'liability', 'revenue', 'expense', 'equity').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description of the account.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "parent_account_id",
+          "description": "ID of the parent account for hierarchical structure.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/accounts",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Account\n\n"
+      }
+    },
+    {
+      "name": "listJournalEntries",
+      "description": "Retrieve a paginated list of journal entries with optional filtering by date, account, or status.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of journal entries to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Search query to filter journal entries. Format: 'field=value'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/journal_entries",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Journal Entries\n\n"
+      }
+    },
+    {
+      "name": "createJournalEntry",
+      "description": "Create a new manual journal entry with debit and credit lines.",
+      "args": [
+        {
+          "name": "date",
+          "description": "Date of the journal entry (YYYY-MM-DD).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description/memo for the journal entry.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "lines",
+          "description": "Array of journal lines. Each line: {account_id, debit, credit, description}.",
+          "type": "array",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "reference",
+          "description": "External reference number.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/journal_entry",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Journal Entry\n\n"
+      }
+    },
+    {
+      "name": "getJournalEntry",
+      "description": "Retrieve a journal entry by its ID, including all journal lines.",
+      "args": [
+        {
+          "name": "journal_entry_id",
+          "description": "The unique identifier of the journal entry.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/journal_entry/{journal_entry_id}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Journal Entry Details\n\n"
+      }
+    },
+    {
+      "name": "listJournalLines",
+      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of journal lines to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Search query to filter journal lines. Format: 'field=value'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/journal_lines",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Journal Lines\n\n"
+      }
+    },
+    {
+      "name": "getBalanceSheet",
+      "description": "Retrieve the balance sheet report showing assets, liabilities, and equity.",
+      "args": [
+        {
+          "name": "as_of_date",
+          "description": "Date for the balance sheet snapshot (YYYY-MM-DD). Defaults to today.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/balance_sheet/v2",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Balance Sheet\n\n"
+      }
+    },
+    {
+      "name": "getIncomeStatement",
+      "description": "Retrieve the income statement (P&L) report showing revenue and expenses.",
+      "args": [
+        {
+          "name": "start_date",
+          "description": "Start date for the income statement period (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "end_date",
+          "description": "End date for the income statement period (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/income_statement/v2",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Income Statement\n\n"
+      }
+    },
+    {
+      "name": "getAccountBalance",
+      "description": "Retrieve the balance for a specific accounting account.",
+      "args": [
+        {
+          "name": "account_id",
+          "description": "The unique identifier of the account.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "as_of_date",
+          "description": "Date for the balance snapshot (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/accounting_new/accounts/{account_id}/balance",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Account Balance\n\n"
+      }
+    },
+    {
+      "name": "createProduct",
+      "description": "Create a new product in the catalog.",
+      "args": [
+        {
+          "name": "name",
+          "description": "Name of the product.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "sku",
+          "description": "SKU (stock keeping unit) identifier.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description of the product.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "type",
+          "description": "Product type (e.g., 'service', 'good').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_active",
+          "description": "Whether the product is active.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_codes",
+          "description": "Array of tax code objects for the product.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_attributes",
+          "description": "Custom attributes as key-value pairs.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/products",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Product\n\n"
+      }
+    },
+    {
+      "name": "updateProduct",
+      "description": "Update an existing product's details.",
+      "args": [
+        {
+          "name": "product_id",
+          "description": "The unique identifier of the product to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Updated name of the product.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "sku",
+          "description": "Updated SKU.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Updated description.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_active",
+          "description": "Whether the product is active.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_codes",
+          "description": "Updated tax codes array.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_attributes",
+          "description": "Updated custom attributes.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/products/{product_id}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Updated Product\n\n"
+      }
+    },
+    {
+      "name": "getProductPricings",
+      "description": "Retrieve all pricing configurations for a specific product.",
+      "args": [
+        {
+          "name": "product_id",
+          "description": "The unique identifier of the product.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/products/{product_id}/pricing",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Product Pricings\n\n"
+      }
+    },
+    {
+      "name": "createProductPricing",
+      "description": "Create a new pricing configuration for a product.",
+      "args": [
+        {
+          "name": "product_id",
+          "description": "The unique identifier of the product.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Name of the pricing.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "pricing_model",
+          "description": "Pricing model type (e.g., 'flat_fee', 'per_unit', 'tiered', 'volume', 'staircase', 'percentage').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "currency",
+          "description": "Currency code (e.g., 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "pricing_data",
+          "description": "Pricing data object containing model-specific configuration (rates, tiers, etc.).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "billing_frequency",
+          "description": "Billing frequency (e.g., 'monthly', 'quarterly', 'annually').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "invoice_timing",
+          "description": "When to invoice: 'in_advance' or 'in_arrears'.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/products/{product_id}/pricing",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Product Pricing\n\n"
+      }
+    },
+    {
+      "name": "listPlans",
+      "description": "Retrieve a paginated list of plans (templates v3) that define reusable contract structures.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of plans to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Search query to filter plans. Format: 'field=value'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/templates/plan",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Plans\n\n"
+      }
+    },
+    {
+      "name": "getPlanById",
+      "description": "Retrieve a plan by its ID, including phases, products, and pricing configurations.",
+      "args": [
+        {
+          "name": "plan_id",
+          "description": "The unique identifier of the plan.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/templates/plan/{plan_id}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Plan Details\n\n"
+      }
+    },
+    {
+      "name": "createPlan",
+      "description": "Create a new plan (template) that defines a reusable contract structure with phases and pricing.",
+      "args": [
+        {
+          "name": "name",
+          "description": "Name of the plan.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description of the plan.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "currency",
+          "description": "Currency code (e.g., 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phases",
+          "description": "Array of plan phases, each with name, pricings, etc.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_attributes",
+          "description": "Custom attributes as key-value pairs.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/templates/plan",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Plan\n\n"
+      }
+    },
+    {
+      "name": "addProductsToPlan",
+      "description": "Add products with pricing to an existing plan.",
+      "args": [
+        {
+          "name": "plan_id",
+          "description": "The unique identifier of the plan.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "products",
+          "description": "Array of product objects to add, each with product_id and pricing configuration.",
+          "type": "array",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/templates/plan/{plan_id}/products",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Updated Plan Products\n\n"
+      }
+    },
+    {
+      "name": "previewPlanEstimate",
+      "description": "Preview the estimated billing for a plan, showing projected charges per phase.",
+      "args": [
+        {
+          "name": "plan_id",
+          "description": "The unique identifier of the plan.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "start_date",
+          "description": "Start date for the estimate (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "End date for the estimate (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/templates/plan/{plan_id}/preview",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Plan Estimate Preview\n\n"
+      }
+    },
+    {
+      "name": "listCustomAttributes",
+      "description": "Retrieve a list of custom attribute definitions configured for the organization.",
+      "args": [
+        {
+          "name": "entity_type",
+          "description": "Filter by entity type (e.g., 'customer', 'contract', 'invoice', 'product').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/custom_attributes",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Custom Attributes\n\n"
+      }
+    },
+    {
+      "name": "createCustomAttribute",
+      "description": "Create a new custom attribute definition for an entity type.",
+      "args": [
+        {
+          "name": "attribute_key_name",
+          "description": "Key name of the custom attribute (used as the field key).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "display_name",
+          "description": "Display name for the custom attribute.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "module",
+          "description": "Module/entity type this attribute applies to (e.g., 'customer', 'contract', 'invoice', 'product').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "data_type",
+          "description": "Data type of the attribute (e.g., 'string', 'number', 'boolean', 'date', 'enum').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "default_value",
+          "description": "Default value for the attribute.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "enum_choices",
+          "description": "Array of allowed values for enum-type attributes.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_required",
+          "description": "Whether the attribute is required.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description of the custom attribute.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/custom_attributes",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Custom Attribute\n\n"
+      }
+    },
+    {
+      "name": "listTaxCategories",
+      "description": "Retrieve a list of tax categories configured for the organization.",
+      "args": [],
+      "requestTemplate": {
+        "url": "/tax/categories",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Tax Categories\n\n"
+      }
+    },
+    {
+      "name": "createTaxCategory",
+      "description": "Create a new tax category.",
+      "args": [
+        {
+          "name": "name",
+          "description": "Name of the tax category.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "tax_code",
+          "description": "Tax code identifier.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description of the tax category.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "rate",
+          "description": "Tax rate as a decimal (e.g., 0.1 for 10%).",
+          "type": "number",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/tax/categories",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Tax Category\n\n"
+      }
+    },
+    {
+      "name": "createQuote",
+      "description": "Create a new quote/proposal for a customer.",
+      "args": [
+        {
+          "name": "name",
+          "description": "Name/title of the quote.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "currency",
+          "description": "Currency code (e.g., 'USD').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "line_items",
+          "description": "Array of line items for the quote. Each item includes product/pricing details.",
+          "type": "array",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "customer_id",
+          "description": "The customer ID this quote is for.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Description of the quote.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "start_date",
+          "description": "Start date for the quote (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "End date for the quote (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_attributes",
+          "description": "Custom attributes as key-value pairs.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/quotes",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Quote\n\n"
+      }
+    },
+    {
+      "name": "previewQuoteEstimate",
+      "description": "Preview the estimated billing for a quote before creating it.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The customer ID for the estimate.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "plan_id",
+          "description": "Plan ID to estimate.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "start_date",
+          "description": "Start date (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "End date (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phases",
+          "description": "Array of quote phases with pricing.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/quotes/preview",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Quote Estimate Preview\n\n"
+      }
+    },
+    {
+      "name": "getQuoteById",
+      "description": "Retrieve a quote by its ID, including phases, pricing, and status.",
+      "args": [
+        {
+          "name": "quote_id",
+          "description": "The unique identifier of the quote.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/quotes/{quote_id}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Quote Details\n\n"
+      }
+    },
+    {
+      "name": "acceptQuote",
+      "description": "Accept a quote, converting it into an active contract.",
+      "args": [
+        {
+          "name": "quote_id",
+          "description": "The unique identifier of the quote to accept.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/quotes/{quote_id}/accept",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Accepted Quote\n\n"
+      }
+    },
+    {
+      "name": "listJobs",
+      "description": "Retrieve a paginated list of async jobs (invoice generation, revenue recognition, etc.).",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of jobs to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Search query to filter jobs. Format: 'field=value'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/jobs",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Jobs\n\n"
+      }
+    },
+    {
+      "name": "getJobById",
+      "description": "Retrieve a specific job by its ID to check status and results.",
+      "args": [
+        {
+          "name": "job_id",
+          "description": "The unique identifier of the job.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/jobs/{job_id}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Job Details\n\n"
+      }
+    },
+    {
+      "name": "createContact",
+      "description": "Create a new contact associated with a customer.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The customer ID to associate this contact with.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "first_name",
+          "description": "First name of the contact.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "last_name",
+          "description": "Last name of the contact.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "email",
+          "description": "Email address of the contact.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phone",
+          "description": "Phone number of the contact.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "designation",
+          "description": "Job title/designation of the contact.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_primary",
+          "description": "Whether this is the primary contact.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contacts",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Contact\n\n"
+      }
+    },
+    {
+      "name": "updateContact",
+      "description": "Update an existing contact's details.",
+      "args": [
+        {
+          "name": "contact_id",
+          "description": "The unique identifier of the contact to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "first_name",
+          "description": "Updated first name.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "last_name",
+          "description": "Updated last name.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "email",
+          "description": "Updated email address.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "phone",
+          "description": "Updated phone number.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "designation",
+          "description": "Updated job title/designation.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_primary",
+          "description": "Whether this is the primary contact.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contacts/{contact_id}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Updated Contact\n\n"
+      }
+    },
+    {
+      "name": "listBusinessEntities",
+      "description": "Retrieve a list of business entities configured for the organization.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of entities to return.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/business_entities",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Business Entities\n\n"
+      }
+    },
+    {
+      "name": "getBusinessEntityById",
+      "description": "Retrieve a business entity by its ID.",
+      "args": [
+        {
+          "name": "entity_id",
+          "description": "The unique identifier of the business entity.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/business_entities/{entity_id}",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Business Entity Details\n\n"
+      }
+    },
+    {
+      "name": "updateBusinessEntity",
+      "description": "Update an existing business entity's details.",
+      "args": [
+        {
+          "name": "entity_id",
+          "description": "The unique identifier of the business entity to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Updated name of the business entity.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address",
+          "description": "Updated address object with line1, line2, city, state, zipCode, country, country_code.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_id",
+          "description": "Updated tax ID.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "email",
+          "description": "Updated email address.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/business_entities/{entity_id}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Updated Business Entity\n\n"
+      }
+    },
+    {
+      "name": "listCustomerAddresses",
+      "description": "Retrieve all addresses for a specific customer.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The unique identifier of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customer_id}/addresses",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Customer Addresses\n\n"
+      }
+    },
+    {
+      "name": "createCustomerAddress",
+      "description": "Add a new address to a customer.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The unique identifier of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "line1",
+          "description": "Address line 1.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "line2",
+          "description": "Address line 2.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "city",
+          "description": "City.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "state",
+          "description": "State/province.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "zipCode",
+          "description": "ZIP/postal code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "country",
+          "description": "Country name.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "country_code",
+          "description": "ISO country code (e.g., 'US', 'GB').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_type",
+          "description": "Type of address (e.g., 'billing', 'shipping').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customer_id}/addresses",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Created Customer Address\n\n"
+      }
+    },
+    {
+      "name": "updateCustomerAddress",
+      "description": "Update an existing customer address.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The unique identifier of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "address_id",
+          "description": "The unique identifier of the address to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "line1",
+          "description": "Updated address line 1.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "line2",
+          "description": "Updated address line 2.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "city",
+          "description": "Updated city.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "state",
+          "description": "Updated state/province.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "zipCode",
+          "description": "Updated ZIP/postal code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "country",
+          "description": "Updated country name.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "country_code",
+          "description": "Updated ISO country code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customer_id}/addresses/{address_id}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Updated Customer Address\n\n"
+      }
+    },
+    {
+      "name": "listPaymentMethods",
+      "description": "Retrieve all payment methods for a specific customer.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The unique identifier of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customer_id}/payment_methods",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Customer Payment Methods\n\n"
+      }
+    },
+    {
+      "name": "attachPaymentMethod",
+      "description": "Attach a payment method to a customer.",
+      "args": [
+        {
+          "name": "customer_id",
+          "description": "The unique identifier of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "payment_method_id",
+          "description": "The payment method ID (from payment gateway) to attach.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "gateway",
+          "description": "Payment gateway name (e.g., 'stripe').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_default",
+          "description": "Whether to set as the default payment method.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customer_id}/payment_methods/attach",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Attached Payment Method\n\n"
+      }
     }
   ]
 }
