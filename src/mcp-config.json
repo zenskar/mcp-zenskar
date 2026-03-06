@@ -4050,9 +4050,9 @@
         },
         {
           "name": "type",
-          "description": "Product type (e.g., 'service', 'good').",
+          "description": "Product type. Use 'product' for standard products, 'service' for services.",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
@@ -4807,8 +4807,8 @@
       "description": "Create a new contact associated with a customer.",
       "args": [
         {
-          "name": "customer_id",
-          "description": "The customer ID to associate this contact with.",
+          "name": "customer",
+          "description": "The customer ID (UUID) to associate this contact with.",
           "type": "string",
           "required": true,
           "position": "body"
@@ -4831,7 +4831,7 @@
           "name": "email",
           "description": "Email address of the contact.",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
@@ -4869,7 +4869,7 @@
     },
     {
       "name": "updateContact",
-      "description": "Update an existing contact's details.",
+      "description": "Update an existing contact's details. Requires customer (customer ID) and email even for partial updates.",
       "args": [
         {
           "name": "contactId",
@@ -4877,6 +4877,13 @@
           "type": "string",
           "required": true,
           "position": "path"
+        },
+        {
+          "name": "customer",
+          "description": "The customer ID (UUID) this contact belongs to. Required even for updates.",
+          "type": "string",
+          "required": true,
+          "position": "body"
         },
         {
           "name": "first_name",
@@ -4894,9 +4901,9 @@
         },
         {
           "name": "email",
-          "description": "Updated email address.",
+          "description": "Email address of the contact. Required even for updates.",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
