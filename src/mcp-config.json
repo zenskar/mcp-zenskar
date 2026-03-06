@@ -4647,7 +4647,7 @@
     },
     {
       "name": "previewQuoteEstimate",
-      "description": "Preview the estimated billing for a quote before creating it.",
+      "description": "Preview the estimated billing for a quote before creating it. Requires customer_id, currency, and line_items at minimum. Use getProductPricings to find valid product_id + pricing_id combos for line_items.",
       "args": [
         {
           "name": "customer_id",
@@ -4657,8 +4657,22 @@
           "position": "body"
         },
         {
+          "name": "currency",
+          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "line_items",
+          "description": "Array of line items. Each item: {product_id, pricing_id}. The pricing_id must belong to the product_id — use getProductPricings to find valid combos.",
+          "type": "array",
+          "required": true,
+          "position": "body"
+        },
+        {
           "name": "plan_id",
-          "description": "Plan ID to estimate.",
+          "description": "Plan ID to estimate (alternative to line_items).",
           "type": "string",
           "required": false,
           "position": "body"
@@ -4667,14 +4681,14 @@
           "name": "start_date",
           "description": "Start date (YYYY-MM-DD).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
           "name": "end_date",
           "description": "End date (YYYY-MM-DD).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
