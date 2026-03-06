@@ -1,15 +1,22 @@
 # Zenskar MCP Server
 
-A Model Context Protocol (MCP) server that provides AI assistants with access to the Zenskar API for customer management, invoicing, and billing operations.
+MCP server for the Zenskar API. 103 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, quotes, and more.
 
-## Features
+## What it does
 
-- **Customer Management**: List, search, create, and update customers
-- **Invoice Operations**: Create, retrieve, and manage invoices
-- **Subscription Management**: Handle subscription lifecycle
-- **Billing Operations**: Process payments and manage billing
-- **Multi-tenant Support**: Organization-based access control
-- **Secure Authentication**: Bearer token authentication
+- Customers: list, search, create, update, addresses, contacts, payment methods
+- Contracts: create, read, update, delete, amend, add phases and pricing, expire
+- Invoices: list, get, approve, void, generate, credit notes, download
+- Payments: create, edit, refund, delete, auto-charge
+- Credit notes: list, create (standalone or against invoice), get by ID
+- Accounting: chart of accounts, journal entries and lines, balance sheet, income statement, account balances
+- Products: CRUD, pricing configurations
+- Plans: list, create, add products, preview estimates
+- Quotes: create, preview, accept (converts to contract)
+- Business entities: list, get, create, update
+- Jobs: monitor async operations
+- Custom attributes and tax categories
+- Multi-tenant, supports Bearer token and API key auth
 
 ## Installation
 
@@ -51,7 +58,7 @@ npx mcp-zenskar
 This MCP server requires two authentication parameters for every request:
 
 1. **Organization ID**: Your Zenskar organization identifier
-2. **Authorization Token**: Your API Bearer token
+2. **Authorization Token**: Your API Bearer token or API key
 
 ### Getting Your Credentials
 
@@ -68,47 +75,193 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 
 ```
 "Show me my recent customers"
-"Create an invoice for customer XYZ"
-"List all active subscriptions"
-```
-
-### Manual Tool Calls
-
-Each tool requires authentication parameters:
-
-```javascript
-{
-  "organization": "your-org-id",
-  "authorization": "Bearer your-token",
-  // ... other tool-specific parameters
-}
+"Find the contract for Acme Corp and add a $500/month add-on phase"
+"Create a $25 credit note against the latest invoice for customer X"
+"Show me the balance sheet and income statement"
+"List all products and their pricing configurations"
+"Record a $1000 manual payment against invoice Y"
 ```
 
 ## Available Tools
 
-The server provides access to all Zenskar API endpoints including:
+### Customers
+| Tool | Description |
+|---|---|
+| `listCustomers` | List customers with search, filtering, and pagination |
+| `getCustomerById` | Get a customer by ID |
+| `createCustomer` | Create a customer with address and tax info |
+| `updateCustomer` | Update customer details (partial update) |
 
-- `listCustomers` - Retrieve paginated customer lists
-- `getCustomer` - Get specific customer details  
-- `createCustomer` - Create new customers
-- `updateCustomer` - Update existing customers
-- `listInvoices` - Retrieve invoice lists
-- `createInvoice` - Generate new invoices
-- `getInvoice` - Get invoice details
-- And many more...
+### Contacts
+| Tool | Description |
+|---|---|
+| `listContacts` | List contacts with pagination |
+| `getContactById` | Get a contact by ID |
+| `createContact` | Create a contact for a customer |
+| `updateContact` | Update a contact's details |
+
+### Contracts
+| Tool | Description |
+|---|---|
+| `listContracts` | List contracts with filtering by status, customer, dates |
+| `getContractById` | Get a contract with phases, pricings, and customer details |
+| `createContract` | Create a contract with phases and pricing |
+| `updateContract` | Update contract terms, status, pricing, or renewal policy |
+| `deleteContract` | Delete a draft contract |
+| `getContractAmendments` | Get amendment history for a contract |
+| `createContractPhase` | Add a phase to a contract (add-ons, expansions) |
+| `createContractPhasePricing` | Add pricing to a contract phase |
+| `expireContract` | Expire an active contract |
+| `createContractPrompt` | Create a contract prompt |
+| `extractContractFromRaw` | Extract contract data from raw text using AI |
+
+### Invoices
+| Tool | Description |
+|---|---|
+| `listInvoices` | List invoices with filtering by customer, status, dates |
+| `getInvoiceById` | Get an invoice by ID |
+| `getInvoiceByExternalId` | Get an invoice by external ID |
+| `getInvoiceGenerationStatus` | Check invoice generation status |
+| `downloadInvoice` | Download invoice in JSON format |
+| `getInvoiceContractJsonActuals` | Get contract actuals for an invoice |
+| `getInvoicePayments` | Get payments for an invoice |
+| `getInvoicePaymentsById` | Get a specific payment on an invoice |
+| `getInvoicePaymentsWithoutRefunds` | Get invoice payments excluding refunds |
+| `getInvoiceLineItems` | Get invoice line items and pricing details |
+| `getInvoiceSummary` | Get invoice summary |
+| `getAllInvoiceTags` | Get all available invoice tags |
+| `generateInvoicePaymentLink` | Generate a payment link for an invoice |
+| `payInvoice` | Initiate payment for an invoice |
+| `approveInvoice` | Approve an invoice for billing |
+| `voidInvoice` | Void an approved unpaid invoice |
+| `generateInvoice` | Generate an invoice for a contract and date range |
+| `createInvoiceCreditNote` | Create a credit note against an invoice |
+| `createInvoiceCharge` | Auto-charge an invoice via payment gateway |
+
+### Payments
+| Tool | Description |
+|---|---|
+| `listAllPayments` | List all payments with filtering and sorting |
+| `getPaymentById` | Get a payment by ID |
+| `createPayment` | Record a payment against an invoice |
+| `updatePayment` | Update a payment's status or details |
+| `deleteManualPayment` | Delete a manual payment |
+| `editManualPayment` | Edit a manual payment's amount or method |
+| `refundPayment` | Refund a payment (full or partial) |
+
+### Credit Notes
+| Tool | Description |
+|---|---|
+| `listCreditNotes` | List credit notes with pagination |
+| `getCreditNoteById` | Get a credit note by ID |
+| `createCreditNote` | Create a standalone credit note |
+
+### Products and Pricing
+| Tool | Description |
+|---|---|
+| `listProducts` | List products in the catalog |
+| `getProductById` | Get a product by ID |
+| `createProduct` | Create a product |
+| `updateProduct` | Update a product's details |
+| `getProductPricings` | Get pricing configs for a product |
+| `createProductPricing` | Create a pricing config for a product |
+
+### Plans (Templates)
+| Tool | Description |
+|---|---|
+| `listPlans` | List plan templates |
+| `getPlanById` | Get a plan by ID with phases and pricing |
+| `createPlan` | Create a plan template |
+| `addProductsToPlan` | Add products to an existing plan |
+| `previewPlanEstimate` | Preview estimated billing for a plan |
+
+### Accounting
+| Tool | Description |
+|---|---|
+| `getChartOfAccounts` | Get the full chart of accounts |
+| `listAccounts` | List GL accounts with filtering |
+| `createAccount` | Create a GL account |
+| `listJournalEntries` | List journal entries with filtering |
+| `createJournalEntry` | Create a manual journal entry |
+| `getJournalEntry` | Get a journal entry by ID with all lines |
+| `listJournalLines` | List journal lines across all entries |
+| `getBalanceSheet` | Get the balance sheet report |
+| `getIncomeStatement` | Get the income statement (P&L) |
+| `getAccountBalance` | Get balance for a specific GL account |
+| `recogniseRevenue` | Trigger revenue recognition up to a date |
+
+### Quotes
+| Tool | Description |
+|---|---|
+| `createQuote` | Create a quote/proposal |
+| `previewQuoteEstimate` | Preview estimated billing for a quote |
+| `getQuoteById` | Get a quote by ID |
+| `acceptQuote` | Accept a quote, converting to a contract |
+
+### Custom Attributes and Tax
+| Tool | Description |
+|---|---|
+| `listCustomAttributes` | List custom attribute definitions |
+| `createCustomAttribute` | Create a custom attribute definition |
+| `listTaxCategories` | List tax categories |
+| `createTaxCategory` | Create a tax category |
+
+### Jobs
+| Tool | Description |
+|---|---|
+| `listJobs` | List async jobs (invoice gen, rev rec, etc.) |
+| `getJobById` | Get a job by ID to check status |
+
+### Business Entities
+| Tool | Description |
+|---|---|
+| `listBusinessEntities` | List business entities |
+| `getBusinessEntityById` | Get a business entity by ID |
+| `createBusinessEntity` | Create a business entity |
+| `updateBusinessEntity` | Update a business entity |
+
+### Customer Addresses and Payment Methods
+| Tool | Description |
+|---|---|
+| `listCustomerAddresses` | List addresses for a customer |
+| `createCustomerAddress` | Add an address to a customer |
+| `updateCustomerAddress` | Update a customer address |
+| `listPaymentMethods` | List payment methods for a customer |
+| `attachPaymentMethod` | Attach a payment method to a customer |
+
+### Metrics and Usage Events
+| Tool | Description |
+|---|---|
+| `listAggregates` | List billable metrics with filtering |
+| `getAggregateSchemas` | Get all billable metric schemas |
+| `getAggregateEstimates` | Get billable metric estimates |
+| `getAggregateById` | Get a billable metric by ID |
+| `getAggregateLogs` | Get logs for a billable metric |
+| `listRawMetrics` | List usage events with filtering |
+| `createRawMetric` | Create a usage event schema |
+| `getRawMetricById` | Get a usage event by ID |
+| `getRawMetricLogs` | Get logs for a usage event |
+| `getRawMetricBySlug` | Get a usage event by API slug |
+| `ingestRawMetricEvent` | Ingest a usage event |
+
+### Other
+| Tool | Description |
+|---|---|
+| `createEntitlement` | Create an entitlement |
+| `getCustomerPortalConfiguration` | Get customer portal config |
+| `getCurrentDateTime` | Get current date/time in multiple formats |
 
 ## Security
 
-- All API requests require valid organization ID and Bearer token
-- Multi-tenant isolation ensures data privacy
-- No credentials are stored by the MCP server
-- All authentication is passed through from the client
+- All requests require a valid organization ID and auth token
+- No credentials are stored by the server
+- Auth is passed through from the client
 
 ## Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/mcp-zenskar
+git clone https://github.com/zenskar/mcp-zenskar
 cd mcp-zenskar
 
 # Install dependencies
@@ -145,7 +298,7 @@ Then either point Claude to the globally-installed binary (usually `$(npm bin -g
 
 ## Configuration
 
-The server uses `src/mcp-config.json` to define available tools and API endpoints. This file contains the complete mapping of MCP tools to Zenskar API operations.
+The server uses `src/mcp-config.json` to define available tools and API endpoints. This file contains the complete mapping of MCP tools to Zenskar API operations. All tools are declarative — no code changes needed to add new tools.
 
 ## License
 
