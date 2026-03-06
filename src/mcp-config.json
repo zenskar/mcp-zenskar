@@ -2445,7 +2445,13 @@
           "required": true,
           "position": "body",
           "default": "draft",
-          "enum": ["draft", "active", "paused", "expired", "disputed"]
+          "enum": [
+            "draft",
+            "active",
+            "paused",
+            "expired",
+            "disputed"
+          ]
         },
         {
           "name": "currency",
@@ -2490,7 +2496,11 @@
           "required": false,
           "position": "body",
           "default": "do_not_renew",
-          "enum": ["do_not_renew", "auto_renew", "manual"]
+          "enum": [
+            "do_not_renew",
+            "auto_renew",
+            "manual"
+          ]
         },
         {
           "name": "bill_parent_customer",
@@ -2580,7 +2590,13 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": ["draft", "active", "paused", "expired", "disputed"]
+          "enum": [
+            "draft",
+            "active",
+            "paused",
+            "expired",
+            "disputed"
+          ]
         },
         {
           "name": "currency",
@@ -2651,7 +2667,11 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": ["renew_with_default_contract", "renew_with_existing", "do_not_renew"]
+          "enum": [
+            "renew_with_default_contract",
+            "renew_with_existing",
+            "do_not_renew"
+          ]
         },
         {
           "name": "contract_link",
@@ -2791,7 +2811,11 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": ["active", "pause", "trial"]
+          "enum": [
+            "active",
+            "pause",
+            "trial"
+          ]
         },
         {
           "name": "description",
@@ -3112,7 +3136,12 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": ["in_progress", "issued", "void", "paid"]
+          "enum": [
+            "in_progress",
+            "issued",
+            "void",
+            "paid"
+          ]
         }
       ],
       "requestTemplate": {
@@ -3157,7 +3186,12 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": ["in_progress", "issued", "void", "paid"]
+          "enum": [
+            "in_progress",
+            "issued",
+            "void",
+            "paid"
+          ]
         },
         {
           "name": "repayment_method",
@@ -3165,7 +3199,13 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": ["credits", "invoice_adjusted", "external_payment", "credits_against_payment", "original_payment_method"]
+          "enum": [
+            "credits",
+            "invoice_adjusted",
+            "external_payment",
+            "credits_against_payment",
+            "original_payment_method"
+          ]
         },
         {
           "name": "line_items",
@@ -3247,7 +3287,21 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": ["card", "cash", "check", "charge_back", "bank_transfer", "direct_debit", "amazon_payments", "paypal_express_checkout", "upi", "netbanking_emandates", "other", "credits", "ach_credit_transfer"]
+          "enum": [
+            "card",
+            "cash",
+            "check",
+            "charge_back",
+            "bank_transfer",
+            "direct_debit",
+            "amazon_payments",
+            "paypal_express_checkout",
+            "upi",
+            "netbanking_emandates",
+            "other",
+            "credits",
+            "ach_credit_transfer"
+          ]
         },
         {
           "name": "currency_code",
@@ -3263,7 +3317,13 @@
           "required": false,
           "position": "body",
           "default": "payment",
-          "enum": ["payment", "refund", "payment_reversal", "authorization", "tax_withheld"]
+          "enum": [
+            "payment",
+            "refund",
+            "payment_reversal",
+            "authorization",
+            "tax_withheld"
+          ]
         },
         {
           "name": "external_id",
@@ -3825,7 +3885,7 @@
       "description": "Retrieve a journal entry by its ID, including all journal lines.",
       "args": [
         {
-          "name": "journal_entry_id",
+          "name": "journalEntryId",
           "description": "The unique identifier of the journal entry.",
           "type": "string",
           "required": true,
@@ -3833,7 +3893,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/accounting_new/journal_entry/{journal_entry_id}",
+        "url": "/accounting_new/journal_entry/{journalEntryId}",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -3938,7 +3998,7 @@
       "description": "Retrieve the balance for a specific accounting account.",
       "args": [
         {
-          "name": "account_id",
+          "name": "accountId",
           "description": "The unique identifier of the account.",
           "type": "string",
           "required": true,
@@ -3953,7 +4013,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/accounting_new/accounts/{account_id}/balance",
+        "url": "/accounting_new/accounts/{accountId}/balance",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4033,7 +4093,7 @@
       "description": "Update an existing product's details.",
       "args": [
         {
-          "name": "product_id",
+          "name": "productId",
           "description": "The unique identifier of the product to update.",
           "type": "string",
           "required": true,
@@ -4083,7 +4143,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/products/{product_id}",
+        "url": "/products/{productId}",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"
@@ -4098,7 +4158,7 @@
       "description": "Retrieve all pricing configurations for a specific product.",
       "args": [
         {
-          "name": "product_id",
+          "name": "productId",
           "description": "The unique identifier of the product.",
           "type": "string",
           "required": true,
@@ -4106,7 +4166,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/products/{product_id}/pricing",
+        "url": "/products/{productId}/pricing",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4121,7 +4181,7 @@
       "description": "Create a new pricing configuration for a product.",
       "args": [
         {
-          "name": "product_id",
+          "name": "productId",
           "description": "The unique identifier of the product.",
           "type": "string",
           "required": true,
@@ -4171,7 +4231,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/products/{product_id}/pricing",
+        "url": "/products/{productId}/pricing",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -4223,7 +4283,7 @@
       "description": "Retrieve a plan by its ID, including phases, products, and pricing configurations.",
       "args": [
         {
-          "name": "plan_id",
+          "name": "planId",
           "description": "The unique identifier of the plan.",
           "type": "string",
           "required": true,
@@ -4231,7 +4291,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/templates/plan/{plan_id}",
+        "url": "/templates/plan/{planId}",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4297,7 +4357,7 @@
       "description": "Add products with pricing to an existing plan.",
       "args": [
         {
-          "name": "plan_id",
+          "name": "planId",
           "description": "The unique identifier of the plan.",
           "type": "string",
           "required": true,
@@ -4312,7 +4372,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/templates/plan/{plan_id}/products",
+        "url": "/templates/plan/{planId}/products",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -4327,7 +4387,7 @@
       "description": "Preview the estimated billing for a plan, showing projected charges per phase.",
       "args": [
         {
-          "name": "plan_id",
+          "name": "planId",
           "description": "The unique identifier of the plan.",
           "type": "string",
           "required": true,
@@ -4349,7 +4409,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/templates/plan/{plan_id}/preview",
+        "url": "/templates/plan/{planId}/preview",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -4641,7 +4701,7 @@
       "description": "Retrieve a quote by its ID, including phases, pricing, and status.",
       "args": [
         {
-          "name": "quote_id",
+          "name": "quoteId",
           "description": "The unique identifier of the quote.",
           "type": "string",
           "required": true,
@@ -4649,7 +4709,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/quotes/{quote_id}",
+        "url": "/quotes/{quoteId}",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4664,7 +4724,7 @@
       "description": "Accept a quote, converting it into an active contract.",
       "args": [
         {
-          "name": "quote_id",
+          "name": "quoteId",
           "description": "The unique identifier of the quote to accept.",
           "type": "string",
           "required": true,
@@ -4672,7 +4732,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/quotes/{quote_id}/accept",
+        "url": "/quotes/{quoteId}/accept",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -4724,7 +4784,7 @@
       "description": "Retrieve a specific job by its ID to check status and results.",
       "args": [
         {
-          "name": "job_id",
+          "name": "jobId",
           "description": "The unique identifier of the job.",
           "type": "string",
           "required": true,
@@ -4732,7 +4792,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/jobs/{job_id}",
+        "url": "/jobs/{jobId}",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4812,7 +4872,7 @@
       "description": "Update an existing contact's details.",
       "args": [
         {
-          "name": "contact_id",
+          "name": "contactId",
           "description": "The unique identifier of the contact to update.",
           "type": "string",
           "required": true,
@@ -4862,7 +4922,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/contacts/{contact_id}",
+        "url": "/contacts/{contactId}",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"
@@ -4907,7 +4967,7 @@
       "description": "Retrieve a business entity by its ID.",
       "args": [
         {
-          "name": "entity_id",
+          "name": "entityId",
           "description": "The unique identifier of the business entity.",
           "type": "string",
           "required": true,
@@ -4915,7 +4975,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/business_entities/{entity_id}",
+        "url": "/business_entities/{entityId}",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4930,7 +4990,7 @@
       "description": "Update an existing business entity's details.",
       "args": [
         {
-          "name": "entity_id",
+          "name": "entityId",
           "description": "The unique identifier of the business entity to update.",
           "type": "string",
           "required": true,
@@ -4966,7 +5026,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/business_entities/{entity_id}",
+        "url": "/business_entities/{entityId}",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"
@@ -4981,7 +5041,7 @@
       "description": "Retrieve all addresses for a specific customer.",
       "args": [
         {
-          "name": "customer_id",
+          "name": "customerId",
           "description": "The unique identifier of the customer.",
           "type": "string",
           "required": true,
@@ -4989,7 +5049,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/customers/{customer_id}/addresses",
+        "url": "/customers/{customerId}/addresses",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -5004,7 +5064,7 @@
       "description": "Add a new address to a customer.",
       "args": [
         {
-          "name": "customer_id",
+          "name": "customerId",
           "description": "The unique identifier of the customer.",
           "type": "string",
           "required": true,
@@ -5068,7 +5128,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/customers/{customer_id}/addresses",
+        "url": "/customers/{customerId}/addresses",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -5083,14 +5143,14 @@
       "description": "Update an existing customer address.",
       "args": [
         {
-          "name": "customer_id",
+          "name": "customerId",
           "description": "The unique identifier of the customer.",
           "type": "string",
           "required": true,
           "position": "path"
         },
         {
-          "name": "address_id",
+          "name": "addressId",
           "description": "The unique identifier of the address to update.",
           "type": "string",
           "required": true,
@@ -5147,7 +5207,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/customers/{customer_id}/addresses/{address_id}",
+        "url": "/customers/{customerId}/addresses/{addressId}",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"
@@ -5162,7 +5222,7 @@
       "description": "Retrieve all payment methods for a specific customer.",
       "args": [
         {
-          "name": "customer_id",
+          "name": "customerId",
           "description": "The unique identifier of the customer.",
           "type": "string",
           "required": true,
@@ -5170,7 +5230,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/customers/{customer_id}/payment_methods",
+        "url": "/customers/{customerId}/payment_methods",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -5185,7 +5245,7 @@
       "description": "Attach a payment method to a customer.",
       "args": [
         {
-          "name": "customer_id",
+          "name": "customerId",
           "description": "The unique identifier of the customer.",
           "type": "string",
           "required": true,
@@ -5214,7 +5274,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/customers/{customer_id}/payment_methods/attach",
+        "url": "/customers/{customerId}/payment_methods/attach",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
