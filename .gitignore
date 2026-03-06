@@ -6,4 +6,6 @@ node_modules/
 dist/
 coverage/
 *.tgz
-test-mcp.*
+test-*.js
+debug-logs.md
+plan.md

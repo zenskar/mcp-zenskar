@@ -1,0 +1,6 @@
+test-*.js
+*.test.js
+*.spec.js
+plan.md
+debug-logs.md
+.claude/
