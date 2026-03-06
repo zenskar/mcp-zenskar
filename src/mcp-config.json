@@ -5304,6 +5304,153 @@
       "responseTemplate": {
         "prependBody": "## Attached Payment Method\n\n"
       }
+    },
+    {
+      "name": "deleteCustomer",
+      "description": "Delete a customer by ID. This is permanent and cannot be undone. The customer must not have active contracts or unpaid invoices.",
+      "args": [
+        {
+          "name": "customerId",
+          "description": "The unique identifier (UUID) of the customer to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customerId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Customer Deleted\n\n"
+      }
+    },
+    {
+      "name": "deleteContact",
+      "description": "Delete a contact by ID.",
+      "args": [
+        {
+          "name": "contactId",
+          "description": "The unique identifier (UUID) of the contact to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contacts/{contactId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contact Deleted\n\n"
+      }
+    },
+    {
+      "name": "deletePaymentMethod",
+      "description": "Delete a payment method from a customer.",
+      "args": [
+        {
+          "name": "customerId",
+          "description": "The unique identifier (UUID) of the customer.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "paymentMethodId",
+          "description": "The unique identifier (UUID) of the payment method to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/customers/{customerId}/payment_methods/{paymentMethodId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Payment Method Deleted\n\n"
+      }
+    },
+    {
+      "name": "pauseContract",
+      "description": "Pause an active contract. Requires a start_date for the pause and an unpause_extension_policy.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to pause.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "start_date",
+          "description": "Date when the pause begins (ISO 8601 format, e.g. 2026-04-01T00:00:00).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "unpause_extension_policy",
+          "description": "How to handle the contract end date when unpaused.",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "enum": [
+            "extend",
+            "overlap"
+          ]
+        },
+        {
+          "name": "end_date",
+          "description": "Optional date when the pause ends and contract auto-resumes (ISO 8601).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/pause",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Paused\n\n"
+      }
+    },
+    {
+      "name": "resumeContract",
+      "description": "Resume a paused contract. No request body needed.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract to resume.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/resume",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Resumed\n\n"
+      }
     }
   ]
 }
