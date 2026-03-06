@@ -2568,7 +2568,7 @@
     },
     {
       "name": "updateContract",
-      "description": "Update an existing contract. Use this for mid-contract upgrades, downgrades, amendments, changing renewal policy, updating custom attributes, or modifying contract terms. Required fields: name, status, currency, start_date, customer_id. Status enum: draft, active, paused, expired, disputed. Renewal policy enum: renew_with_default_contract, renew_with_existing, do_not_renew.",
+      "description": "Update an existing contract. The API requires name, status, currency, start_date, and customer_id even for partial changes — fetch the contract first with getContractById to get current values, then send all required fields plus any changes. Status: draft, active, paused, expired, disputed. Renewal: renew_with_default_contract, renew_with_existing, do_not_renew.",
       "args": [
         {
           "name": "contractId",
@@ -4210,7 +4210,7 @@
         },
         {
           "name": "pricing_data",
-          "description": "Pricing data object containing model-specific configuration (rates, tiers, etc.).",
+          "description": "Pricing data object. Must include 'pricing_type' discriminator matching pricing_model. For flat_fee: {pricing_type:'flat_fee', unit_amount:10000} (amount in cents). For per_unit: {pricing_type:'per_unit', unit_amount:500}.",
           "type": "object",
           "required": false,
           "position": "body"
@@ -4397,14 +4397,14 @@
           "name": "start_date",
           "description": "Start date for the estimate (YYYY-MM-DD).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
           "name": "end_date",
           "description": "End date for the estimate (YYYY-MM-DD).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         }
       ],
@@ -4462,7 +4462,7 @@
         },
         {
           "name": "module",
-          "description": "Module/entity type this attribute applies to (e.g., 'customer', 'contract', 'invoice', 'product').",
+          "description": "Module/entity type this attribute applies to. Allowed values: 'customers', 'contracts', 'invoices', 'payments', 'products', 'plans'.",
           "type": "string",
           "required": true,
           "position": "body"
@@ -4600,9 +4600,9 @@
         },
         {
           "name": "customer_id",
-          "description": "The customer ID this quote is for.",
+          "description": "The customer ID this quote is for (required for non-amendment quotes).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
@@ -4616,14 +4616,14 @@
           "name": "start_date",
           "description": "Start date for the quote (YYYY-MM-DD).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
           "name": "end_date",
           "description": "End date for the quote (YYYY-MM-DD).",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
