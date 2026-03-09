@@ -2032,9 +2032,9 @@
         },
         {
           "name": "phone_number",
-          "description": "Business Entity phone number with country code (Required).",
+          "description": "Business Entity phone number with country code (optional).",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body",
           "default": "+911234567890"
         },
