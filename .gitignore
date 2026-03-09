@@ -9,3 +9,5 @@ coverage/
 test-*.js
 debug-logs.md
 plan.md
+progress/
+CLAUDE.md

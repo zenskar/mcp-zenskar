@@ -3767,8 +3767,8 @@
           "position": "body"
         },
         {
-          "name": "account_type",
-          "description": "Type of account (e.g., 'asset', 'liability', 'revenue', 'expense', 'equity').",
+          "name": "account_category",
+          "description": "Category of account. Valid values: 'Assets', 'Liabilities', 'Equity', 'Income', 'Expenses'.",
           "type": "string",
           "required": true,
           "position": "body"
@@ -3851,12 +3851,19 @@
           "name": "description",
           "description": "Description/memo for the journal entry.",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
-          "name": "lines",
-          "description": "Array of journal lines. Each line: {account_id, debit, credit, description}.",
+          "name": "currency",
+          "description": "Three-letter ISO 4217 currency code (e.g., 'USD', 'EUR', 'GBP').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "journal_lines",
+          "description": "Array of journal lines. Each line requires: {account_id, debits, credits, currency}. Use 'debits' and 'credits' (plural, integers in cents). Example: [{account_id:'...', debits:10000, credits:0, currency:'USD'}, {account_id:'...', debits:0, credits:10000, currency:'USD'}].",
           "type": "array",
           "required": true,
           "position": "body"
@@ -4212,7 +4219,7 @@
           "name": "pricing_data",
           "description": "Pricing data object. Must include 'pricing_type' discriminator matching pricing_model. For flat_fee: {pricing_type:'flat_fee', unit_amount:10000} (amount in cents). For per_unit: {pricing_type:'per_unit', unit_amount:500}.",
           "type": "object",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
@@ -4321,9 +4328,9 @@
         },
         {
           "name": "currency",
-          "description": "Currency code (e.g., 'USD').",
+          "description": "Three-letter ISO 4217 currency code (e.g., 'USD', 'EUR', 'GBP').",
           "type": "string",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
