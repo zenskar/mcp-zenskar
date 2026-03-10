@@ -73,13 +73,6 @@
           "position": "query"
         },
         {
-          "name": "id__ilike",
-          "description": "Case-insensitive partial match for customer ID.",
-          "type": "string",
-          "required": false,
-          "position": "query"
-        },
-        {
           "name": "id__in",
           "description": "Filter by a comma-separated list of customer IDs.",
           "type": "string",
@@ -279,8 +272,8 @@
           "position": "query"
         },
         {
-          "name": "customer_external_id",
-          "description": "Filter invoices by a customer's external ID.",
+          "name": "customer__external_id",
+          "description": "Filter invoices by a customer's external ID (nested filter).",
           "type": "string",
           "required": false,
           "position": "query"
@@ -428,9 +421,9 @@
           "position": "path"
         },
         {
-          "name": "customer_id",
-          "description": "The ID of the customer associated with the invoice (optional).",
-          "type": "string",
+          "name": "include_line_items",
+          "description": "Whether to include line items in the response.",
+          "type": "boolean",
           "required": false,
           "position": "query"
         }
@@ -502,7 +495,7 @@
           "position": "path"
         },
         {
-          "name": "invoiceJsonKey",
+          "name": "invoice_json_key",
           "description": "Optional key for invoice JSON.",
           "type": "string",
           "required": false,
@@ -1003,22 +996,6 @@
           "position": "body"
         },
         {
-          "name": "connector",
-          "description": "Connector that owns this raw metric (e.g., push_to_zenskar).",
-          "type": "string",
-          "required": true,
-          "position": "body",
-          "default": "push_to_zenskar"
-        },
-        {
-          "name": "api_type",
-          "description": "API type for ingestion (typically PUSH).",
-          "type": "string",
-          "required": false,
-          "position": "body",
-          "default": "PUSH"
-        },
-        {
           "name": "dataschema",
           "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool); use 'Bool' instead of 'Boolean'.",
           "type": "object",
@@ -1472,8 +1449,7 @@
         "cancelText": "Cancel",
         "sensitiveFields": [
           "prompt_name",
-          "prompt_text",
-          "document_id"
+          "prompt_text"
         ]
       },
       "args": [
@@ -1487,13 +1463,6 @@
         {
           "name": "prompt_text",
           "description": "The prompt text to save.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "document_id",
-          "description": "The ID of the contract document this prompt is for.",
           "type": "string",
           "required": true,
           "position": "body"
@@ -1549,20 +1518,6 @@
         {
           "name": "id",
           "description": "Filter by Contract ID (exact match).",
-          "type": "string",
-          "required": false,
-          "position": "query"
-        },
-        {
-          "name": "id__ilike",
-          "description": "Contract ID (case-insensitive partial match).",
-          "type": "string",
-          "required": false,
-          "position": "query"
-        },
-        {
-          "name": "id__like",
-          "description": "Contract ID (case-sensitive partial match).",
           "type": "string",
           "required": false,
           "position": "query"
@@ -2449,7 +2404,6 @@
             "draft",
             "active",
             "paused",
-            "expired",
             "disputed"
           ]
         },
@@ -2491,15 +2445,15 @@
         },
         {
           "name": "renewal_policy",
-          "description": "Contract renewal policy (defaults to 'do_not_renew').",
+          "description": "Contract renewal policy. Currently only 'do_not_renew' is supported at runtime.",
           "type": "string",
           "required": false,
           "position": "body",
           "default": "do_not_renew",
           "enum": [
-            "do_not_renew",
-            "auto_renew",
-            "manual"
+            "renew_with_default_contract",
+            "renew_with_existing",
+            "do_not_renew"
           ]
         },
         {
@@ -2512,9 +2466,9 @@
         },
         {
           "name": "phases",
-          "description": "Array of contract phases with pricing details. Each phase includes name, start_date, end_date, phase_type, and pricings array.",
+          "description": "Array of contract phases with pricing details. Each phase includes name, start_date, end_date, phase_type, and pricings array. Defaults to empty array if omitted.",
           "type": "array",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
@@ -2586,7 +2540,7 @@
         },
         {
           "name": "status",
-          "description": "Contract status: draft, active, paused, expired, or disputed.",
+          "description": "Contract status: draft, active, paused, or disputed. Cannot set to 'expired' via update.",
           "type": "string",
           "required": true,
           "position": "body",
@@ -2594,7 +2548,6 @@
             "draft",
             "active",
             "paused",
-            "expired",
             "disputed"
           ]
         },
@@ -2656,9 +2609,9 @@
         },
         {
           "name": "phases",
-          "description": "REQUIRED — Array of contract phases. Without this the API returns 500. Copy phases from getContractById response. Each phase needs at minimum: name, start_date, end_date. Include pricings array if the phase has pricing.",
+          "description": "Array of contract phases. Each phase needs at minimum: name, start_date, end_date. Include pricings array if the phase has pricing. Defaults to empty array if omitted.",
           "type": "array",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
@@ -3423,7 +3376,7 @@
           "position": "path"
         },
         {
-          "name": "amount",
+          "name": "refund_amount",
           "description": "Amount to refund.",
           "type": "number",
           "required": true,
@@ -3497,15 +3450,29 @@
           "position": "body"
         },
         {
-          "name": "payment_method",
-          "description": "Updated payment method.",
+          "name": "payment_method_details",
+          "description": "Updated payment method details object.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "payment_parts",
+          "description": "Updated invoice allocations. Array of {invoice_id, amount}.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "external_id",
+          "description": "Updated external reference ID.",
           "type": "string",
           "required": false,
           "position": "body"
         },
         {
-          "name": "currency_code",
-          "description": "Updated currency code.",
+          "name": "timestamp",
+          "description": "Updated payment timestamp in ISO 8601 format.",
           "type": "string",
           "required": false,
           "position": "body"
@@ -3662,8 +3629,8 @@
           "position": "query"
         },
         {
-          "name": "search",
-          "description": "Search by product name.",
+          "name": "name__ilike",
+          "description": "Case-insensitive partial match for product name.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -3737,8 +3704,8 @@
           "position": "query"
         },
         {
-          "name": "search",
-          "description": "Search query to filter accounts by name or other fields. Format: 'field=value'.",
+          "name": "name__ilike",
+          "description": "Case-insensitive partial match for account name.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -3767,13 +3734,6 @@
           "position": "body"
         },
         {
-          "name": "account_code",
-          "description": "Unique account code/number.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
           "name": "account_category",
           "description": "Category of account. Valid values: 'Assets', 'Liabilities', 'Equity', 'Income', 'Expenses'.",
           "type": "string",
@@ -3788,9 +3748,9 @@
           "position": "body"
         },
         {
-          "name": "parent_account_id",
-          "description": "ID of the parent account for hierarchical structure.",
-          "type": "string",
+          "name": "custom_data",
+          "description": "Custom data object for the account.",
+          "type": "object",
           "required": false,
           "position": "body"
         }
@@ -3825,8 +3785,8 @@
           "position": "query"
         },
         {
-          "name": "search",
-          "description": "Search query to filter journal entries. Format: 'field=value'.",
+          "name": "search_query",
+          "description": "Search query to filter journal entries.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -3944,8 +3904,8 @@
           "position": "query"
         },
         {
-          "name": "search",
-          "description": "Search query to filter journal lines. Format: 'field=value'.",
+          "name": "search_query",
+          "description": "Search query to filter journal lines.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -3967,8 +3927,15 @@
       "description": "Retrieve the balance sheet report showing assets, liabilities, and equity.",
       "args": [
         {
-          "name": "as_of_date",
-          "description": "Date for the balance sheet snapshot (YYYY-MM-DD). Defaults to today.",
+          "name": "start_date",
+          "description": "Start date for the balance sheet period (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "end_date",
+          "description": "End date for the balance sheet period (YYYY-MM-DD). Defaults to today.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -4027,7 +3994,7 @@
           "position": "path"
         },
         {
-          "name": "as_of_date",
+          "name": "as_of",
           "description": "Date for the balance snapshot (YYYY-MM-DD).",
           "type": "string",
           "required": false,
@@ -4072,7 +4039,7 @@
         },
         {
           "name": "type",
-          "description": "Product type. Use 'product' for standard products, 'service' for services.",
+          "description": "Product type. Valid values: 'product' (standard product) or 'group' (product group).",
           "type": "string",
           "required": true,
           "position": "body"
@@ -4225,7 +4192,7 @@
         },
         {
           "name": "pricing_data",
-          "description": "Pricing data object (required). Must include 'pricing_type' discriminator. Supported types: flat_fee: {pricing_type:'flat_fee', unit_amount:10000} (amount in cents). per_unit: {pricing_type:'per_unit', unit_amount:500}. tiered: {pricing_type:'tiered', tiers:[{from:0, to:100, unit_amount:1000}, {from:100, to:null, unit_amount:500}]}. volume: {pricing_type:'volume', tiers:[{from:0, to:100, unit_amount:1000}, {from:100, to:null, unit_amount:500}]}. percentage: {pricing_type:'percentage', percentage:5.0}. package: {pricing_type:'package', package_size:10, unit_amount:5000}. staircase/step: {pricing_type:'step', tiers:[...]}. matrix: {pricing_type:'matrix', dimensions:[...], values:[...]}.",
+          "description": "Pricing data object (required). Must include 'pricing_type' discriminator. Supported types: flat_fee: {pricing_type:'flat_fee', unit_amount:10000}. per_unit: {pricing_type:'per_unit', unit_amount:500}. tiered: {pricing_type:'tiered', unit_amount:[1000,500], up_to:[100,null]}. volume: {pricing_type:'volume', unit_amount:[1000,500], up_to:[100,null]}. percent: {pricing_type:'percent', percentage:5.0}. package: {pricing_type:'package', package_size:10, unit_amount:5000}. step: {pricing_type:'step', unit_amount:[...], up_to:[...]}. matrix: {pricing_type:'matrix', dimensions:[...], values:[...]}.",
           "type": "object",
           "required": true,
           "position": "body"
@@ -4282,8 +4249,15 @@
           "position": "query"
         },
         {
-          "name": "search",
-          "description": "Search query to filter plans. Format: 'field=value'.",
+          "name": "name__ilike",
+          "description": "Case-insensitive partial match for plan name.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "status",
+          "description": "Filter by plan status. Valid values: draft, active, archived.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -4445,9 +4419,9 @@
         },
         {
           "name": "end_date",
-          "description": "End date for the estimate (YYYY-MM-DD).",
+          "description": "End date for the estimate (YYYY-MM-DD). Optional — calculated from plan duration if omitted.",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         }
       ],
@@ -4467,8 +4441,8 @@
       "description": "Retrieve a list of custom attribute definitions configured for the organization.",
       "args": [
         {
-          "name": "entity_type",
-          "description": "Filter by entity type (e.g., 'customer', 'contract', 'invoice', 'product').",
+          "name": "module",
+          "description": "Filter by module. Valid values: 'customers', 'contracts', 'invoices', 'payments', 'products', 'plans'.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -4512,7 +4486,7 @@
         },
         {
           "name": "data_type",
-          "description": "Data type of the attribute (e.g., 'string', 'number', 'boolean', 'date', 'enum').",
+          "description": "Data type of the attribute. Valid values: 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN', 'LIST_STRING', 'ENUM', 'JSON', 'DATE'.",
           "type": "string",
           "required": true,
           "position": "body"
@@ -4584,23 +4558,9 @@
           "position": "body"
         },
         {
-          "name": "tax_code",
-          "description": "Tax code identifier.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "description",
-          "description": "Description of the tax category.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "rate",
-          "description": "Tax rate as a decimal (e.g., 0.1 for 10%).",
-          "type": "number",
+          "name": "external_codes",
+          "description": "Array of external tax code mappings (e.g., [{ \"provider\": \"avalara\", \"code\": \"P0000000\" }]).",
+          "type": "array",
           "required": false,
           "position": "body"
         }
@@ -4878,9 +4838,9 @@
           "position": "body"
         },
         {
-          "name": "tax_id",
-          "description": "Updated tax ID.",
-          "type": "string",
+          "name": "tax_config",
+          "description": "Tax configuration object (e.g., { \"tax_id\": \"...\", \"tax_provider\": \"...\" }).",
+          "type": "object",
           "required": false,
           "position": "body"
         },
@@ -5161,14 +5121,14 @@
           "position": "body"
         },
         {
-          "name": "gateway",
-          "description": "Payment gateway name (e.g., 'stripe').",
+          "name": "connector",
+          "description": "Payment connector name (e.g., 'stripe').",
           "type": "string",
           "required": false,
           "position": "body"
         },
         {
-          "name": "is_default",
+          "name": "set_as_default",
           "description": "Whether to set as the default payment method.",
           "type": "boolean",
           "required": false,
