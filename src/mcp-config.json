@@ -1954,7 +1954,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/invoice/{invoiceId}/approve",
+        "url": "/invoices/{invoiceId}/approve",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"
@@ -2470,9 +2470,9 @@
         },
         {
           "name": "end_date",
-          "description": "Contract end date in ISO 8601 format (e.g., '2025-12-31T23:59:59.999999').",
+          "description": "Contract end date in ISO 8601 format (e.g., '2025-12-31T23:59:59.999999'). Optional — omit for open-ended contracts.",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
@@ -3074,15 +3074,15 @@
         },
         {
           "name": "from_date",
-          "description": "Start date of the billing period (e.g. 2026-03-01).",
-          "type": "string",
+          "description": "Start date of the billing period as a UNIX timestamp in seconds (e.g. 1709251200 for 2024-03-01). Must be an integer, NOT a date string.",
+          "type": "number",
           "required": true,
           "position": "body"
         },
         {
           "name": "to_date",
-          "description": "End date of the billing period (e.g. 2026-03-31).",
-          "type": "string",
+          "description": "End date of the billing period as a UNIX timestamp in seconds (e.g. 1711929600 for 2024-03-31). Must be an integer, NOT a date string.",
+          "type": "number",
           "required": true,
           "position": "body"
         }
@@ -3258,34 +3258,41 @@
     },
     {
       "name": "createPayment",
-      "description": "Record a payment against an invoice. Payment method enum: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, etc. Type enum: payment, refund, payment_reversal, authorization, tax_withheld. For manual payments use payment_method='other' and type='payment'. Note: customer_id is required.",
+      "description": "Record a payment. Link to invoices via payment_parts array. Payment method enum: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, etc. Type enum: payment, refund, payment_reversal, authorization, tax_withheld. For manual payments use payment_method='other' and type='payment'.",
       "args": [
-        {
-          "name": "invoice_id",
-          "description": "UUID of the invoice this payment is for.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
         {
           "name": "customer_id",
           "description": "UUID of the customer making the payment.",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
           "name": "amount",
-          "description": "Payment amount in the currency specified.",
+          "description": "Total payment amount in the smallest currency unit (e.g. cents).",
           "type": "number",
           "required": true,
+          "position": "body"
+        },
+        {
+          "name": "currency_code",
+          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "payment_parts",
+          "description": "Array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}. Links the payment to one or more invoices.",
+          "type": "array",
+          "required": false,
           "position": "body"
         },
         {
           "name": "payment_method",
           "description": "Payment method: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, ach_credit_transfer, etc. Use 'other' for manual payments.",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body",
           "enum": [
             "card",
@@ -3304,13 +3311,6 @@
           ]
         },
         {
-          "name": "currency_code",
-          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
           "name": "type",
           "description": "Payment type: payment, refund, payment_reversal, authorization, or tax_withheld.",
           "type": "string",
@@ -3326,8 +3326,22 @@
           ]
         },
         {
+          "name": "status",
+          "description": "Payment status.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
           "name": "external_id",
           "description": "External reference ID for this payment.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "timestamp",
+          "description": "Payment timestamp in ISO 8601 format.",
           "type": "string",
           "required": false,
           "position": "body"
@@ -3346,7 +3360,7 @@
     },
     {
       "name": "updatePayment",
-      "description": "Update a payment's details such as status.",
+      "description": "Update a payment's invoice allocations (payment_parts).",
       "args": [
         {
           "name": "paymentId",
@@ -3356,16 +3370,9 @@
           "position": "path"
         },
         {
-          "name": "status",
-          "description": "New payment status.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "amount",
-          "description": "Updated payment amount.",
-          "type": "number",
+          "name": "payment_parts",
+          "description": "Updated array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}.",
+          "type": "array",
           "required": false,
           "position": "body"
         }
@@ -3841,10 +3848,10 @@
       "description": "Create a new manual journal entry with debit and credit lines.",
       "args": [
         {
-          "name": "date",
-          "description": "Date of the journal entry (YYYY-MM-DD).",
+          "name": "posted_at",
+          "description": "Posting date of the journal entry in ISO 8601 format (e.g., '2026-01-15T00:00:00').",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
@@ -3863,17 +3870,25 @@
         },
         {
           "name": "journal_lines",
-          "description": "Array of journal lines. Each line requires: {account_id, debits, credits, currency}. Use 'debits' and 'credits' (plural, integers in cents). Example: [{account_id:'...', debits:10000, credits:0, currency:'USD'}, {account_id:'...', debits:0, credits:10000, currency:'USD'}].",
+          "description": "Array of journal lines. Each line requires: {account_id, debits, credits, currency}. Use 'debits' and 'credits' (plural, integers in cents). Example: [{account_id:'...', debits:10000, credits:0, currency:'USD'}, {account_id:'...', debits:0, credits:10000, currency:'USD'}]. Optional tags: customer_id, contract_id, invoice_id, custom_tags.",
           "type": "array",
           "required": true,
           "position": "body"
         },
         {
-          "name": "reference",
-          "description": "External reference number.",
-          "type": "string",
+          "name": "custom_data",
+          "description": "Additional metadata as key-value pairs.",
+          "type": "object",
           "required": false,
           "position": "body"
+        },
+        {
+          "name": "status_type",
+          "description": "Journal entry status (default: 'posted').",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "default": "posted"
         }
       ],
       "requestTemplate": {
@@ -4185,7 +4200,7 @@
     },
     {
       "name": "createProductPricing",
-      "description": "Create a new pricing configuration for a product.",
+      "description": "Create a new pricing configuration for a product. The pricing_data object is a discriminated union — the 'pricing_type' field determines which pricing model schema to use.",
       "args": [
         {
           "name": "productId",
@@ -4196,45 +4211,45 @@
         },
         {
           "name": "name",
-          "description": "Name of the pricing.",
+          "description": "Name of the pricing (optional).",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
-          "name": "pricing_model",
-          "description": "Pricing model type (e.g., 'flat_fee', 'per_unit', 'tiered', 'volume', 'staircase', 'percentage').",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "currency",
-          "description": "Currency code (e.g., 'USD').",
+          "name": "description",
+          "description": "Description of this pricing configuration.",
           "type": "string",
           "required": false,
           "position": "body"
         },
         {
           "name": "pricing_data",
-          "description": "Pricing data object. Must include 'pricing_type' discriminator matching pricing_model. For flat_fee: {pricing_type:'flat_fee', unit_amount:10000} (amount in cents). For per_unit: {pricing_type:'per_unit', unit_amount:500}.",
+          "description": "Pricing data object (required). Must include 'pricing_type' discriminator. Supported types: flat_fee: {pricing_type:'flat_fee', unit_amount:10000} (amount in cents). per_unit: {pricing_type:'per_unit', unit_amount:500}. tiered: {pricing_type:'tiered', tiers:[{from:0, to:100, unit_amount:1000}, {from:100, to:null, unit_amount:500}]}. volume: {pricing_type:'volume', tiers:[{from:0, to:100, unit_amount:1000}, {from:100, to:null, unit_amount:500}]}. percentage: {pricing_type:'percentage', percentage:5.0}. package: {pricing_type:'package', package_size:10, unit_amount:5000}. staircase/step: {pricing_type:'step', tiers:[...]}. matrix: {pricing_type:'matrix', dimensions:[...], values:[...]}.",
           "type": "object",
           "required": true,
           "position": "body"
         },
         {
-          "name": "billing_frequency",
-          "description": "Billing frequency (e.g., 'monthly', 'quarterly', 'annually').",
-          "type": "string",
+          "name": "billing_period",
+          "description": "Billing cadence for this pricing. Object with 'cadence' (ISO 8601 duration, e.g. 'P1M' for monthly, 'P3M' for quarterly, 'P1Y' for annually) and optional 'offset'. Example: {cadence: 'P1M'}.",
+          "type": "object",
           "required": false,
           "position": "body"
         },
         {
-          "name": "invoice_timing",
-          "description": "When to invoice: 'in_advance' or 'in_arrears'.",
-          "type": "string",
+          "name": "is_recurring",
+          "description": "Whether this pricing is recurring (true) or one-time (false).",
+          "type": "boolean",
           "required": false,
           "position": "body"
+        },
+        {
+          "name": "return_existing",
+          "description": "If true, returns existing pricing with matching hash instead of creating a duplicate.",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
         }
       ],
       "requestTemplate": {
@@ -4310,20 +4325,13 @@
     },
     {
       "name": "createPlan",
-      "description": "Create a new plan (template) that defines a reusable contract structure with phases and pricing.",
+      "description": "Create a new plan (template) that defines a reusable contract structure with products and pricing.",
       "args": [
         {
           "name": "name",
           "description": "Name of the plan.",
           "type": "string",
           "required": true,
-          "position": "body"
-        },
-        {
-          "name": "description",
-          "description": "Description of the plan.",
-          "type": "string",
-          "required": false,
           "position": "body"
         },
         {
@@ -4334,8 +4342,22 @@
           "position": "body"
         },
         {
-          "name": "phases",
-          "description": "Array of plan phases, each with name, pricings, etc.",
+          "name": "display_config",
+          "description": "Customer-facing display content. Object with fields like title, description, etc.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "duration",
+          "description": "Billing period in ISO 8601 duration format (e.g., 'P1M' for monthly, 'P1Y' for yearly).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "products",
+          "description": "Array of products to add to plan, each with product_id and pricing configuration.",
           "type": "array",
           "required": false,
           "position": "body"
@@ -4344,6 +4366,20 @@
           "name": "custom_attributes",
           "description": "Custom attributes as key-value pairs.",
           "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "status",
+          "description": "Plan status. Default: 'draft'. Options: 'draft', 'active', 'archived'.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "business_entity_id",
+          "description": "Business entity ID for invoicing.",
+          "type": "string",
           "required": false,
           "position": "body"
         }
@@ -4581,189 +4617,6 @@
       }
     },
     {
-      "name": "createQuote",
-      "description": "Create a new quote/proposal for a customer.",
-      "args": [
-        {
-          "name": "name",
-          "description": "Name/title of the quote.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "currency",
-          "description": "Currency code (e.g., 'USD').",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "line_items",
-          "description": "Array of line items for the quote. Each item includes product/pricing details.",
-          "type": "array",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "customer_id",
-          "description": "The customer ID this quote is for (required for non-amendment quotes).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "description",
-          "description": "Description of the quote.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "start_date",
-          "description": "Start date for the quote (YYYY-MM-DD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "end_date",
-          "description": "End date for the quote (YYYY-MM-DD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "custom_attributes",
-          "description": "Custom attributes as key-value pairs.",
-          "type": "object",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/quotes",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Created Quote\n\n"
-      }
-    },
-    {
-      "name": "previewQuoteEstimate",
-      "description": "Preview the estimated billing for a quote before creating it. Requires customer_id, currency, and line_items at minimum. Use getProductPricings to find valid product_id + pricing_id combos for line_items.",
-      "args": [
-        {
-          "name": "customer_id",
-          "description": "The customer ID for the estimate.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "currency",
-          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "line_items",
-          "description": "Array of line items. Each item: {product_id, pricing_id}. The pricing_id must belong to the product_id — use getProductPricings to find valid combos.",
-          "type": "array",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "plan_id",
-          "description": "Plan ID to estimate (alternative to line_items).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "start_date",
-          "description": "Start date (YYYY-MM-DD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "end_date",
-          "description": "End date (YYYY-MM-DD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "phases",
-          "description": "Array of quote phases with pricing.",
-          "type": "array",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/quotes/preview",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Quote Estimate Preview\n\n"
-      }
-    },
-    {
-      "name": "getQuoteById",
-      "description": "Retrieve a quote by its ID, including phases, pricing, and status.",
-      "args": [
-        {
-          "name": "quoteId",
-          "description": "The unique identifier of the quote.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/quotes/{quoteId}",
-        "method": "GET",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Quote Details\n\n"
-      }
-    },
-    {
-      "name": "acceptQuote",
-      "description": "Accept a quote, converting it into an active contract.",
-      "args": [
-        {
-          "name": "quoteId",
-          "description": "The unique identifier of the quote to accept.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/quotes/{quoteId}/accept",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Accepted Quote\n\n"
-      }
-    },
-    {
       "name": "listJobs",
       "description": "Retrieve a paginated list of async jobs (invoice generation, revenue recognition, etc.).",
       "args": [
@@ -4838,7 +4691,7 @@
           "name": "first_name",
           "description": "First name of the contact.",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
@@ -4856,22 +4709,15 @@
           "position": "body"
         },
         {
-          "name": "phone",
-          "description": "Phone number of the contact.",
-          "type": "string",
+          "name": "send_contract",
+          "description": "Whether to send contracts to this contact.",
+          "type": "boolean",
           "required": false,
           "position": "body"
         },
         {
-          "name": "designation",
-          "description": "Job title/designation of the contact.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "is_primary",
-          "description": "Whether this is the primary contact.",
+          "name": "send_invoice",
+          "description": "Whether to send invoices to this contact.",
           "type": "boolean",
           "required": false,
           "position": "body"
@@ -4890,7 +4736,7 @@
     },
     {
       "name": "updateContact",
-      "description": "Update an existing contact's details. Requires customer (customer ID) and email even for partial updates.",
+      "description": "Update an existing contact's details. Supports partial updates.",
       "args": [
         {
           "name": "contactId",
@@ -4901,9 +4747,9 @@
         },
         {
           "name": "customer",
-          "description": "The customer ID (UUID) this contact belongs to. Required even for updates.",
+          "description": "The customer ID (UUID) this contact belongs to.",
           "type": "string",
-          "required": true,
+          "required": false,
           "position": "body"
         },
         {
@@ -4922,28 +4768,21 @@
         },
         {
           "name": "email",
-          "description": "Email address of the contact. Required even for updates.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "phone",
-          "description": "Updated phone number.",
+          "description": "Updated email address.",
           "type": "string",
           "required": false,
           "position": "body"
         },
         {
-          "name": "designation",
-          "description": "Updated job title/designation.",
-          "type": "string",
+          "name": "send_contract",
+          "description": "Whether to send contracts to this contact.",
+          "type": "boolean",
           "required": false,
           "position": "body"
         },
         {
-          "name": "is_primary",
-          "description": "Whether this is the primary contact.",
+          "name": "send_invoice",
+          "description": "Whether to send invoices to this contact.",
           "type": "boolean",
           "required": false,
           "position": "body"
@@ -5148,9 +4987,23 @@
           "position": "body"
         },
         {
-          "name": "address_type",
-          "description": "Type of address (e.g., 'billing', 'shipping').",
+          "name": "line3",
+          "description": "Address line 3.",
           "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_default_billing",
+          "description": "Set as default billing address. Default: false.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_default_shipping",
+          "description": "Set as default shipping address. Default: false.",
+          "type": "boolean",
           "required": false,
           "position": "body"
         }
@@ -5230,6 +5083,27 @@
           "name": "country_code",
           "description": "Updated ISO country code.",
           "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "line3",
+          "description": "Updated address line 3.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_default_billing",
+          "description": "Set as default billing address.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_default_shipping",
+          "description": "Set as default shipping address.",
+          "type": "boolean",
           "required": false,
           "position": "body"
         }
