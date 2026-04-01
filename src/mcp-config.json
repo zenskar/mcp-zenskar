@@ -539,7 +539,7 @@
     },
     {
       "name": "getInvoicePayments",
-      "description": "Get payments associated with a specific invoice.",
+      "description": "Get successful payments currently associated with a specific invoice. This view may omit refund records and non-success payment states.",
       "args": [
         {
           "name": "invoiceId",
@@ -670,7 +670,7 @@
     },
     {
       "name": "listAggregates",
-      "description": "Get billable metrics in paginated form with options for filtering by ID, name, and data source.",
+      "description": "List Billable Metrics (also called aggregates in backend/API terminology) in paginated form, with filtering by ID, name, and data source.",
       "args": [
         {
           "name": "cursor",
@@ -744,28 +744,28 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Billable Metrics List\n\nHere is the list of billable metrics:\n\n"
+        "prependBody": "## Billable Metrics (Aggregates)\n\nHere is the list of billable metrics. Backend/API terminology may also call these aggregates:\n\n"
       }
     },
     {
       "name": "getAggregateSchemas",
-      "description": "Get all billable metric schemas belonging to an organization.",
+      "description": "Show the underlying storage/schema definitions for Billable Metrics (also called aggregates). Mainly useful for advanced debugging, SQL/schema inspection, and integration work rather than day-to-day business operations.",
       "args": [],
       "requestTemplate": {
         "url": "/aggregates/tables/schema",
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Billable Metric Schemas\n\nHere are the schemas for billable metrics:\n\n"
+        "prependBody": "## Billable Metric Schemas\n\nHere are the underlying schemas for billable metrics (aggregates):\n\n"
       }
     },
     {
       "name": "getAggregateEstimates",
-      "description": "Get billable metric estimates based on the specified criteria.",
+      "description": "Get Billable Metric estimates based on the specified criteria. Backend/API terminology may also call a billable metric an aggregate.",
       "args": [
         {
           "name": "aggregate_id",
-          "description": "The ID of the billable metric.",
+          "description": "The ID of the Billable Metric (aggregate).",
           "type": "string",
           "required": true,
           "position": "query"
@@ -805,16 +805,16 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Billable Metric Estimates\n\nHere are the estimates for the billable metric:\n\n"
+        "prependBody": "## Billable Metric Estimates\n\nHere are the estimates for the Billable Metric (aggregate):\n\n"
       }
     },
     {
       "name": "getAggregateById",
-      "description": "Get the details of a billable metric by its ID.",
+      "description": "Get the details of a Billable Metric by its ID. Backend/API terminology may also call this an aggregate.",
       "args": [
         {
           "name": "aggregateId",
-          "description": "The ID of the billable metric.",
+          "description": "The ID of the Billable Metric (aggregate).",
           "type": "string",
           "required": true,
           "position": "path"
@@ -825,16 +825,16 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Billable Metric Details\n\nHere are the details for the specified billable metric:\n\n"
+        "prependBody": "## Billable Metric Details\n\nHere are the details for the specified Billable Metric (aggregate):\n\n"
       }
     },
     {
       "name": "getAggregateLogs",
-      "description": "Get the logs related to a billable metric by its ID, with optional date and customer filters.",
+      "description": "Get logs related to a Billable Metric (also called an aggregate) by ID, with optional date and customer filters.",
       "args": [
         {
           "name": "aggregateId",
-          "description": "The ID of the billable metric.",
+          "description": "The ID of the Billable Metric (aggregate).",
           "type": "string",
           "required": true,
           "position": "path"
@@ -881,12 +881,12 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Billable Metric Logs\n\nHere are the logs for the specified billable metric:\n\n"
+        "prependBody": "## Billable Metric Logs\n\nHere are the logs for the specified Billable Metric (aggregate):\n\n"
       }
     },
     {
       "name": "listRawMetrics",
-      "description": "Get usage events in paginated form, with options for filtering by ID, name, and API slug.",
+      "description": "List Usage Events. In backend/API terminology these are also called raw metrics. Supports filtering by ID, name, and API slug.",
       "args": [
         {
           "name": "cursor",
@@ -960,18 +960,18 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Usage Events List\n\nHere is the list of usage events:\n\n"
+        "prependBody": "## Usage Events\n\nHere is the list of usage events. Backend/API terminology may also call these raw metrics:\n\n"
       }
     },
     {
       "name": "createRawMetric",
-      "description": "Create a new raw metric (usage event schema) with column definitions and connectors.",
+      "description": "Create a new Usage Event schema. In backend/API terminology this resource is called a raw metric. This defines the schema used for ingesting usage events.",
       "needsApproval": true,
       "approvalConfig": {
-        "title": "Create Raw Metric",
-        "description": "This will create a new raw metric and provision its event schema. Please review the payload carefully.",
+        "title": "Create Usage Event Schema",
+        "description": "This will create a new Usage Event schema (called a raw metric in backend/API terminology) and provision its event schema. Please review the payload carefully.",
         "warningText": "Ensure the dataschema and slug values are correct before continuing.",
-        "confirmText": "Create Raw Metric",
+        "confirmText": "Create Usage Event Schema",
         "cancelText": "Cancel",
         "sensitiveFields": [
           "name",
@@ -983,21 +983,21 @@
       "args": [
         {
           "name": "name",
-          "description": "Human-friendly name for the raw metric.",
+          "description": "Human-friendly name for the Usage Event schema (raw metric).",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "api_slug",
-          "description": "API slug used when ingesting events (lowercase, underscores).",
+          "description": "API slug used when ingesting Usage Events (lowercase, underscores).",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "dataschema",
-          "description": "Data schema of raw metric (JSON object). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool); use 'Bool' instead of 'Boolean'.",
+          "description": "Data schema of the Usage Event resource (called a raw metric in backend/API terminology). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'timestamp' and 'customer_id' fields are mandatory schema fields for usage ingestion. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool); use 'Bool' instead of 'Boolean'.",
           "type": "object",
           "required": true,
           "position": "body",
@@ -1035,16 +1035,16 @@
         }
       },
       "responseTemplate": {
-        "prependBody": "## Raw Metric Created\n\nThe raw metric was created successfully:\n\n"
+        "prependBody": "## Usage Event Schema Created\n\nThe Usage Event schema (raw metric) was created successfully:\n\n"
       }
     },
     {
       "name": "getRawMetricById",
-      "description": "Get usage event details by its ID.",
+      "description": "Get Usage Event details by ID. Backend/API terminology may also call this a raw metric.",
       "args": [
         {
           "name": "rawMetricId",
-          "description": "The ID of the raw metric.",
+          "description": "The ID of the Usage Event resource (raw metric).",
           "type": "string",
           "required": true,
           "position": "path"
@@ -1060,11 +1060,11 @@
     },
     {
       "name": "getRawMetricLogs",
-      "description": "Get logs for a specific raw metric by its ID.",
+      "description": "Get Usage Event logs for a specific resource by ID. Backend/API terminology may also call this a raw metric.",
       "args": [
         {
           "name": "rawMetricId",
-          "description": "The ID of the raw metric.",
+          "description": "The ID of the Usage Event resource (raw metric).",
           "type": "string",
           "required": true,
           "position": "path"
@@ -1080,11 +1080,11 @@
     },
     {
       "name": "getRawMetricBySlug",
-      "description": "Get usage event details by its API slug.",
+      "description": "Get Usage Event details by API slug. Backend/API terminology may also call this a raw metric.",
       "args": [
         {
           "name": "rawMetricSlug",
-          "description": "The API slug of the raw metric.",
+          "description": "The API slug of the Usage Event resource (raw metric).",
           "type": "string",
           "required": true,
           "position": "path"
@@ -1100,7 +1100,7 @@
     },
     {
       "name": "getInvoicePaymentsById",
-      "description": "Get payments associated with a specific invoice ID.",
+      "description": "Get successful payments associated with a specific invoice ID. This endpoint is success-only and may not show refund rows.",
       "args": [
         {
           "name": "invoiceId",
@@ -1120,7 +1120,7 @@
     },
     {
       "name": "getInvoicePaymentsWithoutRefunds",
-      "description": "Get payments for an invoice, excluding refunds.",
+      "description": "Get original payment records for an invoice, excluding refund payment rows. Refunded or partially refunded original payments may still appear here.",
       "args": [
         {
           "name": "invoiceId",
@@ -1172,7 +1172,7 @@
     },
     {
       "name": "listAllPayments",
-      "description": "Retrieve a paginated list of all payments, with extensive filtering and sorting options.",
+      "description": "Retrieve a paginated list of all payments, including refund records, with extensive filtering and sorting options.",
       "args": [
         {
           "name": "cursor",
@@ -2268,12 +2268,12 @@
     },
     {
       "name": "ingestRawMetricEvent",
-      "description": "Ingest a usage event for the specified raw metric slug.",
+      "description": "Ingest a Usage Event for the specified resource slug. Backend/API terminology may also call the target resource a raw metric.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Ingest Usage Event",
-        "description": "This will ingest a usage event for the selected raw metric. Review the payload carefully.",
-        "warningText": "Ensure the data payload matches the raw metric schema before proceeding.",
+        "description": "This will ingest a Usage Event for the selected Usage Event schema (called a raw metric in backend/API terminology). Review the payload carefully.",
+        "warningText": "Ensure the data payload matches the Usage Event schema (raw metric schema) before proceeding.",
         "confirmText": "Ingest Usage Event",
         "cancelText": "Cancel",
         "sensitiveFields": [
@@ -2284,14 +2284,14 @@
       "args": [
         {
           "name": "rawMetricSlug",
-          "description": "Slug of the raw metric (e.g., api_usage_events).",
+          "description": "Slug of the Usage Event resource (raw metric), e.g. api_usage_events.",
           "type": "string",
           "required": true,
           "position": "path"
         },
         {
           "name": "event",
-          "description": "Usage event payload containing customer_id, timestamp, and data map with schema-compliant types. Before constructing the event, fetch the schema via getRawMetricBySlug (or reuse the response from createRawMetric) so you only include fields that exist in the raw metric. Use the provided type buckets such as String/Int64 or the exact column names returned by sample logs; do not invent new keys.",
+          "description": "Usage Event payload containing customer_id, timestamp, and a data map with schema-compliant types. customer_id and timestamp are mandatory event fields and must be provided in the payload; MCP does not auto-add them. Before constructing the event, fetch the schema via getRawMetricBySlug (or reuse the response from createRawMetric) so you only include fields that exist in the Usage Event schema (raw metric schema). Use the provided type buckets such as String/Int64 or the exact column names returned by sample logs; do not invent new keys.",
           "type": "object",
           "required": true,
           "position": "body",
@@ -3109,84 +3109,6 @@
       }
     },
     {
-      "name": "createCreditNote",
-      "description": "Create a standalone credit note (not tied to a specific invoice). Status enum: in_progress, issued, void, paid. Repayment method enum: credits, invoice_adjusted, external_payment, credits_against_payment, original_payment_method.",
-      "args": [
-        {
-          "name": "amount",
-          "description": "Credit note amount in the specified currency.",
-          "type": "number",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "currency",
-          "description": "Three-letter ISO 4217 currency code (e.g. USD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "customer_id",
-          "description": "UUID of the customer this credit note is for.",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "status",
-          "description": "Credit note status: in_progress, issued, void, or paid.",
-          "type": "string",
-          "required": true,
-          "position": "body",
-          "enum": [
-            "in_progress",
-            "issued",
-            "void",
-            "paid"
-          ]
-        },
-        {
-          "name": "repayment_method",
-          "description": "How the credit is applied: credits, invoice_adjusted, external_payment, credits_against_payment, or original_payment_method.",
-          "type": "string",
-          "required": true,
-          "position": "body",
-          "enum": [
-            "credits",
-            "invoice_adjusted",
-            "external_payment",
-            "credits_against_payment",
-            "original_payment_method"
-          ]
-        },
-        {
-          "name": "line_items",
-          "description": "Line items object describing the credit note breakdown.",
-          "type": "object",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "invoice_id",
-          "description": "Optional invoice UUID to associate the credit note with.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/credit_notes",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Credit Note Created\n\n"
-      }
-    },
-    {
       "name": "getCreditNoteById",
       "description": "Retrieve a credit note by its ID, including amount, status, customer, invoice association, and line items URL.",
       "args": [
@@ -3313,7 +3235,7 @@
     },
     {
       "name": "updatePayment",
-      "description": "Update a payment's invoice allocations (payment_parts).",
+      "description": "Update a payment's invoice allocations. The API requires a non-empty request body with payment_parts.",
       "args": [
         {
           "name": "paymentId",
@@ -3324,9 +3246,9 @@
         },
         {
           "name": "payment_parts",
-          "description": "Updated array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}.",
+          "description": "Updated array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}. This field is required by the API.",
           "type": "array",
-          "required": false,
+          "required": true,
           "position": "body"
         }
       ],

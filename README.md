@@ -8,7 +8,7 @@ MCP server for the Zenskar API. 103 tools covering customers, contracts, invoice
 - Contracts: create, read, update, delete, amend, add phases and pricing, expire
 - Invoices: list, get, approve, void, generate, credit notes, download
 - Payments: create, edit, refund, delete, auto-charge
-- Credit notes: list, create (standalone or against invoice), get by ID
+- Credit notes: list, create against invoice, get by ID
 - Accounting: chart of accounts, journal entries and lines, balance sheet, income statement, account balances
 - Products: CRUD, pricing configurations
 - Plans: list, create, add products, preview estimates
@@ -124,9 +124,9 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getInvoiceGenerationStatus` | Check invoice generation status |
 | `downloadInvoice` | Download invoice in JSON format |
 | `getInvoiceContractJsonActuals` | Get contract actuals for an invoice |
-| `getInvoicePayments` | Get payments for an invoice |
-| `getInvoicePaymentsById` | Get a specific payment on an invoice |
-| `getInvoicePaymentsWithoutRefunds` | Get invoice payments excluding refunds |
+| `getInvoicePayments` | Get successful payments currently mapped to an invoice |
+| `getInvoicePaymentsById` | Get successful payments for a specific invoice ID |
+| `getInvoicePaymentsWithoutRefunds` | Get original payment records for an invoice, excluding refund payment rows |
 | `getInvoiceLineItems` | Get invoice line items and pricing details |
 | `getInvoiceSummary` | Get invoice summary |
 | `getAllInvoiceTags` | Get all available invoice tags |
@@ -141,10 +141,10 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 ### Payments
 | Tool | Description |
 |---|---|
-| `listAllPayments` | List all payments with filtering and sorting |
+| `listAllPayments` | List all payments with filtering and sorting, including refund records |
 | `getPaymentById` | Get a payment by ID |
 | `createPayment` | Record a payment against an invoice |
-| `updatePayment` | Update a payment's status or details |
+| `updatePayment` | Update a payment's invoice allocations (`payment_parts`) |
 | `deleteManualPayment` | Delete a manual payment |
 | `editManualPayment` | Edit a manual payment's amount or method |
 | `refundPayment` | Refund a payment (full or partial) |
@@ -154,7 +154,6 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 |---|---|
 | `listCreditNotes` | List credit notes with pagination |
 | `getCreditNoteById` | Get a credit note by ID |
-| `createCreditNote` | Create a standalone credit note |
 
 ### Products and Pricing
 | Tool | Description |
@@ -232,16 +231,16 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 ### Metrics and Usage Events
 | Tool | Description |
 |---|---|
-| `listAggregates` | List billable metrics with filtering |
-| `getAggregateSchemas` | Get all billable metric schemas |
-| `getAggregateEstimates` | Get billable metric estimates |
-| `getAggregateById` | Get a billable metric by ID |
-| `getAggregateLogs` | Get logs for a billable metric |
-| `listRawMetrics` | List usage events with filtering |
-| `createRawMetric` | Create a usage event schema |
-| `getRawMetricById` | Get a usage event by ID |
-| `getRawMetricLogs` | Get logs for a usage event |
-| `getRawMetricBySlug` | Get a usage event by API slug |
+| `listAggregates` | List Billable Metrics with filtering; backend/API may also call these aggregates |
+| `getAggregateSchemas` | Show the underlying schemas for Billable Metrics (Aggregates); mainly useful for debugging or integration work |
+| `getAggregateEstimates` | Get Billable Metric estimates; backend/API may also call these aggregates |
+| `getAggregateById` | Get a Billable Metric by ID; backend/API may also call it an aggregate |
+| `getAggregateLogs` | Get logs for a Billable Metric (Aggregate) |
+| `listRawMetrics` | List Usage Events with filtering; backend/API may also call these raw metrics |
+| `createRawMetric` | Create a Usage Event schema; backend/API calls this a raw metric |
+| `getRawMetricById` | Get a Usage Event by ID; backend/API may also call it a raw metric |
+| `getRawMetricLogs` | Get logs for a Usage Event (raw metric) |
+| `getRawMetricBySlug` | Get a Usage Event by API slug; backend/API may also call it a raw metric |
 | `ingestRawMetricEvent` | Ingest a usage event |
 
 ### Other

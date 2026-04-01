@@ -196,6 +196,203 @@ function normalizeRawMetricDataschema(schema) {
   return normalized;
 }
 
+function extractListPayload(data) {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.results)) return data.results;
+  if (data.api_response !== undefined) return extractListPayload(data.api_response);
+  return [];
+}
+
+function normalizeAccountCategory(category) {
+  if (!category || typeof category !== 'string') return 'Uncategorized';
+  const normalized = category.trim();
+  if (!normalized) return 'Uncategorized';
+  return normalized;
+}
+
+function getCategoryOrder(reportType, category) {
+  const balanceSheetOrder = {
+    Assets: 1,
+    Liabilities: 2,
+    Equity: 3
+  };
+  const incomeStatementOrder = {
+    Income: 1,
+    Revenue: 1,
+    'Cost of Goods Sold': 2,
+    Expense: 3,
+    Expenses: 3,
+    'Other Income': 4,
+    'Other Expense': 5,
+    'Other Expenses': 5
+  };
+  const map = reportType === 'getBalanceSheet' ? balanceSheetOrder : incomeStatementOrder;
+  return map[category] || 999;
+}
+
+function buildPeriodKey(row) {
+  const start = row?.interval_start || 'unknown_start';
+  const end = row?.interval_end || 'unknown_end';
+  return `${start}__${end}`;
+}
+
+function summarizePeriods(periodMap) {
+  return Object.values(periodMap)
+    .sort((a, b) => String(a.interval_start).localeCompare(String(b.interval_start)));
+}
+
+function buildAccountingStatementView(reportType, rows, accountLookup) {
+  const periodMap = new Map();
+  const sectionsMap = new Map();
+
+  rows.forEach(row => {
+    const category = normalizeAccountCategory(row.account_category);
+    const periodKey = buildPeriodKey(row);
+    const periodEntry = periodMap.get(periodKey) || {
+      key: periodKey,
+      interval_start: row.interval_start || null,
+      interval_end: row.interval_end || null
+    };
+    periodMap.set(periodKey, periodEntry);
+
+    if (!sectionsMap.has(category)) {
+      sectionsMap.set(category, {
+        category,
+        accounts: new Map(),
+        totals_by_period: {},
+        total_balance: 0,
+        total_debits: 0,
+        total_credits: 0
+      });
+    }
+
+    const section = sectionsMap.get(category);
+    const accountId = row.account_id || 'unknown_account';
+    const accountMeta = accountLookup.get(accountId) || {};
+    if (!section.accounts.has(accountId)) {
+      section.accounts.set(accountId, {
+        account_id: accountId,
+        account_name: row.account_name || accountMeta.name || accountId,
+        account_description: row.account_description || accountMeta.description || null,
+        account_category: category,
+        parent_path: row.account_parent_path || accountMeta.parent_path || null,
+        balance_normality: row.balance_normality || accountMeta.balance_normality || null,
+        periods: {},
+        total_balance: 0,
+        total_debits: 0,
+        total_credits: 0
+      });
+    }
+
+    const account = section.accounts.get(accountId);
+    account.periods[periodKey] = {
+      interval_start: row.interval_start || null,
+      interval_end: row.interval_end || null,
+      balance: row.balance ?? 0,
+      debits: row.debits ?? 0,
+      credits: row.credits ?? 0
+    };
+    account.total_balance += Number(row.balance || 0);
+    account.total_debits += Number(row.debits || 0);
+    account.total_credits += Number(row.credits || 0);
+
+    const sectionPeriod = section.totals_by_period[periodKey] || {
+      interval_start: row.interval_start || null,
+      interval_end: row.interval_end || null,
+      balance: 0,
+      debits: 0,
+      credits: 0
+    };
+    sectionPeriod.balance += Number(row.balance || 0);
+    sectionPeriod.debits += Number(row.debits || 0);
+    sectionPeriod.credits += Number(row.credits || 0);
+    section.totals_by_period[periodKey] = sectionPeriod;
+    section.total_balance += Number(row.balance || 0);
+    section.total_debits += Number(row.debits || 0);
+    section.total_credits += Number(row.credits || 0);
+  });
+
+  const sections = Array.from(sectionsMap.values())
+    .sort((a, b) => {
+      const orderDiff = getCategoryOrder(reportType, a.category) - getCategoryOrder(reportType, b.category);
+      return orderDiff !== 0 ? orderDiff : a.category.localeCompare(b.category);
+    })
+    .map(section => ({
+      category: section.category,
+      accounts: Array.from(section.accounts.values())
+        .sort((a, b) => a.account_name.localeCompare(b.account_name))
+        .map(account => ({
+          ...account,
+          periods: summarizePeriods(account.periods)
+        })),
+      totals_by_period: summarizePeriods(section.totals_by_period),
+      total_balance: section.total_balance,
+      total_debits: section.total_debits,
+      total_credits: section.total_credits
+    }));
+
+  return {
+    report_type: reportType === 'getBalanceSheet' ? 'balance_sheet' : 'income_statement',
+    periods: Array.from(periodMap.values()).sort((a, b) => String(a.interval_start).localeCompare(String(b.interval_start))),
+    sections
+  };
+}
+
+async function fetchJson(url, headers) {
+  const response = await fetch(url, { method: 'GET', headers });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`Supplemental fetch failed: ${response.status} ${response.statusText}\nResponse: ${text}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (_error) {
+    throw new Error(`Supplemental fetch returned non-JSON response: ${text}`);
+  }
+}
+
+async function enrichAccountingReportResult(toolName, result, headers, baseUrl) {
+  if (!result || !Array.isArray(result.results)) {
+    return result;
+  }
+
+  try {
+    const chartUrl = `${baseUrl}/accounting_new/chart_of_accounts`;
+    const chartData = await fetchJson(chartUrl, headers);
+    const chartAccounts = extractListPayload(chartData);
+    const accountLookup = new Map(
+      chartAccounts
+        .filter(account => account && account.id)
+        .map(account => [account.id, account])
+    );
+
+    const enrichedRows = result.results.map(row => {
+      const account = accountLookup.get(row.account_id) || {};
+      return {
+        ...row,
+        account_name: account.name || row.account_id || null,
+        account_description: account.description || null,
+        account_category: normalizeAccountCategory(account.account_category),
+        account_parent_path: account.parent_path || null,
+        balance_normality: account.balance_normality || null
+      };
+    });
+
+    return {
+      ...result,
+      results: enrichedRows,
+      statement_view: buildAccountingStatementView(toolName, enrichedRows, accountLookup)
+    };
+  } catch (error) {
+    logger.warn(`[${toolName}] Failed to enrich accounting report output; returning raw report`, {
+      error: error.message
+    });
+    return result;
+  }
+}
+
 // Helper function to convert OpenAPI args to Zod schema
 function convertArgsToZodSchema(args) {
   const schemaObj = {};
@@ -587,7 +784,9 @@ async function executeAPICall(tool, args) {
 
     if (!response.ok) {
       logger.error(`[${tool.name}] API Error Response:`, responseText);
-      throw new Error(`API request failed: ${response.status} ${response.statusText}\nResponse: ${responseText}`);
+      let errorMessage = `API request failed: ${response.status} ${response.statusText}\nResponse: ${responseText}`;
+
+      throw new Error(errorMessage);
     }
 
     let result;
@@ -596,6 +795,11 @@ async function executeAPICall(tool, args) {
     } catch (e) {
       logger.debug(`[${tool.name}] Failed to parse JSON response, returning as text`);
       result = responseText;
+    }
+
+    if (tool.name === 'getBalanceSheet' || tool.name === 'getIncomeStatement') {
+      const baseUrl = process.env.ZENSKAR_API_BASE_URL || 'https://api.zenskar.com';
+      result = await enrichAccountingReportResult(tool.name, result, headers, baseUrl);
     }
     
     // Apply response template if available
@@ -815,7 +1019,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           
           // Use adjusted args with enforced limits
           const adjustedArgs = limitsValidation.adjustedArgs;
-          
+
           // Track limit adjustments
           if (args.limit && adjustedArgs.limit && args.limit !== adjustedArgs.limit) {
             limitRequested = args.limit;

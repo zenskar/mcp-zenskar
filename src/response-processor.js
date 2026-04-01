@@ -2,7 +2,7 @@
 class ResponseProcessor {
   constructor() {
     // Minimal configuration
-    this.maxResponseLength = 50000;
+    this.maxResponseLength = 2000000;
   }
 
   processResponse(responseData, toolName) {
