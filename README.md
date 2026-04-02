@@ -239,7 +239,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `listRawMetrics` | List Usage Events with filtering; backend/API may also call these raw metrics |
 | `createRawMetric` | Create a Usage Event schema; backend/API calls this a raw metric |
 | `getRawMetricById` | Get a Usage Event by ID; backend/API may also call it a raw metric |
-| `getRawMetricLogs` | Get logs for a Usage Event (raw metric) |
+| `getRawMetricLogs` | Get recent event rows for a Usage Event using the same preview-query path as the frontend |
 | `getRawMetricBySlug` | Get a Usage Event by API slug; backend/API may also call it a raw metric |
 | `ingestRawMetricEvent` | Ingest a usage event |
 

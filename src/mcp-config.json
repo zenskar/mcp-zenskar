@@ -1060,7 +1060,7 @@
     },
     {
       "name": "getRawMetricLogs",
-      "description": "Get Usage Event logs for a specific resource by ID. Backend/API terminology may also call this a raw metric.",
+      "description": "Get Usage Event event rows for a specific resource by ID. This follows the same visual-preview query path used by the frontend meter page, so it returns recent event rows rather than only backend sample logs. Backend/API terminology may also call this a raw metric.",
       "args": [
         {
           "name": "rawMetricId",
@@ -1068,6 +1068,43 @@
           "type": "string",
           "required": true,
           "position": "path"
+        },
+        {
+          "name": "filters",
+          "description": "Optional visual-query filter array, matching the frontend usage-event viewer format. Default is an empty filter list.",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of event rows to return. Defaults to 20, matching frontend behavior.",
+          "type": "integer",
+          "required": false,
+          "position": "body",
+          "default": 20
+        },
+        {
+          "name": "offset",
+          "description": "Pagination offset for event rows. Defaults to 0.",
+          "type": "integer",
+          "required": false,
+          "position": "body",
+          "default": 0
+        },
+        {
+          "name": "aggregate_operation",
+          "description": "Optional aggregate operation object used by the frontend for event counts (for example COUNT on timestamp). Leave null for normal row listing.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "order_by",
+          "description": "Optional ordering array. Defaults to [{column:'timestamp', type:'DESC'}] to match frontend event viewing.",
+          "type": "array",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -1075,7 +1112,7 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Usage Event Logs\n\nHere are the logs for the specified usage event:\n\n"
+        "prependBody": "## Usage Event Logs\n\nHere are recent event rows for the specified usage event:\n\n"
       }
     },
     {

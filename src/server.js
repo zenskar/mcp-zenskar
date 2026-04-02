@@ -211,6 +211,20 @@ function normalizeAccountCategory(category) {
   return normalized;
 }
 
+function toDisplayAmount(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  return num / 100;
+}
+
+function normalizeReportAccountCategory(reportType, category) {
+  const normalized = normalizeAccountCategory(category);
+  if (reportType === 'getBalanceSheet' && normalized === 'Liabilities') {
+    return 'Liabilities & Equity';
+  }
+  return normalized;
+}
+
 function getCategoryOrder(reportType, category) {
   const balanceSheetOrder = {
     Assets: 1,
@@ -247,7 +261,7 @@ function buildAccountingStatementView(reportType, rows, accountLookup) {
   const sectionsMap = new Map();
 
   rows.forEach(row => {
-    const category = normalizeAccountCategory(row.account_category);
+    const category = normalizeReportAccountCategory(reportType, row.account_category);
     const periodKey = buildPeriodKey(row);
     const periodEntry = periodMap.get(periodKey) || {
       key: periodKey,
@@ -290,8 +304,11 @@ function buildAccountingStatementView(reportType, rows, accountLookup) {
       interval_start: row.interval_start || null,
       interval_end: row.interval_end || null,
       balance: row.balance ?? 0,
+      display_balance: toDisplayAmount(row.balance ?? 0),
       debits: row.debits ?? 0,
-      credits: row.credits ?? 0
+      display_debits: toDisplayAmount(row.debits ?? 0),
+      credits: row.credits ?? 0,
+      display_credits: toDisplayAmount(row.credits ?? 0)
     };
     account.total_balance += Number(row.balance || 0);
     account.total_debits += Number(row.debits || 0);
@@ -302,11 +319,17 @@ function buildAccountingStatementView(reportType, rows, accountLookup) {
       interval_end: row.interval_end || null,
       balance: 0,
       debits: 0,
-      credits: 0
+      credits: 0,
+      display_balance: 0,
+      display_debits: 0,
+      display_credits: 0
     };
     sectionPeriod.balance += Number(row.balance || 0);
     sectionPeriod.debits += Number(row.debits || 0);
     sectionPeriod.credits += Number(row.credits || 0);
+    sectionPeriod.display_balance = toDisplayAmount(sectionPeriod.balance);
+    sectionPeriod.display_debits = toDisplayAmount(sectionPeriod.debits);
+    sectionPeriod.display_credits = toDisplayAmount(sectionPeriod.credits);
     section.totals_by_period[periodKey] = sectionPeriod;
     section.total_balance += Number(row.balance || 0);
     section.total_debits += Number(row.debits || 0);
@@ -328,14 +351,138 @@ function buildAccountingStatementView(reportType, rows, accountLookup) {
         })),
       totals_by_period: summarizePeriods(section.totals_by_period),
       total_balance: section.total_balance,
+      display_total_balance: toDisplayAmount(section.total_balance),
       total_debits: section.total_debits,
-      total_credits: section.total_credits
+      display_total_debits: toDisplayAmount(section.total_debits),
+      total_credits: section.total_credits,
+      display_total_credits: toDisplayAmount(section.total_credits)
     }));
 
   return {
     report_type: reportType === 'getBalanceSheet' ? 'balance_sheet' : 'income_statement',
     periods: Array.from(periodMap.values()).sort((a, b) => String(a.interval_start).localeCompare(String(b.interval_start))),
     sections
+  };
+}
+
+function normalizeChartAccountCategory(account) {
+  if (!account) return '';
+  const category = account.account_category || '';
+  if (category === 'Liabilities') return 'Liabilities & Equity';
+  return category;
+}
+
+function buildChartOfAccountsView(accounts) {
+  const baseAccounts = [...accounts]
+    .map(account => ({
+      ...account,
+      account_category: normalizeChartAccountCategory(account)
+    }))
+    .sort((a, b) => {
+      const categoryDiff = normalizeChartAccountCategory(a).localeCompare(normalizeChartAccountCategory(b));
+      return categoryDiff !== 0 ? categoryDiff : String(a.name || '').localeCompare(String(b.name || ''));
+    });
+
+  const grouped = new Map();
+  baseAccounts.forEach(account => {
+    const category = normalizeChartAccountCategory(account) || 'Uncategorized';
+    if (!grouped.has(category)) grouped.set(category, []);
+    grouped.get(category).push(account);
+  });
+
+  const syntheticGroups = ['Assets', 'Liabilities & Equity', 'Equity', 'Income', 'Expenses'];
+  syntheticGroups.forEach(category => {
+    if (!grouped.has(category)) grouped.set(category, []);
+  });
+
+  const sections = Array.from(grouped.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([category, entries]) => ({
+      id: category,
+      name: category,
+      description: category,
+      account_category: category,
+      is_parent: true,
+      parent_path: null,
+      children: entries.map(entry => ({
+        ...entry,
+        parent_path: entry.parent_path || category
+        }))
+    }));
+
+  const liabEqSection = sections.find(section => section.name === 'Liabilities & Equity');
+  if (liabEqSection) {
+    const hasEquity = liabEqSection.children.some(child => child.name === 'Equity');
+    if (!hasEquity) {
+      liabEqSection.children.push({
+        id: 'Equity',
+        name: 'Equity',
+        description: 'Equity',
+        account_category: 'Liabilities & Equity',
+        balance_normality: 'credit',
+        is_parent: true,
+        parent_path: 'Liabilities & Equity',
+        custom_data: { default_account: false },
+        children: []
+      });
+      liabEqSection.children.push({
+        id: 'Equity:Retained Earnings',
+        name: 'Retained Earnings',
+        description: 'Retained Earnings',
+        account_category: 'Liabilities & Equity',
+        balance_normality: 'credit',
+        is_parent: false,
+        parent_path: 'Equity',
+        custom_data: { default_account: false }
+      });
+    }
+  }
+
+  return sections;
+}
+
+function enrichJobsResult(result) {
+  if (!result || !Array.isArray(result.results)) return result;
+  const counts = result.results.reduce((acc, job) => {
+    const status = job.status || 'unknown';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    ...result,
+    summary: {
+      total_count: result.total_count ?? result.results.length,
+      returned_count: result.results.length,
+      page_status_counts: counts,
+      has_more: !!result.next,
+      note: result.next
+        ? `Showing ${result.results.length} jobs from the current page. Use the cursor to continue through the remaining jobs.`
+        : `Showing ${result.results.length} jobs from the current page.`
+    }
+  };
+}
+
+function enrichListAccountsResult(result) {
+  if (!result || !Array.isArray(result.results)) return result;
+  const sortedResults = [...result.results].sort((a, b) => {
+    const categoryA = normalizeAccountCategory(a.account_category);
+    const categoryB = normalizeAccountCategory(b.account_category);
+    const categoryDiff = categoryA.localeCompare(categoryB);
+    return categoryDiff !== 0 ? categoryDiff : String(a.name || '').localeCompare(String(b.name || ''));
+  });
+
+  const grouped = sortedResults.reduce((acc, account) => {
+    const category = normalizeAccountCategory(account.account_category);
+    acc[category] = acc[category] || [];
+    acc[category].push(account);
+    return acc;
+  }, {});
+
+  return {
+    ...result,
+    results: sortedResults,
+    grouped_view: grouped
   };
 }
 
@@ -350,6 +497,58 @@ async function fetchJson(url, headers) {
     return JSON.parse(text);
   } catch (_error) {
     throw new Error(`Supplemental fetch returned non-JSON response: ${text}`);
+  }
+}
+
+async function executeFrontendStyleRawMetricLogs(args, headers, baseUrl) {
+  const rawMetricId = args.rawMetricId;
+  const rawMetricUrl = `${baseUrl}/rawmetric/${encodeURIComponent(rawMetricId)}`;
+  const rawMetric = await fetchJson(rawMetricUrl, headers);
+
+  if (!rawMetric?.api_slug) {
+    throw new Error(`Unable to resolve api_slug for raw metric ${rawMetricId}`);
+  }
+
+  const previewHeaders = {
+    ...headers,
+    apiversion: '20240301'
+  };
+
+  const payload = {
+    limit: args.limit ?? 20,
+    offset: args.offset ?? 0,
+    order_by: args.order_by ?? [{ column: 'timestamp', type: 'DESC' }],
+    aggregate_operation: args.aggregate_operation ?? null,
+    customer_mapping: null,
+    end_date_mapping: null,
+    start_date_mapping: null,
+    table_name: `raw_metric_${rawMetric.api_slug}`,
+    visual_query: {
+      groups: [
+        {
+          filters: Array.isArray(args.filters) ? args.filters : [],
+          logic: 'AND'
+        }
+      ],
+      logic: 'AND'
+    }
+  };
+
+  const response = await fetch(`${baseUrl}/aggregate/visualquery/preview`, {
+    method: 'POST',
+    headers: previewHeaders,
+    body: JSON.stringify(payload)
+  });
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(`API request failed: ${response.status} ${response.statusText}\nResponse: ${responseText}`);
+  }
+
+  try {
+    return JSON.parse(responseText);
+  } catch (_error) {
+    return responseText;
   }
 }
 
@@ -374,16 +573,92 @@ async function enrichAccountingReportResult(toolName, result, headers, baseUrl) 
         ...row,
         account_name: account.name || row.account_id || null,
         account_description: account.description || null,
-        account_category: normalizeAccountCategory(account.account_category),
+        account_category: normalizeReportAccountCategory(toolName, account.account_category),
         account_parent_path: account.parent_path || null,
-        balance_normality: account.balance_normality || null
+        balance_normality: account.balance_normality || null,
+        display_balance: toDisplayAmount(row.balance ?? 0),
+        display_debits: toDisplayAmount(row.debits ?? 0),
+        display_credits: toDisplayAmount(row.credits ?? 0)
       };
     });
+
+    let statementView = buildAccountingStatementView(toolName, enrichedRows, accountLookup);
+
+    if (toolName === 'getBalanceSheet') {
+      const params = new URLSearchParams();
+      if (headers.apiversion) params.set('apiversion', headers.apiversion);
+      const incomeStatementUrl = `${baseUrl}/accounting_new/income_statement/v2`;
+      const incomeStatement = await fetchJson(incomeStatementUrl, headers);
+      const incomeRows = Array.isArray(incomeStatement?.results) ? incomeStatement.results : [];
+      const retainedByPeriod = {};
+
+      incomeRows.forEach(row => {
+        const periodKey = buildPeriodKey(row);
+        const period = retainedByPeriod[periodKey] || {
+          interval_start: row.interval_start || null,
+          interval_end: row.interval_end || null,
+          balance: 0,
+          debits: 0,
+          credits: 0
+        };
+        period.balance += Number(row.balance || 0);
+        period.debits += Number(row.debits || 0);
+        period.credits += Number(row.credits || 0);
+        retainedByPeriod[periodKey] = period;
+      });
+
+      const retainedPeriods = summarizePeriods(
+        Object.fromEntries(
+          Object.entries(retainedByPeriod).map(([key, value]) => [
+            key,
+            {
+              ...value,
+              display_balance: toDisplayAmount(value.balance),
+              display_debits: toDisplayAmount(value.debits),
+              display_credits: toDisplayAmount(value.credits)
+            }
+          ])
+        )
+      );
+
+      const retainedAccount = {
+        account_id: 'Equity:Retained Earnings',
+        account_name: 'Retained Earnings (Derived)',
+        account_description: 'Derived from the companion income statement for MCP presentation.',
+        account_category: 'Liabilities & Equity',
+        parent_path: 'Equity',
+        balance_normality: 'credit',
+        periods: retainedPeriods,
+        total_balance: retainedPeriods.reduce((sum, period) => sum + Number(period.balance || 0), 0),
+        display_total_balance: toDisplayAmount(retainedPeriods.reduce((sum, period) => sum + Number(period.balance || 0), 0)),
+        total_debits: retainedPeriods.reduce((sum, period) => sum + Number(period.debits || 0), 0),
+        display_total_debits: toDisplayAmount(retainedPeriods.reduce((sum, period) => sum + Number(period.debits || 0), 0)),
+        total_credits: retainedPeriods.reduce((sum, period) => sum + Number(period.credits || 0), 0),
+        display_total_credits: toDisplayAmount(retainedPeriods.reduce((sum, period) => sum + Number(period.credits || 0), 0))
+      };
+
+      let liabEqSection = statementView.sections.find(section => section.category === 'Liabilities & Equity');
+      if (!liabEqSection) {
+        liabEqSection = {
+          category: 'Liabilities & Equity',
+          accounts: [],
+          totals_by_period: [],
+          total_balance: 0,
+          display_total_balance: 0,
+          total_debits: 0,
+          display_total_debits: 0,
+          total_credits: 0,
+          display_total_credits: 0
+        };
+        statementView.sections.push(liabEqSection);
+      }
+      liabEqSection.accounts.push(retainedAccount);
+    }
 
     return {
       ...result,
       results: enrichedRows,
-      statement_view: buildAccountingStatementView(toolName, enrichedRows, accountLookup)
+      statement_view: statementView
     };
   } catch (error) {
     logger.warn(`[${toolName}] Failed to enrich accounting report output; returning raw report`, {
@@ -770,6 +1045,13 @@ async function executeAPICall(tool, args) {
   });
   
   try {
+    if (tool.name === 'getRawMetricLogs') {
+      const baseUrl = process.env.ZENSKAR_API_BASE_URL || 'https://api.zenskar.com';
+      const result = await executeFrontendStyleRawMetricLogs(cleanArgs, headers, baseUrl);
+      logger.debug(`[${tool.name}] Successfully processed frontend-style usage-event logs`);
+      return result;
+    }
+
     const response = await fetch(fullUrl, {
       method,
       headers,
@@ -800,6 +1082,18 @@ async function executeAPICall(tool, args) {
     if (tool.name === 'getBalanceSheet' || tool.name === 'getIncomeStatement') {
       const baseUrl = process.env.ZENSKAR_API_BASE_URL || 'https://api.zenskar.com';
       result = await enrichAccountingReportResult(tool.name, result, headers, baseUrl);
+    }
+    if (tool.name === 'listJobs') {
+      result = enrichJobsResult(result);
+    }
+    if (tool.name === 'listAccounts') {
+      result = enrichListAccountsResult(result);
+    }
+    if (tool.name === 'getChartOfAccounts' && Array.isArray(result)) {
+      result = {
+        raw_accounts: result,
+        chart_view: buildChartOfAccountsView(result)
+      };
     }
     
     // Apply response template if available
