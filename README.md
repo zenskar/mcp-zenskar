@@ -1,18 +1,17 @@
 # Zenskar MCP Server
 
-MCP server for the Zenskar API. 103 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, quotes, and more.
+MCP server for the Zenskar API. 103 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, and more.
 
 ## What it does
 
-- Customers: list, search, create, update, addresses, contacts, payment methods
-- Contracts: create, read, update, delete, amend, add phases and pricing, expire
+- Customers: list, search, create, update, delete, addresses, contacts, payment methods
+- Contracts: create, read, update, delete, amend, add phases and pricing, pause/resume, expire
 - Invoices: list, get, approve, void, generate, credit notes, download
 - Payments: create, edit, refund, delete, auto-charge
 - Credit notes: list, create against invoice, get by ID
 - Accounting: chart of accounts, journal entries and lines, balance sheet, income statement, account balances
 - Products: CRUD, pricing configurations
 - Plans: list, create, add products, preview estimates
-- Quotes: create, preview, accept (converts to contract)
 - Business entities: list, get, create, update
 - Jobs: monitor async operations
 - Custom attributes and tax categories
@@ -91,6 +90,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getCustomerById` | Get a customer by ID |
 | `createCustomer` | Create a customer with address and tax info |
 | `updateCustomer` | Update customer details (partial update) |
+| `deleteCustomer` | Permanently delete a customer by ID (only allowed when they have no active contracts or unpaid invoices) |
 
 ### Contacts
 | Tool | Description |
@@ -99,6 +99,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getContactById` | Get a contact by ID |
 | `createContact` | Create a contact for a customer |
 | `updateContact` | Update a contact's details |
+| `deleteContact` | Delete a contact by ID |
 
 ### Contracts
 | Tool | Description |
@@ -112,6 +113,8 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `createContractPhase` | Add a phase to a contract (add-ons, expansions) |
 | `createContractPhasePricing` | Add pricing to a contract phase |
 | `expireContract` | Expire an active contract |
+| `pauseContract` | Pause an active contract from a given start date, with an unpause-extension policy (`extend` or `overlap`) and optional end date for auto-resume |
+| `resumeContract` | Resume a paused contract |
 | `createContractPrompt` | Create a contract prompt |
 | `extractContractFromRaw` | Extract contract data from raw text using AI |
 
@@ -189,14 +192,6 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getAccountBalance` | Get balance for a specific GL account |
 | `recogniseRevenue` | Trigger revenue recognition up to a date |
 
-### Quotes
-| Tool | Description |
-|---|---|
-| `createQuote` | Create a quote/proposal |
-| `previewQuoteEstimate` | Preview estimated billing for a quote |
-| `getQuoteById` | Get a quote by ID |
-| `acceptQuote` | Accept a quote, converting to a contract |
-
 ### Custom Attributes and Tax
 | Tool | Description |
 |---|---|
@@ -227,6 +222,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `updateCustomerAddress` | Update a customer address |
 | `listPaymentMethods` | List payment methods for a customer |
 | `attachPaymentMethod` | Attach a payment method to a customer |
+| `deletePaymentMethod` | Delete a payment method from a customer |
 
 ### Metrics and Usage Events
 | Tool | Description |
