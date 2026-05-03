@@ -2730,12 +2730,12 @@
     },
     {
       "name": "deleteContract",
-      "description": "Permanently delete a contract. Backend allows deletion on any non-ACTIVE contract (DRAFT, EXPIRED, PAUSED) — NOT draft-only. DESTRUCTIVE: removes all phases, products, and pricing associations. NEVER call this as automatic recovery from another failed operation (e.g., do not retry as a fallback after expireContract or voidInvoice fails). ONLY call when the user explicitly says 'delete' or 'remove' for THIS contract. If a non-destructive action fails, surface the error verbatim and stop.",
+      "description": "Permanently delete a DRAFT contract. ONLY works on contracts with status='draft'. Do NOT call on ACTIVE, EXPIRED, or PAUSED contracts. DESTRUCTIVE: removes all phases, products, and pricing associations. NEVER call as automatic recovery from another failed operation (e.g., do not retry as a fallback after expireContract or voidInvoice fails). ONLY call when the user explicitly says 'delete' or 'remove' for THIS draft contract. If a non-destructive action fails, surface the error verbatim and stop.",
       "needsApproval": true,
       "approvalConfig": {
-        "title": "Delete Contract",
-        "description": "This will permanently delete the contract along with all its phases, products, and pricing associations.",
-        "warningText": "DESTRUCTIVE — this cannot be undone. All linked phases, product associations, and pricing data will be removed.",
+        "title": "Delete Draft Contract",
+        "description": "This will permanently delete the draft contract along with all its phases, products, and pricing associations.",
+        "warningText": "DESTRUCTIVE — this cannot be undone. Only draft contracts may be deleted; verify status before confirming.",
         "confirmText": "Delete Contract",
         "cancelText": "Cancel",
         "sensitiveFields": [
@@ -3020,7 +3020,7 @@
     },
     {
       "name": "voidInvoice",
-      "description": "Void an invoice. Backend currently restricts voiding to approved/paid invoices with invoice_total == 0 (zero-balance, typically after a full credit-note offset). For non-zero approved invoices, issue a credit note via createInvoiceCreditNote first to bring the balance to zero, then void. Returns INVOICE_CANNOT_BE_VOIDED on non-zero totals — surface that error verbatim, do NOT retry, do NOT escalate to deleteInvoice.",
+      "description": "Void an invoice. ONLY works on approved or paid invoices with invoice_total == 0 (zero-balance, typically after a full credit-note offset). For non-zero approved invoices, issue a credit note via createInvoiceCreditNote first to bring the balance to zero, then void. If the call returns INVOICE_CANNOT_BE_VOIDED, surface that error verbatim — do NOT retry, do NOT escalate to deleteInvoice.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Void Invoice",
@@ -3054,7 +3054,7 @@
     },
     {
       "name": "deleteInvoice",
-      "description": "Permanently delete a draft invoice. ONLY works on status='draft' (backend rejects with InvoiceNotDraftException otherwise). For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation.",
+      "description": "Permanently delete a draft invoice. ONLY works on status='draft'. For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Invoice",
