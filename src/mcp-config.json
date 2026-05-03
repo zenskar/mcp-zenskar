@@ -3054,11 +3054,11 @@
     },
     {
       "name": "deleteInvoice",
-      "description": "Permanently delete a draft or upcoming invoice. ONLY works on status='draft' or 'upcoming' (backend rejects with InvoiceNotDraftException otherwise). For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation.",
+      "description": "Permanently delete a draft invoice. ONLY works on status='draft' (backend rejects with InvoiceNotDraftException otherwise). For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Invoice",
-        "description": "This will permanently delete the draft/upcoming invoice.",
+        "description": "This will permanently delete the draft invoice.",
         "warningText": "DESTRUCTIVE — invoice record will be removed and cannot be recovered.",
         "confirmText": "Delete Invoice",
         "cancelText": "Cancel",
