@@ -586,7 +586,18 @@
     },
     {
       "name": "payInvoice",
-      "description": "Initiate payment for an invoice using a payload.",
+      "description": "Initiate payment for an invoice using a payload. MONEY-MOVING ACTION — only call when the user explicitly authorizes payment for this specific invoice.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Pay Invoice",
+        "description": "This will initiate a payment against the invoice using the provided payload.",
+        "warningText": "Money-moving action — funds will be charged. Verify the invoice and amount before confirming.",
+        "confirmText": "Pay Invoice",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "payload"
+        ]
+      },
       "args": [
         {
           "name": "payload",
@@ -2719,7 +2730,18 @@
     },
     {
       "name": "deleteContract",
-      "description": "Delete a contract by its ID. Only works on draft contracts. Returns the deleted contract object with a deleted_at timestamp.",
+      "description": "Permanently delete a contract. Backend allows deletion on any non-ACTIVE contract (DRAFT, EXPIRED, PAUSED) — NOT draft-only. DESTRUCTIVE: removes all phases, products, and pricing associations. NEVER call this as automatic recovery from another failed operation (e.g., do not retry as a fallback after expireContract or voidInvoice fails). ONLY call when the user explicitly says 'delete' or 'remove' for THIS contract. If a non-destructive action fails, surface the error verbatim and stop.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Contract",
+        "description": "This will permanently delete the contract along with all its phases, products, and pricing associations.",
+        "warningText": "DESTRUCTIVE — this cannot be undone. All linked phases, product associations, and pricing data will be removed.",
+        "confirmText": "Delete Contract",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "contractId"
+        ]
+      },
       "args": [
         {
           "name": "contractId",
@@ -2956,7 +2978,19 @@
     },
     {
       "name": "expireContract",
-      "description": "Expire an active contract. Only works on contracts with status 'active'. Optionally specify an expiry_date (defaults to today). The contract expires at end of day 23:59:59.999999.",
+      "description": "Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Expire Contract",
+        "description": "This will set the contract's end_date and transition status to EXPIRED. EXPIRED is terminal.",
+        "warningText": "Once expired, the contract cannot be re-activated through this endpoint. Future-dated phases beyond the expiry will be removed.",
+        "confirmText": "Expire Contract",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "contractId",
+          "expiry_date"
+        ]
+      },
       "args": [
         {
           "name": "contractId",
@@ -2967,7 +3001,7 @@
         },
         {
           "name": "expiry_date",
-          "description": "Date to expire the contract (e.g. 2026-12-31). Defaults to today if not provided.",
+          "description": "Date to expire the contract (e.g. 2026-12-31). Defaults to today if not provided. Must not be earlier than contract.start_date.",
           "type": "string",
           "required": false,
           "position": "body"
@@ -2986,7 +3020,18 @@
     },
     {
       "name": "voidInvoice",
-      "description": "Void an invoice by its ID. Only works on approved invoices that have not been fully paid. Voiding reverses the invoice and creates appropriate accounting entries.",
+      "description": "Void an invoice. Backend currently restricts voiding to approved/paid invoices with invoice_total == 0 (zero-balance, typically after a full credit-note offset). For non-zero approved invoices, issue a credit note via createInvoiceCreditNote first to bring the balance to zero, then void. Returns INVOICE_CANNOT_BE_VOIDED on non-zero totals — surface that error verbatim, do NOT retry, do NOT escalate to deleteInvoice.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Void Invoice",
+        "description": "This will set the invoice status to 'void' and post the corresponding accounting entries. Only zero-balance approved/paid invoices are eligible.",
+        "warningText": "Voiding affects accounting records and cannot be easily undone.",
+        "confirmText": "Void Invoice",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "invoiceId"
+        ]
+      },
       "args": [
         {
           "name": "invoiceId",
@@ -3005,6 +3050,40 @@
       },
       "responseTemplate": {
         "prependBody": "## Invoice Voided\n\n"
+      }
+    },
+    {
+      "name": "deleteInvoice",
+      "description": "Permanently delete a draft or upcoming invoice. ONLY works on status='draft' or 'upcoming' (backend rejects with InvoiceNotDraftException otherwise). For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Invoice",
+        "description": "This will permanently delete the draft/upcoming invoice.",
+        "warningText": "DESTRUCTIVE — invoice record will be removed and cannot be recovered.",
+        "confirmText": "Delete Invoice",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "invoiceId"
+        ]
+      },
+      "args": [
+        {
+          "name": "invoiceId",
+          "description": "The unique identifier (UUID) of the draft or upcoming invoice to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/invoices/{invoiceId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Invoice Deleted\n\n"
       }
     },
     {
@@ -3046,7 +3125,7 @@
     },
     {
       "name": "generateInvoice",
-      "description": "Generate an invoice for a customer given a contract and date range. Use this for billing replay or on-demand invoice generation.",
+      "description": "Generate ONE invoice covering ALL products active in the (contract, customer, from_date, to_date) tuple. The invoice contains every applicable product as separate line items — do NOT call once per product. Granularity is per-phase, NOT per-product. To bill a multi-phase contract, call ONCE per phase using that phase's start/end as from_date/to_date — e.g., a 2-phase contract with 2 products = 2 calls (yielding 2 invoices, each with 2 line items), NOT 4 calls. Iterating per product produces fragmented duplicate invoices and is incorrect. Use for billing replay or on-demand invoice generation.",
       "args": [
         {
           "name": "contract_id",
@@ -3302,7 +3381,18 @@
     },
     {
       "name": "deleteManualPayment",
-      "description": "Delete a manual payment. Only works on payments that are in an eligible status for deletion.",
+      "description": "Permanently delete a manual payment record. Only works on payments in an eligible status for deletion. DESTRUCTIVE — only call when the user explicitly says 'delete' for THIS payment; never as automatic recovery from another failed operation.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Manual Payment",
+        "description": "This will permanently remove the manual payment record.",
+        "warningText": "DESTRUCTIVE — payment record will be removed and cannot be recovered. Linked invoice balance may shift as a result.",
+        "confirmText": "Delete Payment",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "paymentId"
+        ]
+      },
       "args": [
         {
           "name": "paymentId",
@@ -4126,7 +4216,7 @@
     },
     {
       "name": "createProductPricing",
-      "description": "Create a new pricing configuration for a product. The pricing_data object is a discriminated union — the 'pricing_type' field determines which pricing model schema to use.",
+      "description": "Create a new pricing configuration for a product. The pricing_data object is a discriminated union — the 'pricing_type' field determines which pricing model schema. IMPORTANT: ask the user explicitly for currency, quantity_type (fixed|metered), and unit amount BEFORE calling. Do not silently default any of these. unit_amount is in MAJOR currency units (float), e.g. 3 means $3, not 300 cents.",
       "args": [
         {
           "name": "productId",
@@ -4151,9 +4241,16 @@
         },
         {
           "name": "pricing_data",
-          "description": "Pricing data object (required). Must include 'pricing_type' discriminator. Supported types: flat_fee: {pricing_type:'flat_fee', unit_amount:10000}. per_unit: {pricing_type:'per_unit', unit_amount:500}. tiered: {pricing_type:'tiered', unit_amount:[1000,500], up_to:[100,null]}. volume: {pricing_type:'volume', unit_amount:[1000,500], up_to:[100,null]}. percent: {pricing_type:'percent', percentage:5.0}. package: {pricing_type:'package', package_size:10, unit_amount:5000}. step: {pricing_type:'step', unit_amount:[...], up_to:[...]}. matrix: {pricing_type:'matrix', dimensions:[...], values:[...]}.",
+          "description": "Pricing data object (required). MUST include 'pricing_type' discriminator AND 'currency' (ISO 4217, e.g. 'USD'). 'unit_amount' is in MAJOR currency units (float) — 3 means $3, NOT 300 cents. Do NOT convert to cents. Supported pricing_type values with examples: flat_fee: {pricing_type:'flat_fee', unit_amount:100, currency:'USD'}. per_unit: {pricing_type:'per_unit', unit_amount:3, currency:'USD'}. tiered: {pricing_type:'tiered', unit_amount:[10,5], up_to:[100,null], currency:'USD'}. volume: {pricing_type:'volume', unit_amount:[10,5], up_to:[100,null], currency:'USD'}. percent: {pricing_type:'percent', percentage:5.0, currency:'USD'}. package: {pricing_type:'package', package_size:10, unit_amount:50, currency:'USD'}. step: {pricing_type:'step', unit_amount:[...], up_to:[...], currency:'USD'}. matrix: {pricing_type:'matrix', dimensions:[...], values:[...], currency:'USD'}. Optional inside pricing_data for per_unit: 'proration_type' ('day_based'|'cadence_based'), 'charge_full_amount' (bool).",
           "type": "object",
           "required": true,
+          "position": "body"
+        },
+        {
+          "name": "quantity",
+          "description": "Quantity configuration (REQUIRED for usage-based pricing — ask the user). Top-level object, NOT inside pricing_data. Shape: {type: 'fixed'|'metered', quantity?: number, unit?: string, aggregate_id?: UUID}. 'fixed' means a static quantity (e.g. seats). 'metered' means consumption tracked via a billable metric — set aggregate_id to the billable-metric UUID. Without a quantity object the resulting pricing has no billing_metric and renders as 0 in the UI.",
+          "type": "object",
+          "required": false,
           "position": "body"
         },
         {
@@ -4191,7 +4288,7 @@
     },
     {
       "name": "listPlans",
-      "description": "Retrieve a paginated list of plans (templates v3) that define reusable contract structures.",
+      "description": "Retrieve a paginated list of plans that define reusable contract structures. Hits /plans — the same data the Zenskar app's Plans page reads.",
       "args": [
         {
           "name": "cursor",
@@ -4223,7 +4320,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/templates/plan",
+        "url": "/plans",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4246,7 +4343,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/templates/plan/{planId}",
+        "url": "/plans/{planId}",
         "method": "GET",
         "headers": {
           "Content-Type": "application/json"
@@ -4258,7 +4355,7 @@
     },
     {
       "name": "createPlan",
-      "description": "Create a new plan (template) that defines a reusable contract structure with products and pricing.",
+      "description": "Create a new plan — a reusable contract template with products and pricing. Hits POST /plans (same store the Zenskar app's Plans page reads).",
       "args": [
         {
           "name": "name",
@@ -4318,7 +4415,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/templates/plan",
+        "url": "/plans",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json"
@@ -4326,73 +4423,6 @@
       },
       "responseTemplate": {
         "prependBody": "## Created Plan\n\n"
-      }
-    },
-    {
-      "name": "addProductsToPlan",
-      "description": "Add products with pricing to an existing plan.",
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique identifier of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "products",
-          "description": "Array of product objects to add, each with product_id and pricing configuration.",
-          "type": "array",
-          "required": true,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/templates/plan/{planId}/products",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Updated Plan Products\n\n"
-      }
-    },
-    {
-      "name": "previewPlanEstimate",
-      "description": "Preview the estimated billing for a plan, showing projected charges per phase.",
-      "args": [
-        {
-          "name": "planId",
-          "description": "The unique identifier of the plan.",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        },
-        {
-          "name": "start_date",
-          "description": "Start date for the estimate (YYYY-MM-DD).",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "end_date",
-          "description": "End date for the estimate (YYYY-MM-DD). Optional — calculated from plan duration if omitted.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/templates/plan/{planId}/preview",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Plan Estimate Preview\n\n"
       }
     },
     {
@@ -5107,7 +5137,18 @@
     },
     {
       "name": "deleteCustomer",
-      "description": "Delete a customer by ID. This is permanent and cannot be undone. The customer must not have active contracts or unpaid invoices.",
+      "description": "Permanently delete a customer by ID. DESTRUCTIVE and cannot be undone. The customer must not have active contracts or unpaid invoices. ONLY call when the user explicitly says 'delete' for THIS customer; never as automatic recovery from another failed operation.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Customer",
+        "description": "This will permanently delete the customer and all associated records.",
+        "warningText": "DESTRUCTIVE — customer record cannot be recovered. Verify there are no active contracts or unpaid invoices first.",
+        "confirmText": "Delete Customer",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "customerId"
+        ]
+      },
       "args": [
         {
           "name": "customerId",
@@ -5130,7 +5171,18 @@
     },
     {
       "name": "deleteContact",
-      "description": "Delete a contact by ID.",
+      "description": "Permanently delete a contact by ID. DESTRUCTIVE — only call when the user explicitly says 'delete' for THIS contact; never as automatic recovery from another failed operation.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Contact",
+        "description": "This will permanently delete the contact record.",
+        "warningText": "DESTRUCTIVE — contact record will be removed and cannot be recovered.",
+        "confirmText": "Delete Contact",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "contactId"
+        ]
+      },
       "args": [
         {
           "name": "contactId",
@@ -5153,7 +5205,19 @@
     },
     {
       "name": "deletePaymentMethod",
-      "description": "Delete a payment method from a customer.",
+      "description": "Permanently delete a payment method from a customer. DESTRUCTIVE — saved card/bank details will be removed; recurring auto-charges using this method will fail. Only call when the user explicitly says 'delete' for THIS payment method.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Payment Method",
+        "description": "This will permanently delete the payment method from the customer's profile.",
+        "warningText": "DESTRUCTIVE — saved payment details will be removed. Any auto-charge or scheduled charge using this method will fail.",
+        "confirmText": "Delete Payment Method",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "customerId",
+          "paymentMethodId"
+        ]
+      },
       "args": [
         {
           "name": "customerId",
@@ -5183,7 +5247,7 @@
     },
     {
       "name": "pauseContract",
-      "description": "Pause an active contract. Requires a start_date for the pause and an unpause_extension_policy.",
+      "description": "Pause an active contract. ALWAYS ask the user explicitly for both 'start_date' and 'unpause_extension_policy' before calling — do NOT silently default. A future-dated start_date will create a scheduled pause that has not yet begun; the contract's top-level status stays 'active' until start_date passes. Use 'editPauseContract' to adjust the pause window or set a resume date afterward.",
       "args": [
         {
           "name": "contractId",
@@ -5194,14 +5258,14 @@
         },
         {
           "name": "start_date",
-          "description": "Date when the pause begins (ISO 8601 format, e.g. 2026-04-01T00:00:00).",
+          "description": "Date when the pause begins (ISO 8601 format, e.g. 2026-04-01T00:00:00). REQUIRED — ask the user; never default to today or a future date silently.",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "unpause_extension_policy",
-          "description": "How to handle the contract end date when unpaused.",
+          "description": "How to handle the contract end date when unpaused. 'extend' pushes the end_date out by the pause duration; 'overlap' keeps end_date fixed. ASK the user.",
           "type": "string",
           "required": true,
           "position": "body",
@@ -5230,8 +5294,56 @@
       }
     },
     {
+      "name": "editPauseContract",
+      "description": "Edit an existing pause phase on a contract. Use this when 'resumeContract' returns 'pause phase not found' for a future-dated pause, or when the user wants to set a resume date (pause end_date), shift the pause start, or change the unpause_extension_policy. Hits PATCH /contract_v2/{contractId}/pause.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract whose pause phase to edit.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "start_date",
+          "description": "New pause start date (ISO 8601). Optional.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "end_date",
+          "description": "Resume date — when the pause ends (ISO 8601). Set this to schedule a future resume.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "unpause_extension_policy",
+          "description": "How to handle the contract end date when unpaused. 'extend' or 'overlap'.",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "enum": [
+            "extend",
+            "overlap"
+          ]
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contract_v2/{contractId}/pause",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Pause Phase Updated\n\n"
+      }
+    },
+    {
       "name": "resumeContract",
-      "description": "Resume a paused contract. No request body needed.",
+      "description": "Resume an actively-running pause on a contract. PRECONDITIONS: the pause's start_date must be strictly in the past (not today, not future). For pauses scheduled for a future start, or to set a future resume date, use 'editPauseContract' instead (sets the pause's end_date). The error 'pause phase not found' means no pause phase has yet started — NOT that no pause exists. If this call fails, surface the error verbatim and consider 'editPauseContract'; do NOT escalate to deleteContract or any destructive fallback.",
       "args": [
         {
           "name": "contractId",
