@@ -114,6 +114,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `createContractPhasePricing` | Add pricing to a contract phase |
 | `expireContract` | Expire an active contract |
 | `pauseContract` | Pause an active contract from a given start date, with an unpause-extension policy (`extend` or `overlap`) and optional end date for auto-resume |
+| `editPauseContract` | Edit an existing pause phase — set or change the resume date, shift the start, or change the unpause policy |
 | `resumeContract` | Resume a paused contract |
 | `createContractPrompt` | Create a contract prompt |
 | `extractContractFromRaw` | Extract contract data from raw text using AI |
@@ -136,7 +137,8 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `generateInvoicePaymentLink` | Generate a payment link for an invoice |
 | `payInvoice` | Initiate payment for an invoice |
 | `approveInvoice` | Approve an invoice for billing |
-| `voidInvoice` | Void an approved unpaid invoice |
+| `voidInvoice` | Void an invoice |
+| `deleteInvoice` | Delete a draft invoice |
 | `generateInvoice` | Generate an invoice for a contract and date range |
 | `createInvoiceCreditNote` | Create a credit note against an invoice |
 | `createInvoiceCharge` | Auto-charge an invoice via payment gateway |
@@ -174,8 +176,6 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `listPlans` | List plan templates |
 | `getPlanById` | Get a plan by ID with phases and pricing |
 | `createPlan` | Create a plan template |
-| `addProductsToPlan` | Add products to an existing plan |
-| `previewPlanEstimate` | Preview estimated billing for a plan |
 
 ### Accounting
 | Tool | Description |
