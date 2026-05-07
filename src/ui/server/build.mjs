@@ -9,7 +9,14 @@ const ROOT = resolve(__dirname, '..', '..', '..');
 const DIST_UI = resolve(ROOT, 'dist', 'ui');
 const TMP = resolve(ROOT, 'dist', 'ui-tmp');
 
-const SHAPES = ['customer-table', 'invoice-table', 'invoice-line-items', 'payment-table', 'credit-note-table', 'contract-table'];
+const SHAPES = [
+  'customer-table', 'invoice-table', 'invoice-line-items',
+  'payment-table', 'credit-note-table', 'contract-table',
+  'customer-detail', 'invoice-detail', 'contract-detail', 'credit-note-detail',
+  'product-table', 'plan-table', 'journal-table', 'job-table', 'contact-table',
+  'raw-metric-table', 'aggregate-table', 'address-list',
+  'payment-method-list', 'entity-table',
+];
 
 mkdirSync(DIST_UI, { recursive: true });
 

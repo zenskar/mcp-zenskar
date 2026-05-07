@@ -5,12 +5,29 @@ const TEXT_ONLY_TOOLS = new Set([
 ]);
 
 const TOOL_TO_SHAPE = {
+  // Existing list tables
   listCustomers: { shape: 'customer-table', noun: 'customer', toPayload: customersToPayload, threshold: 0 },
   listInvoices: { shape: 'invoice-table', noun: 'invoice', toPayload: invoicesToPayload, threshold: 0 },
   getInvoiceLineItems: { shape: 'invoice-line-items', noun: 'line item', toPayload: lineItemsToPayload, threshold: 0 },
   listAllPayments: { shape: 'payment-table', noun: 'payment', toPayload: paymentsToPayload, threshold: 0 },
   listCreditNotes: { shape: 'credit-note-table', noun: 'credit note', toPayload: creditNotesToPayload, threshold: 0 },
   listContracts: { shape: 'contract-table', noun: 'contract', toPayload: contractsToPayload, threshold: 0 },
+  // New detail cards (Tier 4)
+  getCustomerById: { shape: 'customer-detail', noun: 'customer', toPayload: customerDetailToPayload, threshold: 0 },
+  getInvoiceById: { shape: 'invoice-detail', noun: 'invoice', toPayload: invoiceDetailToPayload, threshold: 0 },
+  getContractById: { shape: 'contract-detail', noun: 'contract', toPayload: contractDetailToPayload, threshold: 0 },
+  getCreditNoteById: { shape: 'credit-note-detail', noun: 'credit note', toPayload: creditNoteDetailToPayload, threshold: 0 },
+  // New list tables (Tier 3)
+  listProducts: { shape: 'product-table', noun: 'product', toPayload: productsToPayload, threshold: 0 },
+  listPlans: { shape: 'plan-table', noun: 'plan', toPayload: plansToPayload, threshold: 0 },
+  listJournalEntries: { shape: 'journal-table', noun: 'journal entry', toPayload: journalEntriesToPayload, threshold: 0 },
+  listJobs: { shape: 'job-table', noun: 'job', toPayload: jobsToPayload, threshold: 0 },
+  listContacts: { shape: 'contact-table', noun: 'contact', toPayload: contactsToPayload, threshold: 0 },
+  listRawMetrics: { shape: 'raw-metric-table', noun: 'raw metric', toPayload: rawMetricsToPayload, threshold: 0 },
+  listAggregates: { shape: 'aggregate-table', noun: 'aggregate', toPayload: aggregatesToPayload, threshold: 0 },
+  listCustomerAddresses: { shape: 'address-list', noun: 'address', toPayload: addressesToPayload, threshold: 0 },
+  listPaymentMethods: { shape: 'payment-method-list', noun: 'payment method', toPayload: paymentMethodsToPayload, threshold: 0 },
+  listBusinessEntities: { shape: 'entity-table', noun: 'business entity', toPayload: entitiesToPayload, threshold: 0 },
 };
 
 export const SHAPES = Object.freeze([
@@ -20,11 +37,27 @@ export const SHAPES = Object.freeze([
   'payment-table',
   'credit-note-table',
   'contract-table',
+  'customer-detail',
+  'invoice-detail',
+  'contract-detail',
+  'credit-note-detail',
+  'product-table',
+  'plan-table',
+  'journal-table',
+  'job-table',
+  'contact-table',
+  'raw-metric-table',
+  'aggregate-table',
+  'address-list',
+  'payment-method-list',
+  'entity-table',
 ]);
 
 export function resourceUriFor(shape) {
   return `ui://zenskar/${shape}.html`;
 }
+
+// ===== Existing payload builders =====
 
 function customersToPayload(raw, args) {
   const body = unwrapTemplate(raw);
@@ -245,6 +278,387 @@ function normalizeContract(c) {
     created_at: c.created_at ?? null,
   };
 }
+
+// ===== New detail-card payload builders =====
+
+function customerDetailToPayload(raw) {
+  const body = unwrapTemplate(raw);
+  const c = body.customer ?? body;
+  const base = normalizeCustomer(c);
+  return {
+    customer: {
+      ...base,
+      phone: c.phone ?? c.primary_phone ?? null,
+      business_entity_id: c.business_entity_id ?? null,
+      address: c.address ?? null,
+      communications_enabled: typeof c.communications_enabled === 'boolean' ? c.communications_enabled : null,
+      auto_charge_enabled: typeof c.auto_charge_enabled === 'boolean' ? c.auto_charge_enabled : null,
+      custom_data: c.custom_data ?? null,
+    },
+  };
+}
+
+function invoiceDetailToPayload(raw) {
+  const body = unwrapTemplate(raw);
+  const i = body.invoice ?? body;
+  const base = normalizeInvoice(i);
+  const lines = Array.isArray(i.line_items) ? i.line_items : Array.isArray(body.line_items) ? body.line_items : [];
+  return {
+    invoice: {
+      ...base,
+      paid_amount: numOrNull(i.paid_amount ?? (base.invoice_total != null && base.amount_due != null ? base.invoice_total - base.amount_due : null)),
+      currency: i.currency_code ?? i.currency ?? null,
+      business_entity_id: i.business_entity_id ?? null,
+      notes: i.notes ?? null,
+      custom_data: i.custom_data ?? null,
+    },
+    line_items: lines.length ? lines.map(normalizeLineItem) : undefined,
+  };
+}
+
+function contractDetailToPayload(raw) {
+  const body = unwrapTemplate(raw);
+  const c = body.contract ?? body;
+  const base = normalizeContract(c);
+  const phases = Array.isArray(c.phases) ? c.phases : [];
+  return {
+    contract: {
+      ...base,
+      custom_attributes: c.custom_attributes ?? null,
+      renewal_policy: c.renewal_policy ?? null,
+      notes: c.notes ?? null,
+    },
+    phases: phases.map(normalizePhase),
+  };
+}
+
+function normalizePhase(p) {
+  if (!p || typeof p !== 'object') return { id: null, name: null, start_date: null, end_date: null, mrr: null, pricing_summary: null, product_count: null };
+  const prods = Array.isArray(p.products) ? p.products : [];
+  return {
+    id: p.id ?? null,
+    name: p.name ?? p.phase_name ?? null,
+    start_date: p.start_date ?? null,
+    end_date: p.end_date ?? null,
+    mrr: pickMoney(p.mrr ?? p.monthly_recurring_revenue),
+    pricing_summary: p.pricing_summary ?? null,
+    product_count: prods.length || numOrNull(p.product_count),
+  };
+}
+
+function creditNoteDetailToPayload(raw) {
+  const body = unwrapTemplate(raw);
+  const c = body.credit_note ?? body.creditNote ?? body;
+  const base = normalizeCreditNote(c);
+  return {
+    credit_note: {
+      ...base,
+      line_items_url: c.line_items_url ?? null,
+      business_entity_id: c.business_entity_id ?? null,
+      notes: c.notes ?? null,
+    },
+  };
+}
+
+// ===== New list-table payload builders =====
+
+function productsToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['products', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && args.name__ilike) || undefined;
+  return {
+    products: rows.map(normalizeProduct),
+    total,
+    cursor: { next, prev },
+    scope,
+  };
+}
+function normalizeProduct(p) {
+  if (!p || typeof p !== 'object') return { id: '', name: null, external_id: null, description: null, status: null, pricing_count: null, created_at: null };
+  const pricings = Array.isArray(p.pricings) ? p.pricings : Array.isArray(p.pricing_configurations) ? p.pricing_configurations : null;
+  return {
+    id: String(p.id || p.product_id || ''),
+    name: p.name ?? p.product_name ?? null,
+    external_id: p.external_id ?? p.sku ?? null,
+    description: p.description ?? null,
+    status: p.status ?? p.state ?? null,
+    pricing_count: pricings ? pricings.length : numOrNull(p.pricing_count),
+    created_at: p.created_at ?? null,
+  };
+}
+
+function plansToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['plans', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && (args.name__ilike || args.status)) || undefined;
+  return {
+    plans: rows.map(normalizePlan),
+    total,
+    cursor: { next, prev },
+    scope,
+  };
+}
+function normalizePlan(p) {
+  if (!p || typeof p !== 'object') return { id: '', name: null, external_id: null, status: null, currency: null, phase_count: null, mrr: null, created_at: null };
+  const phases = Array.isArray(p.phases) ? p.phases : [];
+  return {
+    id: String(p.id || p.plan_id || ''),
+    name: p.name ?? p.plan_name ?? null,
+    external_id: p.external_id ?? null,
+    status: p.status ?? p.state ?? null,
+    currency: p.currency ?? p.currency_code ?? null,
+    phase_count: phases.length || numOrNull(p.phase_count),
+    mrr: pickMoney(p.mrr ?? p.monthly_recurring_revenue),
+    created_at: p.created_at ?? null,
+  };
+}
+
+function journalEntriesToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['entries', 'journal_entries', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && args.search_query) || undefined;
+  return {
+    entries: rows.map(normalizeJournalEntry),
+    total,
+    cursor: { next, prev },
+    scope,
+    default_currency: 'USD',
+  };
+}
+function normalizeJournalEntry(e) {
+  if (!e || typeof e !== 'object') return { id: '', entry_number: null, date: null, account_id: null, account_name: null, debit: null, credit: null, currency: null, description: null, created_at: null };
+  return {
+    id: String(e.id || e.journal_entry_id || ''),
+    entry_number: e.entry_number ?? e.reference ?? null,
+    date: e.date ?? e.transaction_date ?? e.posted_at ?? null,
+    account_id: e.account_id ?? null,
+    account_name: e.account_name ?? null,
+    debit: numOrNull(e.debit ?? e.debit_amount),
+    credit: numOrNull(e.credit ?? e.credit_amount),
+    currency: e.currency ?? e.currency_code ?? null,
+    description: e.description ?? e.memo ?? null,
+    created_at: e.created_at ?? null,
+  };
+}
+
+function jobsToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['jobs', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && args.search) || undefined;
+  // Roll up status counts so the header can show distribution at a glance
+  const status_counts = {};
+  for (const r of rows) {
+    const s = (r && r.status) || 'unknown';
+    status_counts[s] = (status_counts[s] || 0) + 1;
+  }
+  return {
+    jobs: rows.map(normalizeJob),
+    total,
+    cursor: { next, prev },
+    scope,
+    status_counts,
+  };
+}
+function normalizeJob(j) {
+  if (!j || typeof j !== 'object') return { id: '', type: null, status: null, started_at: null, completed_at: null, duration_ms: null, error: null, created_at: null };
+  const start = j.started_at ?? j.start_time ?? null;
+  const end = j.completed_at ?? j.end_time ?? null;
+  let duration_ms = null;
+  if (start && end) {
+    const a = Date.parse(start); const b = Date.parse(end);
+    if (Number.isFinite(a) && Number.isFinite(b)) duration_ms = b - a;
+  }
+  return {
+    id: String(j.id || j.job_id || ''),
+    type: j.type ?? j.job_type ?? j.kind ?? null,
+    status: j.status ?? null,
+    started_at: start,
+    completed_at: end,
+    duration_ms,
+    error: j.error ?? j.error_message ?? null,
+    created_at: j.created_at ?? null,
+  };
+}
+
+function contactsToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['contacts', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && args.customer_id) || undefined;
+  return {
+    contacts: rows.map(normalizeContact),
+    total,
+    cursor: { next, prev },
+    scope: scope ? String(scope) : undefined,
+  };
+}
+function normalizeContact(c) {
+  if (!c || typeof c !== 'object') return { id: '', name: null, email: null, phone: null, customer_id: null, role: null, created_at: null };
+  const first = c.first_name ?? '';
+  const last = c.last_name ?? '';
+  const composedName = [first, last].filter(Boolean).join(' ').trim();
+  return {
+    id: String(c.id || c.contact_id || ''),
+    name: c.name ?? (composedName || null),
+    email: c.email ?? c.primary_email ?? null,
+    phone: c.phone ?? c.primary_phone ?? null,
+    customer_id: c.customer_id ?? null,
+    role: c.role ?? c.title ?? c.position ?? null,
+    created_at: c.created_at ?? null,
+  };
+}
+
+function rawMetricsToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['raw_metrics', 'rawmetrics', 'rawMetrics', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && (args.search || args.name__ilike)) || undefined;
+  return {
+    raw_metrics: rows.map(normalizeRawMetric),
+    total,
+    cursor: { next, prev },
+    scope,
+  };
+}
+function normalizeRawMetric(m) {
+  if (!m || typeof m !== 'object') return { id: '', name: null, api_slug: null, api_type: null, status: null, description: null, created_at: null };
+  return {
+    id: String(m.id || m.raw_metric_id || ''),
+    name: m.name ?? null,
+    api_slug: m.api_slug ?? null,
+    api_type: m.api_type ?? null,
+    status: m.status ?? null,
+    description: m.description ?? null,
+    created_at: m.created_at ?? null,
+  };
+}
+
+function aggregatesToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['aggregates', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  const scope = (args && (args.name__ilike || args.datasource)) || undefined;
+  return {
+    aggregates: rows.map(normalizeAggregate),
+    total,
+    cursor: { next, prev },
+    scope,
+  };
+}
+function normalizeAggregate(a) {
+  if (!a || typeof a !== 'object') return { id: '', name: null, datasource: null, status: null, formula: null, unit: null, last_run_at: null, created_at: null };
+  return {
+    id: String(a.id || a.aggregate_id || ''),
+    name: a.name ?? null,
+    datasource: a.datasource ?? a.data_source ?? a.raw_metric_name ?? null,
+    status: a.status ?? null,
+    formula: a.formula ?? a.aggregation ?? null,
+    unit: a.unit ?? null,
+    last_run_at: a.last_run_at ?? a.updated_at ?? null,
+    created_at: a.created_at ?? null,
+  };
+}
+
+function addressesToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['addresses', 'data', 'results']);
+  return {
+    customer_id: args && args.customerId ? String(args.customerId) : undefined,
+    addresses: rows.map(normalizeAddress),
+    total: rows.length,
+  };
+}
+function normalizeAddress(a) {
+  if (!a || typeof a !== 'object') return { id: '', label: null, line1: null, line2: null, city: null, state: null, zip_code: null, country: null, is_primary: null };
+  return {
+    id: String(a.id || ''),
+    label: a.label ?? a.name ?? a.address_type ?? null,
+    line1: a.line1 ?? a.address_line_1 ?? null,
+    line2: a.line2 ?? a.address_line_2 ?? null,
+    city: a.city ?? null,
+    state: a.state ?? null,
+    zip_code: a.zipCode ?? a.zip_code ?? a.postal_code ?? null,
+    country: a.country ?? a.country_code ?? null,
+    is_primary: typeof a.is_primary === 'boolean' ? a.is_primary : (typeof a.primary === 'boolean' ? a.primary : null),
+  };
+}
+
+function paymentMethodsToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['payment_methods', 'paymentMethods', 'data', 'results']);
+  return {
+    customer_id: args && args.customerId ? String(args.customerId) : undefined,
+    payment_methods: rows.map(normalizePaymentMethod),
+    total: rows.length,
+  };
+}
+function normalizePaymentMethod(m) {
+  if (!m || typeof m !== 'object') return { id: '', type: null, brand: null, last4: null, exp_month: null, exp_year: null, is_default: null, created_at: null };
+  const card = m.card || {};
+  return {
+    id: String(m.id || ''),
+    type: m.type ?? m.payment_method_type ?? null,
+    brand: card.brand ?? m.brand ?? null,
+    last4: card.last4 ?? m.last4 ?? null,
+    exp_month: numOrNull(card.exp_month ?? m.exp_month),
+    exp_year: numOrNull(card.exp_year ?? m.exp_year),
+    is_default: typeof m.is_default === 'boolean' ? m.is_default : (typeof m.default === 'boolean' ? m.default : null),
+    created_at: m.created_at ?? null,
+  };
+}
+
+function entitiesToPayload(raw, args) {
+  const body = unwrapTemplate(raw);
+  const rows = pickArray(body, ['business_entities', 'businessEntities', 'entities', 'data', 'results']);
+  const total = pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length;
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {};
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null;
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null;
+  return {
+    entities: rows.map(normalizeEntity),
+    total,
+    cursor: { next, prev },
+  };
+}
+function normalizeEntity(e) {
+  if (!e || typeof e !== 'object') return { id: '', name: null, code: null, country: null, default_currency: null, status: null, created_at: null };
+  return {
+    id: String(e.id || e.business_entity_id || ''),
+    name: e.name ?? e.business_entity_name ?? null,
+    code: e.code ?? e.short_code ?? null,
+    country: e.country ?? e.country_code ?? (e.address && e.address.country) ?? null,
+    default_currency: e.default_currency ?? e.currency ?? null,
+    status: e.status ?? null,
+    created_at: e.created_at ?? null,
+  };
+}
+
+// ===== Helpers =====
 
 function pickArray(o, keys) {
   if (Array.isArray(o)) return o;
