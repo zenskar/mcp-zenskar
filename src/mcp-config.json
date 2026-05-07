@@ -3619,7 +3619,21 @@
     },
     {
       "name": "refundPayment",
-      "description": "Refund a payment (full or partial). Pass refund_amount=0 (or full original amount) for a full refund, or a smaller positive integer for a partial refund. refund_destination + writeoff_invoices control where the refund money goes and whether linked invoices are written off.",
+      "description": "Refund a payment (full or partial). Pass refund_amount=0 (or full original amount) for a full refund, or a smaller positive integer for a partial refund. refund_destination + writeoff_invoices control where the refund money goes and whether linked invoices are written off. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Refund Payment",
+        "description": "This will refund the payment via the selected destination and may write off linked invoices.",
+        "warningText": "DESTRUCTIVE — refunds money via the original payment method (or issues credits) and may write off invoices. Verify amount, destination, and writeoff flag before proceeding.",
+        "confirmText": "Refund Payment",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "paymentId",
+          "refund_amount",
+          "refund_destination",
+          "writeoff_invoices"
+        ]
+      },
       "args": [
         {
           "name": "paymentId",
