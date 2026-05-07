@@ -1932,7 +1932,7 @@
     },
     {
       "name": "recogniseRevenue",
-      "description": "Create an organisation-wide revenue recognition job up to a specified end_date. Backend does NOT support per-contract scoping. Returns immediately with a job (status='pending') that runs ASYNCHRONOUSLY on a worker. AI workflow: (1) call this and capture job.id, (2) poll getJobById until status is 'success' or 'partial_success' (or 'failed' — then discard) — typical completion is fast but can take longer for large orgs, (3) only then call confirmRevenueRecognition to post the staged entries, or discardRevenueRecognition to roll back. Calling confirm before the job reaches a terminal status will commit a PARTIAL set of staged entries — the backend does NOT guard against this. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "description": "Recognize revenue for the organization up to a specified end_date. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Recognise Revenue",
@@ -1961,75 +1961,7 @@
         }
       },
       "responseTemplate": {
-        "prependBody": "## Revenue Recognition Job Created\n\nA pending revenue recognition job has been created and is running asynchronously. Poll getJobById until status is 'success' or 'partial_success' before calling confirmRevenueRecognition. If status becomes 'failed', call discardRevenueRecognition instead.\n\n"
-      }
-    },
-    {
-      "name": "confirmRevenueRecognition",
-      "description": "Commit a revenue recognition job created by recogniseRevenue — posts the staged journal entries. PRECONDITION: getJobById(job_id).status must be 'success' or 'partial_success'. The backend only checks idempotency markers (transferred_at / discarded_at) — it does NOT block confirm while the worker is still 'pending' or 'in_progress', so calling early commits PARTIAL data. Always poll getJobById to a terminal status first. If status is 'failed', call discardRevenueRecognition instead. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Confirm Revenue Recognition",
-        "description": "This will commit the staged revenue recognition journal entries for the specified job.",
-        "warningText": "This action will post journal entries that affect financial reporting. It cannot be reversed by simple discard once confirmed.",
-        "confirmText": "Confirm Recognition",
-        "cancelText": "Cancel",
-        "sensitiveFields": [
-          "job_id"
-        ]
-      },
-      "args": [
-        {
-          "name": "job_id",
-          "description": "The unique identifier of the pending revenue recognition job (returned by recogniseRevenue).",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/revenue_recognition_v3/recognise-revenue/{job_id}/confirm",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Revenue Recognition Confirmed\n\n"
-      }
-    },
-    {
-      "name": "discardRevenueRecognition",
-      "description": "Roll back a revenue recognition job created by recogniseRevenue — drops the staged journal entries without posting. Use this when getJobById shows status='failed', or when the user reviewed the staged numbers and wants to abort. Safe to call once the worker has reached a terminal status; calling while the worker is still 'pending' or 'in_progress' will discard whatever is staged so far (the backend does not block on job.status). Once discarded the job cannot be confirmed; you must call recogniseRevenue again to start over. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
-      "needsApproval": true,
-      "approvalConfig": {
-        "title": "Discard Revenue Recognition",
-        "description": "This will discard all staged journal entries for the specified pending revenue recognition job.",
-        "warningText": "This action drops the pending recognition batch. The job cannot be re-confirmed after discard; you will need to call recogniseRevenue again.",
-        "confirmText": "Discard Job",
-        "cancelText": "Cancel",
-        "sensitiveFields": [
-          "job_id"
-        ]
-      },
-      "args": [
-        {
-          "name": "job_id",
-          "description": "The unique identifier of the pending revenue recognition job (returned by recogniseRevenue).",
-          "type": "string",
-          "required": true,
-          "position": "path"
-        }
-      ],
-      "requestTemplate": {
-        "url": "/revenue_recognition_v3/recognise-revenue/{job_id}/discard",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      },
-      "responseTemplate": {
-        "prependBody": "## Revenue Recognition Discarded\n\n"
+        "prependBody": "## Revenue Recognition\n\nRevenue recognition has been processed successfully:\n\n"
       }
     },
     {
