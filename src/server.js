@@ -1184,6 +1184,76 @@ function generateApprovalRequest(tool, args) {
   };
 }
 
+// Tool-specific deep argument validation. Catches semantic gaps that JSON Schema
+// `required` cannot express (e.g. nested fields inside an `object` arg).
+// Return shape matches validateToolLimits: {valid, errors[]}.
+function validateToolArgs(toolName, args) {
+  const errors = [];
+
+  if (toolName === 'createProductPricing') {
+    const pd = args.pricing_data;
+    if (!pd || typeof pd !== 'object') {
+      errors.push("'pricing_data' is required and must be an object containing 'pricing_type' and 'currency'.");
+    } else {
+      if (!pd.pricing_type) errors.push("'pricing_data.pricing_type' is required (e.g. 'per_unit', 'flat_fee', 'tiered', 'volume', 'percent', 'package').");
+      if (!pd.currency) errors.push("'pricing_data.currency' is required (ISO 4217, e.g. 'USD').");
+    }
+    const q = args.quantity;
+    if (!q || typeof q !== 'object') {
+      errors.push("'quantity' is required and must be an object: {type:'fixed'|'metered', quantity?, unit?, aggregate_id?}. Without it the UI shows 0 for billing_metric.");
+    } else {
+      if (q.type !== 'fixed' && q.type !== 'metered') errors.push("'quantity.type' must be exactly 'fixed' or 'metered'.");
+      if (q.type === 'fixed' && (q.quantity == null || !q.unit)) errors.push("'quantity.type'='fixed' requires both 'quantity' (number) and 'unit' (label string).");
+      if (q.type === 'metered' && !q.aggregate_id) errors.push("'quantity.type'='metered' requires 'aggregate_id' (UUID of the billable metric).");
+    }
+    const bp = args.billing_period;
+    if (!bp || typeof bp !== 'object') {
+      errors.push("'billing_period' is required and must be an object: {cadence:'P1M'|'P3M'|'P1Y'|..., offset:'P0D'|...}. Without it the UI renders 'Undefined- Every Undefined Undefined'.");
+    } else {
+      if (!bp.cadence) errors.push("'billing_period.cadence' is required (ISO-8601 duration: 'P1M'=monthly, 'P3M'=quarterly, 'P1Y'=yearly).");
+      if (!bp.offset) errors.push("'billing_period.offset' is required (ISO-8601 duration, 'P0D' for no offset).");
+    }
+  }
+
+  if (toolName === 'createPlan') {
+    if (!args.schedule || typeof args.schedule !== 'object' || !args.schedule.duration) {
+      errors.push("'schedule' is required and must include 'duration' (ISO-8601, e.g. 'P1Y').");
+    }
+    if (!args.status) {
+      errors.push("'status' is required: 'draft' | 'active' | 'archived'.");
+    }
+    const phases = args.phases;
+    if (!Array.isArray(phases) || phases.length === 0) {
+      errors.push("'phases' must be a non-empty array. A plan with no phases is unusable in PlansV2 — include at least one phase with name, schedule, order, and either features or pricings.");
+    } else {
+      phases.forEach((p, i) => {
+        if (!p || typeof p !== 'object') { errors.push(`'phases[${i}]' must be an object.`); return; }
+        if (!p.name) errors.push(`'phases[${i}].name' is required.`);
+        if (!p.schedule || !p.schedule.duration) errors.push(`'phases[${i}].schedule.duration' is required (ISO-8601).`);
+        if (typeof p.order !== 'number') errors.push(`'phases[${i}].order' is required (integer, 0-indexed).`);
+        if (!p.features && (!Array.isArray(p.pricings) || p.pricings.length === 0)) {
+          errors.push(`'phases[${i}]' has neither 'features' nor non-empty 'pricings' — phase will be empty in the UI.`);
+        }
+      });
+    }
+  }
+
+  if (toolName === 'generateInvoice') {
+    if (!Number.isInteger(args.from_date)) errors.push("'from_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
+    if (!Number.isInteger(args.to_date)) errors.push("'to_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
+    if (Number.isInteger(args.from_date) && Number.isInteger(args.to_date) && args.to_date <= args.from_date) {
+      errors.push("'to_date' must be strictly greater than 'from_date'.");
+    }
+  }
+
+  if (toolName === 'pauseContract' || toolName === 'editPauseContract') {
+    if (toolName === 'pauseContract' && !args.start_date) errors.push("'start_date' is required (ISO 8601).");
+    if (toolName === 'pauseContract' && !args.unpause_extension_policy) errors.push("'unpause_extension_policy' is required: 'extend' or 'overlap'.");
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 // Helper to map API types to form field types
 function getFieldType(apiType) {
   switch (apiType) {
@@ -1232,7 +1302,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           // Check if this tool needs approval and hasn't been approved yet
           const needsApproval = checkNeedsApproval(tool, args);
           const userContext = args.__userContext;
-          const isApproved = userContext?.approved === true;
+          const isApproved = userContext?.approval?.approved === true;
           
           logger.info(`[${tool.name}] Approval check:`, {
             needsApproval,
@@ -1246,11 +1316,13 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           if (needsApproval && !isApproved) {
             logger.info(`[${tool.name}] Tool requires approval, generating approval request`);
             const approvalRequest = generateApprovalRequest(tool, args);
-            
+            const noticePrefix = `ACTION_NOT_EXECUTED — APPROVAL_REQUIRED\n\n` +
+              `Tool '${tool.name}' was NOT executed. The host must render an approval dialog from the payload below and re-invoke this tool with __userContext.approval.approved=true to actually perform the action. Do NOT report success to the user; surface the dialog instead.\n\n`;
+
             return {
               content: [{
                 type: "text",
-                text: JSON.stringify(approvalRequest, null, 2)
+                text: noticePrefix + JSON.stringify(approvalRequest, null, 2)
               }],
               isApprovalRequired: true,
               approvalRequest: approvalRequest
@@ -1311,6 +1383,23 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             };
           }
           
+          // Tool-specific deep argument validation (catches what JSON Schema can't express)
+          const argValidation = validateToolArgs(tool.name, args);
+          if (!argValidation.valid) {
+            logger.error(`[${tool.name}] Tool execution blocked due to invalid arguments:`, argValidation.errors);
+            tokenUsageStatus = 'blocked';
+            tokenUsageReason = `invalid_args: ${argValidation.errors.join('; ')}`;
+            return {
+              content: [{
+                type: "text",
+                text: `ACTION_NOT_EXECUTED — INVALID_ARGUMENTS\n\nTool '${tool.name}' was NOT executed because the supplied arguments are invalid or incomplete:\n\n` +
+                      argValidation.errors.map((e, i) => `${i + 1}. ${e}`).join('\n') +
+                      `\n\nFix the arguments and call again. Do NOT report success to the user.`
+              }],
+              isError: true
+            };
+          }
+
           // Use adjusted args with enforced limits
           const adjustedArgs = limitsValidation.adjustedArgs;
 
