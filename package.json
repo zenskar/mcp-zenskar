@@ -2,13 +2,17 @@
   "name": "mcp-zenskar",
   "version": "1.1.11",
   "description": "Model Context Protocol (MCP) server for Zenskar API - customer management, invoicing, and billing operations",
+  "type": "module",
   "main": "src/server.js",
   "bin": {
     "mcp-zenskar": "src/server.js"
   },
   "scripts": {
     "start": "node src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:ui": "vite --config vite.config.ts",
+    "build:ui": "node src/ui/server/build.mjs",
+    "smoke": "tsx src/ui/test/smoke.ts",
+    "test": "npm run smoke"
   },
   "keywords": [
     "mcp",
@@ -25,11 +29,26 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
-    "uuid": "^9.0.1",
-    "zod": "^3.22.0"
+    "uuid": "^14.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.1.2",
+    "@tailwindcss/vite": "^4.2.4",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwindcss": "^4.2.4",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vite-plugin-singlefile": "^2.3.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=24.0.0"
   },
   "repository": {
     "type": "git",
