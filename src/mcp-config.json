@@ -790,14 +790,14 @@
         },
         {
           "name": "start_date",
-          "description": "Start date of the estimate (YYYY-MM-DD).",
+          "description": "Start date of the estimate window. ISO 8601 date format only — YYYY-MM-DD (e.g., '2025-01-15'). NOT datetime.",
           "type": "string",
           "required": true,
           "position": "query"
         },
         {
           "name": "end_date",
-          "description": "End date of the estimate (YYYY-MM-DD).",
+          "description": "End date of the estimate window. ISO 8601 date format only — YYYY-MM-DD (e.g., '2025-01-31'). NOT datetime.",
           "type": "string",
           "required": true,
           "position": "query"
@@ -1071,7 +1071,7 @@
     },
     {
       "name": "getRawMetricLogs",
-      "description": "Get Usage Event event rows for a specific resource by ID. This follows the same visual-preview query path used by the frontend meter page, so it returns recent event rows rather than only backend sample logs. Backend/API terminology may also call this a raw metric.",
+      "description": "Get recent Usage Event rows for a resource by ID. Returns the most recent event rows; backend does NOT support filters, pagination, ordering, or aggregation on this endpoint. For filtered/aggregated queries use the aggregate endpoints. Backend/API terminology may also call this a raw metric.",
       "args": [
         {
           "name": "rawMetricId",
@@ -1079,43 +1079,6 @@
           "type": "string",
           "required": true,
           "position": "path"
-        },
-        {
-          "name": "filters",
-          "description": "Optional visual-query filter array, matching the frontend usage-event viewer format. Default is an empty filter list.",
-          "type": "array",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "limit",
-          "description": "Maximum number of event rows to return. Defaults to 20, matching frontend behavior.",
-          "type": "integer",
-          "required": false,
-          "position": "body",
-          "default": 20
-        },
-        {
-          "name": "offset",
-          "description": "Pagination offset for event rows. Defaults to 0.",
-          "type": "integer",
-          "required": false,
-          "position": "body",
-          "default": 0
-        },
-        {
-          "name": "aggregate_operation",
-          "description": "Optional aggregate operation object used by the frontend for event counts (for example COUNT on timestamp). Leave null for normal row listing.",
-          "type": "object",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "order_by",
-          "description": "Optional ordering array. Defaults to [{column:'timestamp', type:'DESC'}] to match frontend event viewing.",
-          "type": "array",
-          "required": false,
-          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -1487,7 +1450,7 @@
     },
     {
       "name": "createContractPrompt",
-      "description": "Create a new contract prompt and save it to the system.",
+      "description": "Save a reusable AI extraction prompt that drives contract data extraction (used by extractContractFromRaw). Use this to create / update / version the instructions the AI follows when parsing raw contract text.",
       "needsApproval": false,
       "approvalConfig": {
         "title": "Create Contract Prompt",
@@ -1503,21 +1466,21 @@
       "args": [
         {
           "name": "prompt_name",
-          "description": "A name for the prompt (required by API).",
+          "description": "Identifier for this prompt template (e.g., 'Standard Contract Extraction', 'SaaS Subscription v2'). Used to look up / version-track the prompt.",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "prompt_text",
-          "description": "The prompt text to save.",
+          "description": "AI instructions that tell the model how to extract contract fields from raw text (e.g., what to do with dates, products, pricing tiers, billing cadence). This is the system/user prompt body the extractor will run against.",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "prompt_schema",
-          "description": "Optional schema for the prompt (e.g., 'billing_schema'). Can be null.",
+          "description": "Optional schema name pinning the expected output shape (e.g., 'billing_schema', 'subscription_schema'). Null lets the AI infer.",
           "type": [
             "string",
             "null"
@@ -2528,6 +2491,20 @@
           "type": "string",
           "required": false,
           "position": "body"
+        },
+        {
+          "name": "custom_data",
+          "description": "Custom key-value pairs for additional customer info (e.g., {\"industry\": \"saas\", \"account_tier\": \"enterprise\", \"sales_rep\": \"jane\"}). Optional.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_info",
+          "description": "List of tax identifiers for the customer. Each item: {country_code: 'US'|'GB'|..., tax_id_type: e.g. 'vat'|'gst', tax_id: string}. Optional.",
+          "type": "array",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -2586,7 +2563,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/usage/{rawMetricSlug}",
+        "url": "/usage_events/{rawMetricSlug}",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json",
@@ -3098,7 +3075,7 @@
     },
     {
       "name": "createContractPhasePricing",
-      "description": "Add pricing to a contract phase. Either pricing_id (reference existing product pricing) or pricing (inline pricing object) must be provided. Use product_id to associate with a product.",
+      "description": "Add pricing to a contract phase. REQUIRED: pass EXACTLY ONE of `pricing_id` (reference an existing product pricing) OR `pricing` (inline pricing object) — never both, never neither. Pair with `product_id` (existing product) or inline `product` to associate with a product.",
       "args": [
         {
           "name": "contractId",
@@ -3642,7 +3619,7 @@
     },
     {
       "name": "refundPayment",
-      "description": "Refund a payment (full or partial). Specify the refund amount, destination, and whether to write off associated invoices.",
+      "description": "Refund a payment (full or partial). Pass refund_amount=0 (or full original amount) for a full refund, or a smaller positive integer for a partial refund. refund_destination + writeoff_invoices control where the refund money goes and whether linked invoices are written off.",
       "args": [
         {
           "name": "paymentId",
@@ -3653,21 +3630,25 @@
         },
         {
           "name": "refund_amount",
-          "description": "Amount to refund.",
+          "description": "Refund amount in the smallest currency unit (integer cents/paise). Use 0 to refund the full payment, or a positive integer for a partial refund. Must not exceed the payment's remaining refundable amount.",
           "type": "number",
           "required": true,
           "position": "body"
         },
         {
           "name": "refund_destination",
-          "description": "Where to send the refund: original_payment_method, credits, etc.",
+          "description": "Where to send the refund. Valid values: 'original_payment_method' (refund back to the source card/bank), 'credits' (issue customer credits instead of returning money).",
           "type": "string",
           "required": true,
-          "position": "body"
+          "position": "body",
+          "enum": [
+            "original_payment_method",
+            "credits"
+          ]
         },
         {
           "name": "writeoff_invoices",
-          "description": "Whether to write off the associated invoices (true/false).",
+          "description": "If true, the invoice(s) linked to this payment are marked written off (no further collection). Set false to leave invoice balance owing after refund.",
           "type": "boolean",
           "required": true,
           "position": "body"
@@ -3694,6 +3675,34 @@
           "type": "string",
           "required": true,
           "position": "path"
+        },
+        {
+          "name": "connector",
+          "description": "Optional payment provider connector config object (e.g., {\"name\": \"stripe\", \"reference_id\": \"cus_xxx\"}). Backend auto-detects if omitted.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "source",
+          "description": "Optional source identifier for the charge.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "payment_method_types",
+          "description": "Optional list of allowed payment method types (e.g., [\"card\", \"ach\"]).",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "skip_invoice_due_date_check",
+          "description": "If true, charge proceeds even if the invoice is not yet due. Defaults to false.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -3871,6 +3880,83 @@
           "name": "business_entity_id",
           "description": "UUID of the business entity to associate with.",
           "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "address_line3",
+          "description": "Address line 3.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line1",
+          "description": "Shipping address line 1.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line2",
+          "description": "Shipping address line 2.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line3",
+          "description": "Shipping address line 3.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_city",
+          "description": "Shipping address city.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_state",
+          "description": "Shipping address state.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_zipCode",
+          "description": "Shipping address ZIP/postal code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_country",
+          "description": "Shipping address country.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_country_code",
+          "description": "Shipping address country code (e.g. US, GB).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_data",
+          "description": "Custom key-value pairs for additional customer info (e.g., {\"industry\": \"saas\", \"account_tier\": \"enterprise\"}).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_info",
+          "description": "List of tax identifiers. Each item: {country_code, tax_id_type, tax_id}.",
+          "type": "array",
           "required": false,
           "position": "body"
         }
@@ -4623,8 +4709,8 @@
         },
         {
           "name": "tax_codes",
-          "description": "Array of tax code objects for the product.",
-          "type": "array",
+          "description": "Tax code mapping object keyed by region/provider (e.g., {\"avalara\": \"PS081282\", \"stripe\": \"txcd_99999999\"}).",
+          "type": "object",
           "required": false,
           "position": "body"
         },
@@ -5344,6 +5430,13 @@
           "type": "string",
           "required": false,
           "position": "body"
+        },
+        {
+          "name": "phone_number",
+          "description": "Updated phone number (max 20 chars). Include country code (e.g., +1-555-0100).",
+          "type": "string",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -5616,8 +5709,8 @@
         },
         {
           "name": "connector",
-          "description": "Payment connector name (e.g., 'stripe').",
-          "type": "string",
+          "description": "Payment provider connector config object (e.g., {\"name\": \"stripe\", \"reference_id\": \"cus_xxx\"}). Either field is optional. If omitted, backend auto-detects from resource mappings.",
+          "type": "object",
           "required": false,
           "position": "body"
         },
@@ -5819,6 +5912,13 @@
         {
           "name": "end_date",
           "description": "Resume date — when the pause ends (ISO 8601). Set this to schedule a future resume.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "pause_phase_id",
+          "description": "UUID of the specific pause phase to edit. Optional — required only when a contract has multiple pause phases and you need to disambiguate which one to edit.",
           "type": "string",
           "required": false,
           "position": "body"
