@@ -4392,9 +4392,9 @@
         },
         {
           "name": "phases",
-          "description": "Array of plan phases. Each phase: {name: string (required), schedule: {duration, start_offset?, trigger_type?} (required), order: int (required, 0-indexed), description?: string, features?: CreateProductPricingRequestSchema (one-off phase-level pricing/features), pricings?: [{schedule, pricing_id?, product_id?, pricing?: CreateProductPricingRequestSchema, product?: CreateProductRequestSchema}] (per-product pricings)}. A phase with no pricings AND no features is effectively empty. Minimal example: [{\"name\":\"Phase 1\",\"schedule\":{\"duration\":\"P1Y\"},\"order\":0,\"features\":{\"pricing_data\":{\"pricing_type\":\"features\"}}}].",
+          "description": "Array of plan phases (REQUIRED — must be non-empty). Each phase: {name: string (required), schedule: {duration, start_offset?, trigger_type?} (required), order: int (required, 0-indexed), description?: string, features?: CreateProductPricingRequestSchema (one-off phase-level pricing/features), pricings?: [{schedule, pricing_id?, product_id?, pricing?: CreateProductPricingRequestSchema, product?: CreateProductRequestSchema}] (per-product pricings)}. Each phase must have features OR a non-empty pricings array. Minimal example: [{\"name\":\"Phase 1\",\"schedule\":{\"duration\":\"P1Y\"},\"order\":0,\"features\":{\"pricing_data\":{\"pricing_type\":\"features\"}}}].",
           "type": "array",
-          "required": false,
+          "required": true,
           "position": "body"
         }
       ],
