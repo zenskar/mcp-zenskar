@@ -1969,7 +1969,7 @@
     },
     {
       "name": "recogniseRevenue",
-      "description": "Recognize revenue for the organization up to a specified end_date. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "description": "Create an organisation-wide revenue recognition job up to a specified end_date. Backend does NOT support per-contract scoping. Returns immediately with a job (status='pending') that runs ASYNCHRONOUSLY on a worker. AI workflow: (1) call this and capture job.id, (2) poll getJobById until status is 'success' or 'partial_success' (or 'failed' — then discard) — typical completion is fast but can take longer for large orgs, (3) only then call confirmRevenueRecognition to post the staged entries, or discardRevenueRecognition to roll back. Calling confirm before the job reaches a terminal status will commit a PARTIAL set of staged entries — the backend does NOT guard against this. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Recognise Revenue",
@@ -1998,7 +1998,234 @@
         }
       },
       "responseTemplate": {
-        "prependBody": "## Revenue Recognition\n\nRevenue recognition has been processed successfully:\n\n"
+        "prependBody": "## Revenue Recognition Job Created\n\nA pending revenue recognition job has been created and is running asynchronously. Poll getJobById until status is 'success' or 'partial_success' before calling confirmRevenueRecognition. If status becomes 'failed', call discardRevenueRecognition instead.\n\n"
+      }
+    },
+    {
+      "name": "confirmRevenueRecognition",
+      "description": "Commit a revenue recognition job created by recogniseRevenue — posts the staged journal entries. PRECONDITION: getJobById(job_id).status must be 'success' or 'partial_success'. The backend only checks idempotency markers (transferred_at / discarded_at) — it does NOT block confirm while the worker is still 'pending' or 'in_progress', so calling early commits PARTIAL data. Always poll getJobById to a terminal status first. If status is 'failed', call discardRevenueRecognition instead. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Confirm Revenue Recognition",
+        "description": "This will commit the staged revenue recognition journal entries for the specified job.",
+        "warningText": "This action will post journal entries that affect financial reporting. It cannot be reversed by simple discard once confirmed.",
+        "confirmText": "Confirm Recognition",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "job_id"
+        ]
+      },
+      "args": [
+        {
+          "name": "job_id",
+          "description": "The unique identifier of the pending revenue recognition job (returned by recogniseRevenue).",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/revenue_recognition_v3/recognise-revenue/{job_id}/confirm",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Revenue Recognition Confirmed\n\n"
+      }
+    },
+    {
+      "name": "discardRevenueRecognition",
+      "description": "Roll back a revenue recognition job created by recogniseRevenue — drops the staged journal entries without posting. Use this when getJobById shows status='failed', or when the user reviewed the staged numbers and wants to abort. Safe to call once the worker has reached a terminal status; calling while the worker is still 'pending' or 'in_progress' will discard whatever is staged so far (the backend does not block on job.status). Once discarded the job cannot be confirmed; you must call recogniseRevenue again to start over. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Discard Revenue Recognition",
+        "description": "This will discard all staged journal entries for the specified pending revenue recognition job.",
+        "warningText": "This action drops the pending recognition batch. The job cannot be re-confirmed after discard; you will need to call recogniseRevenue again.",
+        "confirmText": "Discard Job",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "job_id"
+        ]
+      },
+      "args": [
+        {
+          "name": "job_id",
+          "description": "The unique identifier of the pending revenue recognition job (returned by recogniseRevenue).",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/revenue_recognition_v3/recognise-revenue/{job_id}/discard",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Revenue Recognition Discarded\n\n"
+      }
+    },
+    {
+      "name": "listRevenuePostings",
+      "description": "Retrieve a paginated list of revenue postings (per-period revenue allocations against revenue contracts and performance obligations). Supports filtering by contract, revenue contract, performance obligation, posting date, and currency.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of revenue postings to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Sort order. Prefix with '-' for descending. Defaults to '-created_at'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Filter by billing contract UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "revenue_contract_id",
+          "description": "Filter by revenue recognition contract UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "revenue_contract_item_id",
+          "description": "Filter by revenue contract item UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "performance_obligation_id",
+          "description": "Filter by performance obligation UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posting_date__gte",
+          "description": "Posting date lower bound (inclusive, YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posting_date__lte",
+          "description": "Posting date upper bound (inclusive, YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry_id__isnull",
+          "description": "If true, return only postings not yet posted to a journal entry. If false, return only postings already journalised.",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/revenue_recognition_v3/revenue_postings",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Revenue Postings\n\n"
+      }
+    },
+    {
+      "name": "refreshRevenuePostings",
+      "description": "Recalculate and upsert revenue postings for a specific revenue contract item / performance obligation at a given posting date. All five identifiers are required (the backend rejects partial inputs). Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Refresh Revenue Postings",
+        "description": "This will recalculate and upsert revenue postings for the specified revenue contract item / performance obligation at the specified posting date.",
+        "warningText": "This action mutates revenue posting state and may shift period revenue figures. Review the identifiers and posting_date before confirming.",
+        "confirmText": "Refresh Postings",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "contract_id",
+          "revenue_contract_id",
+          "revenue_contract_item_id",
+          "performance_obligation_id",
+          "posting_date"
+        ]
+      },
+      "args": [
+        {
+          "name": "contract_id",
+          "description": "Billing contract UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "revenue_contract_id",
+          "description": "Revenue recognition contract UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "revenue_contract_item_id",
+          "description": "Revenue contract item UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "performance_obligation_id",
+          "description": "Performance obligation UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "posting_date",
+          "description": "Posting date in YYYY-MM-DD format (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/revenue_recognition_v3/revenue_postings/refresh",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Revenue Postings Refreshed\n\n"
       }
     },
     {
@@ -3817,7 +4044,7 @@
     },
     {
       "name": "listJournalEntries",
-      "description": "Retrieve a paginated list of journal entries with optional filtering by date, account, or status.",
+      "description": "Retrieve a paginated list of journal entries with optional filtering by date, status, account, or job. Filters use fastapi-filter conventions (e.g. posted_at__gte=YYYY-MM-DD, lines__account_id=<uuid>).",
       "args": [
         {
           "name": "cursor",
@@ -3836,6 +4063,62 @@
         {
           "name": "search_query",
           "description": "Search query to filter journal entries.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Sort order. Prefix with '-' for descending. Defaults to '-created_at'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "id",
+          "description": "Filter by journal entry UUID (exact match).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posted_at__gte",
+          "description": "Posted-at date lower bound (inclusive). Accepts ISO date YYYY-MM-DD or full datetime.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posted_at__lte",
+          "description": "Posted-at date upper bound (inclusive).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "status_type",
+          "description": "Filter by status. Common values: 'posted', 'draft'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "description__ilike",
+          "description": "Case-insensitive partial match on description.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "job_id",
+          "description": "Filter by originating job UUID (e.g. revenue recognition batch).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "lines__account_id",
+          "description": "Filter entries having a line on this account UUID.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -3936,7 +4219,7 @@
     },
     {
       "name": "listJournalLines",
-      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries.",
+      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries. Supports filtering by customer, contract, account, currency, and parent journal entry posted date.",
       "args": [
         {
           "name": "cursor",
@@ -3958,6 +4241,83 @@
           "type": "string",
           "required": false,
           "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Sort order. Prefix with '-' for descending. Defaults to '-created_at'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Filter by customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Filter by billing contract UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "account_id",
+          "description": "Filter by GL account UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry_id",
+          "description": "Filter by parent journal entry UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "revenue_contract_id",
+          "description": "Filter by revenue recognition contract UUID (distinct from billing contract_id).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "performance_obligation_id",
+          "description": "Filter by performance obligation UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "invoice_id",
+          "description": "Filter by invoice UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__gte",
+          "description": "Parent entry posted-at lower bound (inclusive). YYYY-MM-DD or ISO datetime.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__lte",
+          "description": "Parent entry posted-at upper bound (inclusive).",
+          "type": "string",
+          "required": false,
+          "position": "query"
         }
       ],
       "requestTemplate": {
@@ -3973,7 +4333,7 @@
     },
     {
       "name": "getBalanceSheet",
-      "description": "Retrieve the balance sheet report showing assets, liabilities, and equity.",
+      "description": "Retrieve the balance sheet report (assets, liabilities, equity). Supports per-customer / per-contract / per-account scoping via filters and currency / cadence selection.",
       "args": [
         {
           "name": "start_date",
@@ -3986,6 +4346,69 @@
           "name": "end_date",
           "description": "End date for the balance sheet period (YYYY-MM-DD). Defaults to today.",
           "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cadence",
+          "description": "Bucket cadence for the report. One of 'month', 'quarter', 'year'. Defaults to 'month'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code to scope the report (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Restrict report to a single customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Restrict report to a single billing contract UUID (enables per-contract balance sheet).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "account_id__in",
+          "description": "Filter to a list of GL account UUIDs.",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "grouping_keys",
+          "description": "Optional grouping dimensions, e.g. ['customer_id'] or ['contract_id'].",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "get_changes",
+          "description": "If true, return period-over-period changes instead of cumulative values.",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum rows per page (default 10).",
+          "type": "integer",
           "required": false,
           "position": "query"
         }
@@ -4003,7 +4426,7 @@
     },
     {
       "name": "getIncomeStatement",
-      "description": "Retrieve the income statement (P&L) report showing revenue and expenses.",
+      "description": "Retrieve the income statement (P&L) report. Supports per-customer / per-contract / per-account scoping via filters and currency / cadence selection.",
       "args": [
         {
           "name": "start_date",
@@ -4016,6 +4439,69 @@
           "name": "end_date",
           "description": "End date for the income statement period (YYYY-MM-DD).",
           "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cadence",
+          "description": "Bucket cadence for the report. One of 'month', 'quarter', 'year'. Defaults to 'month'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code to scope the report (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Restrict report to a single customer UUID (enables per-customer P&L).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Restrict report to a single billing contract UUID (enables per-contract P&L).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "account_id__in",
+          "description": "Filter to a list of GL account UUIDs.",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "grouping_keys",
+          "description": "Optional grouping dimensions, e.g. ['customer_id'] or ['contract_id'].",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "get_changes",
+          "description": "If true, return period-over-period changes (default true for income statement).",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum rows per page (default 10).",
+          "type": "integer",
           "required": false,
           "position": "query"
         }
@@ -4033,7 +4519,7 @@
     },
     {
       "name": "getAccountBalance",
-      "description": "Retrieve the balance for a specific accounting account.",
+      "description": "Retrieve the balance for a specific accounting account. Supports filtering by customer, contract, currency, and posted-at date range.",
       "args": [
         {
           "name": "accountId",
@@ -4045,6 +4531,41 @@
         {
           "name": "as_of",
           "description": "Date for the balance snapshot (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Filter the balance to a single customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Filter the balance to a single billing contract UUID (enables per-contract GL balance).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__gte",
+          "description": "Lower bound on parent journal entry posted-at date (inclusive).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__lte",
+          "description": "Upper bound on parent journal entry posted-at date (inclusive).",
           "type": "string",
           "required": false,
           "position": "query"
