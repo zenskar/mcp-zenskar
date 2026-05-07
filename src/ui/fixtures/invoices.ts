@@ -1,0 +1,56 @@
+import type { InvoiceTablePayload, InvoiceLineItemsPayload } from '../types';
+
+export const invoiceFixture: InvoiceTablePayload = {
+  total: 24077,
+  scope: 'recently created',
+  cursor: { next: 'eyJjdXJzb3IiOiJpbnZuZXh0In0=', prev: null },
+  default_currency: 'USD',
+  invoices: [
+    { id: '5c7c6311-19d7-440a-9990-c849b1ec12ee', invoice_number: 'def4e-DRAFT', customer_id: 'def4e67d-f02c-4548-abc8-c14c45bce3b5', status: 'draft', invoice_total: 100, amount_due: 100, due_date: null, invoice_period_begin: '2026-04-01', invoice_period_end: '2026-04-30', external_id: null, created_at: '2026-05-06T19:11:57Z', payment_url: null },
+    { id: '7ac4c15e-1070-4378-a291-9b3d38e4561b', invoice_number: 'INV-7AC4', customer_id: 'b2c1d9e0-1a2b-3c4d-5e6f-7a8b9c0d1e2f', status: 'approved', invoice_total: -500, amount_due: -500, due_date: '2026-05-31', invoice_period_begin: '2026-05-01', invoice_period_end: '2026-05-31', external_id: 'EXT-7AC4', created_at: '2026-05-04T08:00:00Z', payment_url: null },
+    { id: '11111111-2222-3333-4444-555555555555', invoice_number: 'INV-OVERDUE', customer_id: 'cust-globex-44', status: 'open', invoice_total: 4800, amount_due: 4800, due_date: '2026-04-15', invoice_period_begin: '2026-03-01', invoice_period_end: '2026-03-31', external_id: null, created_at: '2026-04-01T08:00:00Z', payment_url: null },
+    { id: '22222222-3333-4444-5555-666666666666', invoice_number: 'INV-PAID', customer_id: 'cust-acme-100', status: 'paid', invoice_total: 12450, amount_due: 0, due_date: '2026-04-30', invoice_period_begin: '2026-04-01', invoice_period_end: '2026-04-30', external_id: 'PO-ACME-2026-04', created_at: '2026-04-01T08:00:00Z', payment_url: null },
+    { id: '33333333-4444-5555-6666-777777777777', invoice_number: 'INV-VOID', customer_id: 'cust-hooli-7', status: 'void', invoice_total: 1200, amount_due: 0, due_date: '2026-04-30', invoice_period_begin: '2026-04-01', invoice_period_end: '2026-04-30', external_id: null, created_at: '2026-04-01T08:00:00Z', payment_url: null },
+  ],
+};
+
+export const lineItemsFixture: InvoiceLineItemsPayload = {
+  invoice_id: '7ac4c15e-1070-4378-a291-9b3d38e4561b',
+  total: -500,
+  currency: 'USD',
+  lines: [
+    {
+      name: 'LEY',
+      description: '',
+      pricing_model: 'subscription-with-proration',
+      subtotal: { value: -1000, unit: 'USD', display: '-$1,000.00' },
+      quantity: { value: 1, unit: null, display: '1' },
+      price: null,
+      service_start_date: '2026-05-01',
+      service_end_date: '2026-05-31',
+      is_billed: true,
+    },
+    {
+      name: 'LEY',
+      description: '',
+      pricing_model: 'per-unit-pricing-with-proration',
+      subtotal: { value: 500, unit: 'USD', display: '$500.00' },
+      quantity: { value: 5, unit: 'unit', display: '5.0 units' },
+      price: { value: 100, unit: 'USD/unit', display: '$100.00 per unit' },
+      service_start_date: '2026-05-01',
+      service_end_date: '2026-05-31',
+      is_billed: true,
+    },
+    {
+      name: 'Premium Support',
+      description: 'Tier-2 priority support',
+      pricing_model: 'flat-fee',
+      subtotal: { value: 200, unit: 'USD', display: '$200.00' },
+      quantity: { value: 1, unit: null, display: '1' },
+      price: { value: 200, unit: 'USD', display: '$200.00' },
+      service_start_date: '2026-05-01',
+      service_end_date: '2026-05-31',
+      is_billed: true,
+    },
+  ],
+};

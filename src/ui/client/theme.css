@@ -1,0 +1,38 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: var(--host-font-sans, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  --font-mono: var(--host-font-mono, ui-monospace, 'SF Mono', Menlo, monospace);
+
+  --color-brand-primary: var(--brand-primary, #ed765e);
+  --color-brand-primary-fg: var(--brand-primary-fg, #ffffff);
+  --color-brand-accent: var(--brand-accent, #eef7ff);
+  --color-brand-accent-fg: var(--brand-accent-fg, #1145bc);
+  --color-brand-link: var(--brand-link, #1145bc);
+  --color-brand-ring: var(--brand-ring, #1145bc);
+
+  --color-bg: var(--brand-bg, #ffffff);
+  --color-fg: var(--brand-fg, #0f172a);
+  --color-muted: var(--brand-muted, #64748b);
+  --color-border: var(--brand-border, #e2e8f0);
+  --color-row-hover: var(--brand-row-hover, #f8fafc);
+
+  --color-status-paid: #16a34a;
+  --color-status-overdue: #dc2626;
+  --color-status-open: #ca8a04;
+  --color-status-void: #64748b;
+  --color-status-active: #16a34a;
+  --color-status-churned: #64748b;
+}
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+table { border-collapse: collapse; }
+.tabular-nums { font-variant-numeric: tabular-nums; }

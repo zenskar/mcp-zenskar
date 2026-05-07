@@ -1,0 +1,20 @@
+import type { PaymentTablePayload } from '../types';
+
+export const paymentFixture: PaymentTablePayload = {
+  total: 1843,
+  scope: 'recently created',
+  cursor: { next: 'eyJjdXJzb3IiOiJwYXltZW50bmV4dCJ9', prev: null },
+  default_currency: 'USD',
+  payments: [
+    { id: 'pay_001', external_id: 'STRIPE-PI-1abc', customer_id: 'c_001', invoice_id: '22222222-3333-4444-5555-666666666666', amount: 12450, currency: 'USD', payment_method: 'card', type: 'payment', status: 'paid', description: 'April subscription', payment_date: '2026-05-01', created_at: '2026-05-01T10:00:00Z' },
+    { id: 'pay_002', external_id: 'STRIPE-PI-2def', customer_id: 'c_002', invoice_id: null, amount: 4800, currency: 'USD', payment_method: 'bank_transfer', type: 'payment', status: 'paid', description: null, payment_date: '2026-05-02', created_at: '2026-05-02T11:00:00Z' },
+    { id: 'pay_003', external_id: 'STRIPE-RE-3ghi', customer_id: 'c_001', invoice_id: '22222222-3333-4444-5555-666666666666', amount: -500, currency: 'USD', payment_method: 'card', type: 'refund', status: 'refunded', description: 'Partial refund — credit applied', payment_date: '2026-05-03', created_at: '2026-05-03T09:00:00Z' },
+    { id: 'pay_004', external_id: null, customer_id: 'c_010', invoice_id: null, amount: 22500, currency: 'EUR', payment_method: 'direct_debit', type: 'payment', status: 'pending', description: 'Soylent monthly retainer', payment_date: null, created_at: '2026-05-04T08:00:00Z' },
+    { id: 'pay_005', external_id: 'CASH-2026-04', customer_id: 'c_011', invoice_id: null, amount: 7800, currency: 'USD', payment_method: 'cash', type: 'payment', status: 'paid', description: 'Cash on delivery', payment_date: '2026-05-04', created_at: '2026-05-04T13:00:00Z' },
+    { id: 'pay_006', external_id: 'CHK-998877', customer_id: 'c_012', invoice_id: null, amount: 920, currency: 'USD', payment_method: 'check', type: 'payment', status: 'failed', description: 'Bounced check', payment_date: '2026-05-05', created_at: '2026-05-05T14:00:00Z' },
+    { id: 'pay_007', external_id: null, customer_id: 'c_007', invoice_id: null, amount: 17700, currency: 'INR', payment_method: 'upi', type: 'payment', status: 'paid', description: null, payment_date: '2026-05-05', created_at: '2026-05-05T15:00:00Z' },
+    { id: 'pay_008', external_id: 'AUTH-PRE-001', customer_id: 'c_005', invoice_id: null, amount: 199, currency: 'USD', payment_method: 'card', type: 'authorization', status: 'pending', description: 'Pre-auth hold', payment_date: '2026-05-06', created_at: '2026-05-06T08:00:00Z' },
+    { id: 'pay_009', external_id: 'TAX-WH-2026-Q2', customer_id: 'c_009', invoice_id: null, amount: -340, currency: 'USD', payment_method: 'other', type: 'tax_withheld', status: 'approved', description: 'Tax withheld at source', payment_date: '2026-05-06', created_at: '2026-05-06T09:00:00Z' },
+    { id: 'pay_010', external_id: 'STRIPE-RV-4jkl', customer_id: 'c_008', invoice_id: null, amount: -99, currency: 'USD', payment_method: 'card', type: 'payment_reversal', status: 'voided', description: 'Chargeback reversal', payment_date: '2026-05-06', created_at: '2026-05-06T10:00:00Z' },
+  ],
+};
