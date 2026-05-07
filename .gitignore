@@ -12,3 +12,6 @@ plan.md
 progress/
 CLAUDE.md
 .omx/
+
+# Octopus tooling state
+.claude-octopus/

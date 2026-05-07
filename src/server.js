@@ -1113,43 +1113,77 @@ async function executeAPICall(tool, args) {
   }
 }
 
+// One-time approval tokens. Server issues a token on the approval_required response;
+// the host must echo it back on the second invocation. Prevents prompt-injection
+// scenarios where an LLM fabricates `approval.approved=true` to bypass the dialog.
+// Tokens are single-use and expire after 5 minutes.
+const APPROVAL_TOKEN_TTL_MS = 5 * 60 * 1000;
+const approvalTokens = new Map(); // token -> {toolName, issuedAt, expiresAt}
+
+function issueApprovalToken(toolName) {
+  const token = uuidv4();
+  const issuedAt = Date.now();
+  approvalTokens.set(token, {
+    toolName,
+    issuedAt,
+    expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS
+  });
+  // Opportunistic cleanup of expired tokens.
+  for (const [t, entry] of approvalTokens) {
+    if (entry.expiresAt < issuedAt) approvalTokens.delete(t);
+  }
+  return token;
+}
+
+function consumeApprovalToken(token, toolName) {
+  if (!token || typeof token !== 'string') return false;
+  const entry = approvalTokens.get(token);
+  if (!entry) return false;
+  approvalTokens.delete(token); // single-use regardless of validity
+  if (entry.toolName !== toolName) return false;
+  if (entry.expiresAt < Date.now()) return false;
+  return true;
+}
+
 // Function to check if tool needs approval
 function checkNeedsApproval(tool, args) {
   if (!tool.needsApproval) {
     return false;
   }
-  
-  // Check if this is a re-execution after approval
+
+  // Check if this is a re-execution after approval. The host must echo the
+  // server-issued one-time token; bare `approved: true` is no longer trusted.
   const userContext = args.__userContext;
-  if (userContext && userContext.approval && userContext.approval.approved === true) {
-    logger.info(`[${tool.name}] Tool was approved by user, using modified arguments`);
-    
-    // Replace current args with user-approved/modified arguments
-    const modifiedArgs = userContext.approval.modifiedArguments;
-    if (modifiedArgs) {
-      // Clear existing tool args but keep __userContext
-      const savedUserContext = args.__userContext;
-      Object.keys(args).forEach(key => {
-        if (key !== '__userContext') {
-          delete args[key];
-        }
-      });
-      
-      // Apply user's modified arguments
-      Object.assign(args, modifiedArgs);
-      args.__userContext = savedUserContext;
-      
-      logger.info(`[${tool.name}] Using user-modified arguments:`, modifiedArgs);
+  const approval = userContext && userContext.approval;
+  if (approval && approval.approved === true) {
+    if (consumeApprovalToken(approval.token, tool.name)) {
+      logger.info(`[${tool.name}] Approval token verified, executing with approved arguments`);
+
+      // Replace current args with user-approved/modified arguments
+      const modifiedArgs = approval.modifiedArguments;
+      if (modifiedArgs) {
+        const savedUserContext = args.__userContext;
+        Object.keys(args).forEach(key => {
+          if (key !== '__userContext') {
+            delete args[key];
+          }
+        });
+        Object.assign(args, modifiedArgs);
+        args.__userContext = savedUserContext;
+        logger.info(`[${tool.name}] Using user-modified arguments:`, modifiedArgs);
+      }
+
+      return false; // Skip approval, execute with approved args
     }
-    
-    return false; // Skip approval, execute with approved args
+    logger.warn(`[${tool.name}] Approval received without valid token (got: ${approval.token ? 'expired/mismatched' : 'missing'}); requiring re-approval`);
+    // Fall through to issue a fresh approval_required response.
   }
-  
+
   // If needsApproval is a function, evaluate it
   if (typeof tool.needsApproval === 'function') {
     return tool.needsApproval(args);
   }
-  
+
   // If it's a boolean true, always needs approval
   return tool.needsApproval === true;
 }
@@ -1159,12 +1193,15 @@ function generateApprovalRequest(tool, args) {
   const userContext = args.__userContext;
   const cleanArgs = { ...args };
   delete cleanArgs.__userContext;
-  
+  const approvalToken = issueApprovalToken(tool.name);
+
   return {
     type: 'approval_required',
     toolName: tool.name,
     toolDescription: tool.description,
     arguments: cleanArgs,
+    approvalToken,
+    approvalTokenExpiresInSeconds: Math.floor(APPROVAL_TOKEN_TTL_MS / 1000),
     approvalConfig: tool.approvalConfig || {
       title: `Approve ${tool.name}`,
       description: `This action requires your approval: ${tool.description}`,
@@ -1182,6 +1219,76 @@ function generateApprovalRequest(tool, args) {
       sensitive: tool.approvalConfig?.sensitiveFields?.includes(arg.name) || false
     }))
   };
+}
+
+// Tool-specific deep argument validation. Catches semantic gaps that JSON Schema
+// `required` cannot express (e.g. nested fields inside an `object` arg).
+// Return shape matches validateToolLimits: {valid, errors[]}.
+function validateToolArgs(toolName, args) {
+  const errors = [];
+
+  if (toolName === 'createProductPricing') {
+    const pd = args.pricing_data;
+    if (!pd || typeof pd !== 'object') {
+      errors.push("'pricing_data' is required and must be an object containing 'pricing_type' and 'currency'.");
+    } else {
+      if (!pd.pricing_type) errors.push("'pricing_data.pricing_type' is required (e.g. 'per_unit', 'flat_fee', 'tiered', 'volume', 'percent', 'package').");
+      if (!pd.currency) errors.push("'pricing_data.currency' is required (ISO 4217, e.g. 'USD').");
+    }
+    const q = args.quantity;
+    if (!q || typeof q !== 'object') {
+      errors.push("'quantity' is required and must be an object: {type:'fixed'|'metered', quantity?, unit?, aggregate_id?}. Without it the UI shows 0 for billing_metric.");
+    } else {
+      if (q.type !== 'fixed' && q.type !== 'metered') errors.push("'quantity.type' must be exactly 'fixed' or 'metered'.");
+      if (q.type === 'fixed' && (q.quantity == null || !q.unit)) errors.push("'quantity.type'='fixed' requires both 'quantity' (number) and 'unit' (label string).");
+      if (q.type === 'metered' && !q.aggregate_id) errors.push("'quantity.type'='metered' requires 'aggregate_id' (UUID of the billable metric).");
+    }
+    const bp = args.billing_period;
+    if (!bp || typeof bp !== 'object') {
+      errors.push("'billing_period' is required and must be an object: {cadence:'P1M'|'P3M'|'P1Y'|..., offset:'P0D'|...}. Without it the UI renders 'Undefined- Every Undefined Undefined'.");
+    } else {
+      if (!bp.cadence) errors.push("'billing_period.cadence' is required (ISO-8601 duration: 'P1M'=monthly, 'P3M'=quarterly, 'P1Y'=yearly).");
+      if (!bp.offset) errors.push("'billing_period.offset' is required (ISO-8601 duration, 'P0D' for no offset).");
+    }
+  }
+
+  if (toolName === 'createPlan') {
+    if (!args.schedule || typeof args.schedule !== 'object' || !args.schedule.duration) {
+      errors.push("'schedule' is required and must include 'duration' (ISO-8601, e.g. 'P1Y').");
+    }
+    if (!args.status) {
+      errors.push("'status' is required: 'draft' | 'active' | 'archived'.");
+    }
+    const phases = args.phases;
+    if (!Array.isArray(phases) || phases.length === 0) {
+      errors.push("'phases' must be a non-empty array. A plan with no phases is unusable in PlansV2 — include at least one phase with name, schedule, order, and either features or pricings.");
+    } else {
+      phases.forEach((p, i) => {
+        if (!p || typeof p !== 'object') { errors.push(`'phases[${i}]' must be an object.`); return; }
+        if (!p.name) errors.push(`'phases[${i}].name' is required.`);
+        if (!p.schedule || !p.schedule.duration) errors.push(`'phases[${i}].schedule.duration' is required (ISO-8601).`);
+        if (typeof p.order !== 'number') errors.push(`'phases[${i}].order' is required (integer, 0-indexed).`);
+        if (!p.features && (!Array.isArray(p.pricings) || p.pricings.length === 0)) {
+          errors.push(`'phases[${i}]' has neither 'features' nor non-empty 'pricings' — phase will be empty in the UI.`);
+        }
+      });
+    }
+  }
+
+  if (toolName === 'generateInvoice') {
+    if (!Number.isInteger(args.from_date)) errors.push("'from_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
+    if (!Number.isInteger(args.to_date)) errors.push("'to_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
+    if (Number.isInteger(args.from_date) && Number.isInteger(args.to_date) && args.to_date <= args.from_date) {
+      errors.push("'to_date' must be strictly greater than 'from_date'.");
+    }
+  }
+
+  if (toolName === 'pauseContract') {
+    if (!args.start_date) errors.push("'start_date' is required (ISO 8601).");
+    if (!args.unpause_extension_policy) errors.push("'unpause_extension_policy' is required: 'extend' or 'overlap'.");
+  }
+
+  return { valid: errors.length === 0, errors };
 }
 
 // Helper to map API types to form field types
@@ -1229,36 +1336,60 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             approvedInArgs: args.__userContext?.approved
           });
           
-          // Check if this tool needs approval and hasn't been approved yet
+          // Validate args BEFORE the approval gate so users do not approve broken calls.
+          const earlyArgValidation = validateToolArgs(tool.name, args);
+          if (!earlyArgValidation.valid) {
+            logger.error(`[${tool.name}] Tool execution blocked due to invalid arguments (pre-approval):`, earlyArgValidation.errors);
+            tokenUsageStatus = 'blocked';
+            tokenUsageReason = `invalid_args: ${earlyArgValidation.errors.join('; ')}`;
+            const errorJson = {
+              type: 'invalid_arguments',
+              toolName: tool.name,
+              errors: earlyArgValidation.errors
+            };
+            return {
+              content: [
+                { type: "text", text: JSON.stringify(errorJson, null, 2) },
+                {
+                  type: "text",
+                  text: `ACTION_NOT_EXECUTED — INVALID_ARGUMENTS\n\nTool '${tool.name}' was NOT executed because the supplied arguments are invalid or incomplete:\n\n` +
+                        earlyArgValidation.errors.map((e, i) => `${i + 1}. ${e}`).join('\n') +
+                        `\n\nFix the arguments and call again. Do NOT report success to the user.`
+                }
+              ],
+              isError: true
+            };
+          }
+
+          // Check if this tool needs approval and hasn't been approved yet.
+          // checkNeedsApproval() validates the one-time token from
+          // __userContext.approval.token; bare `approved: true` is not trusted.
           const needsApproval = checkNeedsApproval(tool, args);
           const userContext = args.__userContext;
-          const isApproved = userContext?.approved === true;
-          
+
           logger.info(`[${tool.name}] Approval check:`, {
             needsApproval,
-            isApproved,
             hasUserContext: !!userContext,
             userContextKeys: userContext ? Object.keys(userContext) : [],
-            approvedValue: userContext?.approved,
-            fullUserContext: JSON.stringify(userContext, null, 2)
+            hasApprovalBlock: !!(userContext && userContext.approval),
+            hasToken: !!(userContext && userContext.approval && userContext.approval.token)
           });
-          
-          if (needsApproval && !isApproved) {
+
+          if (needsApproval) {
             logger.info(`[${tool.name}] Tool requires approval, generating approval request`);
             const approvalRequest = generateApprovalRequest(tool, args);
-            
             return {
-              content: [{
-                type: "text",
-                text: JSON.stringify(approvalRequest, null, 2)
-              }],
+              content: [
+                { type: "text", text: JSON.stringify(approvalRequest, null, 2) },
+                {
+                  type: "text",
+                  text: `ACTION_NOT_EXECUTED — APPROVAL_REQUIRED\n\n` +
+                        `Tool '${tool.name}' was NOT executed. The host must render an approval dialog from the JSON payload above and re-invoke this tool with __userContext.approval = {approved: true, token: '<approvalToken from payload>'} to actually perform the action. The token is single-use and expires in ${Math.floor(APPROVAL_TOKEN_TTL_MS / 1000)}s. Do NOT fabricate the token. Do NOT report success to the user; surface the dialog instead.`
+                }
+              ],
               isApprovalRequired: true,
               approvalRequest: approvalRequest
             };
-          }
-          
-          if (needsApproval && isApproved) {
-            logger.info(`[${tool.name}] Tool was approved, executing actual API call`);
           }
           
           // Extract user context for token usage tracking
@@ -1311,6 +1442,8 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             };
           }
           
+          // (validateToolArgs already ran pre-approval; no duplicate check here.)
+
           // Use adjusted args with enforced limits
           const adjustedArgs = limitsValidation.adjustedArgs;
 

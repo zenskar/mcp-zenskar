@@ -586,7 +586,7 @@
     },
     {
       "name": "payInvoice",
-      "description": "Initiate payment for an invoice using a payload. MONEY-MOVING ACTION — only call when the user explicitly authorizes payment for this specific invoice.",
+      "description": "Initiate payment for an invoice using a payload. MONEY-MOVING ACTION — only call when the user explicitly authorizes payment for this specific invoice. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Pay Invoice",
@@ -976,7 +976,7 @@
     },
     {
       "name": "createRawMetric",
-      "description": "Create a new Usage Event schema. In backend/API terminology this resource is called a raw metric. This defines the schema used for ingesting usage events.",
+      "description": "Create a new Usage Event schema. In backend/API terminology this resource is called a raw metric. This defines the schema used for ingesting usage events. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Create Usage Event Schema",
@@ -1840,7 +1840,7 @@
     },
     {
       "name": "createEntitlement",
-      "description": "Creates a new entitlement in the system with various attributes including name, description, type, units, and product association.",
+      "description": "Creates a new entitlement in the system with various attributes including name, description, type, units, and product association. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Create New Entitlement",
@@ -1917,7 +1917,7 @@
     },
     {
       "name": "approveInvoice",
-      "description": "Approves an invoice. This changes the invoice status to approved and may trigger billing processes.",
+      "description": "Approve an invoice; sets status to approved. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Approve Invoice",
@@ -1969,7 +1969,7 @@
     },
     {
       "name": "recogniseRevenue",
-      "description": "Recognizes revenue for the organization up to a specified end date. This triggers revenue recognition processing for all eligible transactions.",
+      "description": "Recognize revenue for the organization up to a specified end_date. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Recognise Revenue",
@@ -2003,7 +2003,7 @@
     },
     {
       "name": "createBusinessEntity",
-      "description": "Creates a new business entity in the system with various attributes including name, address, contact details, tax configuration, and logo.",
+      "description": "Creates a new business entity in the system with various attributes including name, address, contact details, tax configuration, and logo. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Create New Business Entity",
@@ -2316,7 +2316,7 @@
     },
     {
       "name": "ingestRawMetricEvent",
-      "description": "Ingest a Usage Event for the specified resource slug. Backend/API terminology may also call the target resource a raw metric.",
+      "description": "Ingest a Usage Event for the specified resource slug. Backend/API terminology may also call the target resource a raw metric. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Ingest Usage Event",
@@ -2730,7 +2730,7 @@
     },
     {
       "name": "deleteContract",
-      "description": "Permanently delete a DRAFT contract. ONLY works on contracts with status='draft'. Do NOT call on ACTIVE, EXPIRED, or PAUSED contracts. DESTRUCTIVE: removes all phases, products, and pricing associations. NEVER call as automatic recovery from another failed operation (e.g., do not retry as a fallback after expireContract or voidInvoice fails). ONLY call when the user explicitly says 'delete' or 'remove' for THIS draft contract. If a non-destructive action fails, surface the error verbatim and stop.",
+      "description": "Permanently delete a DRAFT contract. ONLY works on contracts with status='draft'. Do NOT call on ACTIVE, EXPIRED, or PAUSED contracts. DESTRUCTIVE: removes all phases, products, and pricing associations. NEVER call as automatic recovery from another failed operation (e.g., do not retry as a fallback after expireContract or voidInvoice fails). ONLY call when the user explicitly says 'delete' or 'remove' for THIS draft contract. If a non-destructive action fails, surface the error verbatim and stop. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Draft Contract",
@@ -2978,7 +2978,7 @@
     },
     {
       "name": "expireContract",
-      "description": "Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999.",
+      "description": "Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Expire Contract",
@@ -3020,7 +3020,7 @@
     },
     {
       "name": "voidInvoice",
-      "description": "Void an invoice. ONLY works on approved or paid invoices with invoice_total == 0 (zero-balance, typically after a full credit-note offset). For non-zero approved invoices, issue a credit note via createInvoiceCreditNote first to bring the balance to zero, then void. If the call returns INVOICE_CANNOT_BE_VOIDED, surface that error verbatim — do NOT retry, do NOT escalate to deleteInvoice.",
+      "description": "Void an invoice. ONLY works on approved or paid invoices with invoice_total == 0 (zero-balance, typically after a full credit-note offset). For non-zero approved invoices, issue a credit note via createInvoiceCreditNote first to bring the balance to zero, then void. If the call returns INVOICE_CANNOT_BE_VOIDED, surface that error verbatim — do NOT retry, do NOT escalate to deleteInvoice. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Void Invoice",
@@ -3054,7 +3054,7 @@
     },
     {
       "name": "deleteInvoice",
-      "description": "Permanently delete a draft invoice. ONLY works on status='draft'. For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation.",
+      "description": "Permanently delete a draft invoice. ONLY works on status='draft'. For approved invoices, use voidInvoice (with caveats) or createInvoiceCreditNote — do NOT call deleteInvoice on approved invoices. DESTRUCTIVE: record removed permanently. ONLY call when the user explicitly says 'delete' for THIS invoice; never call as automatic recovery from another failed operation. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Invoice",
@@ -3125,7 +3125,7 @@
     },
     {
       "name": "generateInvoice",
-      "description": "Generate ONE invoice covering ALL products active in the (contract, customer, from_date, to_date) tuple. The invoice contains every applicable product as separate line items — do NOT call once per product. Granularity is per-phase, NOT per-product. To bill a multi-phase contract, call ONCE per phase using that phase's start/end as from_date/to_date — e.g., a 2-phase contract with 2 products = 2 calls (yielding 2 invoices, each with 2 line items), NOT 4 calls. Iterating per product produces fragmented duplicate invoices and is incorrect. Use for billing replay or on-demand invoice generation.",
+      "description": "STOP — read this before calling. Granularity is PER PHASE, NOT per product. ONE call generates ONE invoice covering ALL products active in the (contract, customer, from_date, to_date) window — every product becomes a line item on the same invoice. NEVER iterate over products. Iterate over PHASES only. CORRECT: a 2-phase contract with 2 products per phase → exactly 2 calls (one per phase), producing 2 invoices each with 2 line items. WRONG: 4 calls (one per product per phase) → produces 4 fragmented duplicate invoices, which is the #1 bug reported on this tool. Before calling, fetch the contract's phases via getContractById and use each phase's start_date / end_date as from_date / to_date. Use for billing replay or on-demand invoice generation.",
       "args": [
         {
           "name": "contract_id",
@@ -3381,7 +3381,7 @@
     },
     {
       "name": "deleteManualPayment",
-      "description": "Permanently delete a manual payment record. Only works on payments in an eligible status for deletion. DESTRUCTIVE — only call when the user explicitly says 'delete' for THIS payment; never as automatic recovery from another failed operation.",
+      "description": "Permanently delete a manual payment record. Only works on payments in an eligible status for deletion. DESTRUCTIVE — only call when the user explicitly says 'delete' for THIS payment; never as automatic recovery from another failed operation. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Manual Payment",
@@ -4216,7 +4216,7 @@
     },
     {
       "name": "createProductPricing",
-      "description": "Create a new pricing configuration for a product. The pricing_data object is a discriminated union — the 'pricing_type' field determines which pricing model schema. IMPORTANT: ask the user explicitly for currency, quantity_type (fixed|metered), and unit amount BEFORE calling. Do not silently default any of these. unit_amount is in MAJOR currency units (float), e.g. 3 means $3, not 300 cents.",
+      "description": "Create a new pricing configuration for a product. MANDATORY pre-call checklist — ask the user for ALL of these and do NOT default any silently: (1) currency (ISO 4217), (2) pricing_type (per_unit|flat_fee|tiered|volume|percent|package|step|matrix), (3) unit_amount in MAJOR currency units (float — 3 means $3, NOT 300 cents), (4) quantity object with type (fixed|metered) and unit label (e.g. 'user', 'request') and either quantity (for fixed) or aggregate_id (for metered), (5) billing_period.cadence (ISO 8601 — 'P1M' monthly, 'P3M' quarterly, 'P1Y' yearly) and billing_period.offset. SKIPPING quantity OR billing_period causes the Zenskar UI to render 'Undefined- Every Undefined Undefined' for billing cadence and 0 for billing metric — that is the #1 bug reported on this tool.",
       "args": [
         {
           "name": "productId",
@@ -4248,16 +4248,16 @@
         },
         {
           "name": "quantity",
-          "description": "Quantity configuration (REQUIRED for usage-based pricing — ask the user). Top-level object, NOT inside pricing_data. Shape: {type: 'fixed'|'metered', quantity?: number, unit?: string, aggregate_id?: UUID}. 'fixed' means a static quantity (e.g. seats). 'metered' means consumption tracked via a billable metric — set aggregate_id to the billable-metric UUID. Without a quantity object the resulting pricing has no billing_metric and renders as 0 in the UI.",
+          "description": "Quantity configuration (REQUIRED — ask the user; do not omit). Top-level object, NOT inside pricing_data. Shape: {type: 'fixed'|'metered', quantity?: number, unit?: string, aggregate_id?: UUID}. 'fixed' = static quantity (e.g. seats); also set 'unit' (label like 'user') and 'quantity' (number). 'metered' = consumption tracked via a billable metric; set aggregate_id to the billable-metric UUID. Omitting this object causes the UI to show 0 for billing metric.",
           "type": "object",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
           "name": "billing_period",
-          "description": "Billing cadence for this pricing. Object with 'cadence' (ISO 8601 duration, e.g. 'P1M' for monthly, 'P3M' for quarterly, 'P1Y' for annually) and optional 'offset'. Example: {cadence: 'P1M'}.",
+          "description": "Billing cadence (REQUIRED — ask the user; do not omit). Object: {cadence: ISO-8601 duration ('P1M'=monthly, 'P3M'=quarterly, 'P1Y'=annually), offset: ISO-8601 duration ('P0D' for no offset, 'P1M' to bill 1 month after period start)}. Both fields needed. Example: {\"cadence\":\"P1M\",\"offset\":\"P0D\"}. Omitting this causes the UI to render 'Undefined- Every Undefined Undefined'.",
           "type": "object",
-          "required": false,
+          "required": true,
           "position": "body"
         },
         {
@@ -4355,62 +4355,46 @@
     },
     {
       "name": "createPlan",
-      "description": "Create a new plan — a reusable contract template with products and pricing. Hits POST /plans (same store the Zenskar app's Plans page reads).",
+      "description": "Create a new plan — a reusable contract template with phased pricing. Hits POST /plans (same Plan table the Zenskar app's PlansV2 page reads). The request body shape is NESTED, not flat: top-level fields are name, status, schedule, optional description, optional phases[]. Currency is set per-pricing inside phase.pricings[].pricing.pricing_data.currency, NOT at the top level. A plan with no phases is unusable in the UI — always include at least one phase. Plan starts as 'draft'; the user must publish it to make it active.",
       "args": [
         {
           "name": "name",
-          "description": "Name of the plan.",
+          "description": "Name of the plan (required).",
           "type": "string",
           "required": true,
-          "position": "body"
-        },
-        {
-          "name": "currency",
-          "description": "Three-letter ISO 4217 currency code (e.g., 'USD', 'EUR', 'GBP').",
-          "type": "string",
-          "required": true,
-          "position": "body"
-        },
-        {
-          "name": "display_config",
-          "description": "Customer-facing display content. Object with fields like title, description, etc.",
-          "type": "object",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "duration",
-          "description": "Billing period in ISO 8601 duration format (e.g., 'P1M' for monthly, 'P1Y' for yearly).",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "products",
-          "description": "Array of products to add to plan, each with product_id and pricing configuration.",
-          "type": "array",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "custom_attributes",
-          "description": "Custom attributes as key-value pairs.",
-          "type": "object",
-          "required": false,
           "position": "body"
         },
         {
           "name": "status",
-          "description": "Plan status. Default: 'draft'. Options: 'draft', 'active', 'archived'.",
+          "description": "Plan status (required). Valid values: 'draft', 'active', 'archived'. New plans almost always start as 'draft' — the user publishes via the UI to activate.",
+          "type": "string",
+          "required": true,
+          "position": "body",
+          "enum": [
+            "draft",
+            "active",
+            "archived"
+          ]
+        },
+        {
+          "name": "schedule",
+          "description": "Plan-level schedule (required). Object: {duration: ISO-8601 e.g. 'P1Y'|'P1M', start_offset?: ISO-8601 e.g. 'P0D', trigger_type?: 'time_based'}. Example: {\"duration\":\"P1Y\",\"start_offset\":\"P0D\"}.",
+          "type": "object",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Optional plan description.",
           "type": "string",
           "required": false,
           "position": "body"
         },
         {
-          "name": "business_entity_id",
-          "description": "Business entity ID for invoicing.",
-          "type": "string",
-          "required": false,
+          "name": "phases",
+          "description": "Array of plan phases (REQUIRED — must be non-empty). Each phase: {name: string (required), schedule: {duration, start_offset?, trigger_type?} (required), order: int (required, 0-indexed), description?: string, features?: CreateProductPricingRequestSchema (one-off phase-level pricing/features), pricings?: [{schedule, pricing_id?, product_id?, pricing?: CreateProductPricingRequestSchema, product?: CreateProductRequestSchema}] (per-product pricings)}. Each phase must have features OR a non-empty pricings array. Minimal example: [{\"name\":\"Phase 1\",\"schedule\":{\"duration\":\"P1Y\"},\"order\":0,\"features\":{\"pricing_data\":{\"pricing_type\":\"features\"}}}].",
+          "type": "array",
+          "required": true,
           "position": "body"
         }
       ],
@@ -5137,7 +5121,7 @@
     },
     {
       "name": "deleteCustomer",
-      "description": "Permanently delete a customer by ID. DESTRUCTIVE and cannot be undone. The customer must not have active contracts or unpaid invoices. ONLY call when the user explicitly says 'delete' for THIS customer; never as automatic recovery from another failed operation.",
+      "description": "Permanently delete a customer by ID. DESTRUCTIVE and cannot be undone. The customer must not have active contracts or unpaid invoices. ONLY call when the user explicitly says 'delete' for THIS customer; never as automatic recovery from another failed operation. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Customer",
@@ -5171,7 +5155,7 @@
     },
     {
       "name": "deleteContact",
-      "description": "Permanently delete a contact by ID. DESTRUCTIVE — only call when the user explicitly says 'delete' for THIS contact; never as automatic recovery from another failed operation.",
+      "description": "Permanently delete a contact by ID. DESTRUCTIVE — only call when the user explicitly says 'delete' for THIS contact; never as automatic recovery from another failed operation. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Contact",
@@ -5205,7 +5189,7 @@
     },
     {
       "name": "deletePaymentMethod",
-      "description": "Permanently delete a payment method from a customer. DESTRUCTIVE — saved card/bank details will be removed; recurring auto-charges using this method will fail. Only call when the user explicitly says 'delete' for THIS payment method.",
+      "description": "Permanently delete a payment method from a customer. DESTRUCTIVE — saved card/bank details will be removed; recurring auto-charges using this method will fail. Only call when the user explicitly says 'delete' for THIS payment method. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Delete Payment Method",
@@ -5343,7 +5327,7 @@
     },
     {
       "name": "resumeContract",
-      "description": "Resume an actively-running pause on a contract. PRECONDITIONS: the pause's start_date must be strictly in the past (not today, not future). For pauses scheduled for a future start, or to set a future resume date, use 'editPauseContract' instead (sets the pause's end_date). The error 'pause phase not found' means no pause phase has yet started — NOT that no pause exists. If this call fails, surface the error verbatim and consider 'editPauseContract'; do NOT escalate to deleteContract or any destructive fallback.",
+      "description": "Resume a contract that is currently in an actively-running pause. MANDATORY FLOW: (1) ASK the user 'What date should the contract resume from?' — never call without a known resume date even though this endpoint takes no body. (2) Call getContractById and check the pause phase's start_date. (3a) If pause start_date is strictly in the past (pause currently active) AND the user wants to resume immediately/today → call this endpoint. (3b) If pause start_date is today OR in the future, OR the user wants a specific future resume date → call 'editPauseContract' with end_date=<resume_date> instead. The error 'pause phase not found' does NOT mean no pause exists — it means no pause has yet started; on this error, automatically pivot to 'editPauseContract' with the resume date. Never escalate to deleteContract or any destructive fallback.",
       "args": [
         {
           "name": "contractId",
