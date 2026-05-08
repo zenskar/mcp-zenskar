@@ -41,9 +41,10 @@ function buildResourceUiMeta() {
 }
 
 export function registerUIResources(server) {
+  // Single shared bundle (Phase 2): one HTML resource serves all shapes.
   for (const shape of SHAPES) {
     const uri = resourceUriFor(shape)
-    server.registerResource(`zenskar-${shape}`, uri, {}, async () => ({
+    server.registerResource(`zenskar-app`, uri, {}, async () => ({
       contents: [
         {
           uri,

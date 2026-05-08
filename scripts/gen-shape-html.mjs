@@ -7,28 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 const SHAPES_DIR = resolve(ROOT, 'src', 'ui', 'shapes')
 
-const SHAPES = [
-  'customer-table',
-  'invoice-table',
-  'invoice-line-items',
-  'payment-table',
-  'credit-note-table',
-  'contract-table',
-  'customer-detail',
-  'invoice-detail',
-  'contract-detail',
-  'credit-note-detail',
-  'product-table',
-  'plan-table',
-  'journal-table',
-  'job-table',
-  'contact-table',
-  'raw-metric-table',
-  'aggregate-table',
-  'address-list',
-  'payment-method-list',
-  'entity-table',
-]
+const SHAPES = ['app']
 
 function template(shape) {
   return `<!doctype html>

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
-import { App } from '@modelcontextprotocol/ext-apps'
+import { callHost, notifyHost, onNotification } from './postMessage'
 
-import { notifyHost } from './postMessage'
+const APP_INFO = { name: 'Zenskar', version: '1.0.0' }
+const PROTOCOL_VERSION = '2026-01-26'
 
 interface OpenAIGlobals {
   toolInput?: { toolName?: string } | null
@@ -27,28 +28,26 @@ export function Shell<T>({ fallback, readyMarker, render }: ShellProps<T>) {
   )
   const ref = useRef<HTMLDivElement>(null)
 
-  // MCP Apps bridge — Claude Desktop / VS Code / Goose. Vanilla App class (skips
-  // /react subpath which transitively pulls SDK Protocol + zod locales).
+  // MCP Apps bridge — Claude Desktop / VS Code / Goose. Hand-rolled JSON-RPC
+  // over postMessage, replacing @modelcontextprotocol/ext-apps to drop SDK
+  // Protocol + zod from the bundle.
   useEffect(() => {
-    const app = new App({ name: 'Zenskar', version: '1.0.0' }, {})
-    app.ontoolresult = (
-      params: { structuredContent?: unknown } | undefined
-    ) => {
-      if (
-        params &&
-        Object.prototype.hasOwnProperty.call(params, 'structuredContent')
-      ) {
-        setData((params.structuredContent as T | null) ?? null)
+    const unsub = onNotification('ui/notifications/tool-result', (params) => {
+      const p = params as { structuredContent?: unknown } | undefined
+      if (p && Object.prototype.hasOwnProperty.call(p, 'structuredContent')) {
+        setData((p.structuredContent as T | null) ?? null)
       }
-    }
-    app.connect().catch(() => {
-      // Host absent (dev preview / no parent frame) — leave fallback in place.
     })
-    return () => {
-      app.close().catch(() => {
-        /* ignore */
+    callHost('ui/initialize', {
+      appCapabilities: {},
+      appInfo: APP_INFO,
+      protocolVersion: PROTOCOL_VERSION,
+    })
+      .then(() => notifyHost('ui/notifications/initialized'))
+      .catch(() => {
+        // Host absent (dev preview / no parent frame) — leave fallback in place.
       })
-    }
+    return unsub
   }, [])
 
   // OpenAI bridge — ChatGPT iframe.

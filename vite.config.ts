@@ -1,19 +1,18 @@
 import { resolve } from 'node:path'
 
+import preact from '@preact/preset-vite'
 import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
-// Build a single shape per invocation. The runner script (src/ui/server/build.mjs)
-// iterates SHAPES and invokes vite once per shape so vite-plugin-singlefile can inline
-// each entry without the multi-input/codeSplitting conflict.
-const shape = process.env.UI_SHAPE || 'customer-table'
+// Single shared bundle (Phase 2 of bundle reduction). The runner script
+// (src/ui/server/build.mjs) invokes vite once with UI_SHAPE=app.
+const shape = process.env.UI_SHAPE || 'app'
 
 export default defineConfig(({ mode }) => ({
   root: 'src/ui',
   publicDir: false,
-  plugins: [react(), tailwindcss(), viteSingleFile()],
+  plugins: [preact(), tailwindcss(), viteSingleFile()],
   build: {
     outDir: '../../dist/ui-tmp',
     emptyOutDir: true,

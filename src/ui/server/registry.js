@@ -130,31 +130,13 @@ const TOOL_TO_SHAPE = {
   },
 }
 
-export const SHAPES = Object.freeze([
-  'customer-table',
-  'invoice-table',
-  'invoice-line-items',
-  'payment-table',
-  'credit-note-table',
-  'contract-table',
-  'customer-detail',
-  'invoice-detail',
-  'contract-detail',
-  'credit-note-detail',
-  'product-table',
-  'plan-table',
-  'journal-table',
-  'job-table',
-  'contact-table',
-  'raw-metric-table',
-  'aggregate-table',
-  'address-list',
-  'payment-method-list',
-  'entity-table',
-])
+// Single-bundle architecture: all 20 shapes ship as one ui://zenskar/app.html
+// resource. The bundled `app.tsx` reads the active tool name from the host
+// context and dispatches to the matching component at runtime.
+export const SHAPES = Object.freeze(['app'])
 
-export function resourceUriFor(shape) {
-  return `ui://zenskar/${shape}.html`
+export function resourceUriFor(_shape) {
+  return 'ui://zenskar/app.html'
 }
 
 // ===== Existing payload builders =====
