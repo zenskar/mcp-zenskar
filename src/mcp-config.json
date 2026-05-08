@@ -790,14 +790,14 @@
         },
         {
           "name": "start_date",
-          "description": "Start date of the estimate (YYYY-MM-DD).",
+          "description": "Start date of the estimate window. ISO 8601 date format only — YYYY-MM-DD (e.g., '2025-01-15'). NOT datetime.",
           "type": "string",
           "required": true,
           "position": "query"
         },
         {
           "name": "end_date",
-          "description": "End date of the estimate (YYYY-MM-DD).",
+          "description": "End date of the estimate window. ISO 8601 date format only — YYYY-MM-DD (e.g., '2025-01-31'). NOT datetime.",
           "type": "string",
           "required": true,
           "position": "query"
@@ -1071,7 +1071,7 @@
     },
     {
       "name": "getRawMetricLogs",
-      "description": "Get Usage Event event rows for a specific resource by ID. This follows the same visual-preview query path used by the frontend meter page, so it returns recent event rows rather than only backend sample logs. Backend/API terminology may also call this a raw metric.",
+      "description": "Get recent Usage Event rows for a resource by ID. Returns the most recent event rows; backend does NOT support filters, pagination, ordering, or aggregation on this endpoint. For filtered/aggregated queries use the aggregate endpoints. Backend/API terminology may also call this a raw metric.",
       "args": [
         {
           "name": "rawMetricId",
@@ -1079,43 +1079,6 @@
           "type": "string",
           "required": true,
           "position": "path"
-        },
-        {
-          "name": "filters",
-          "description": "Optional visual-query filter array, matching the frontend usage-event viewer format. Default is an empty filter list.",
-          "type": "array",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "limit",
-          "description": "Maximum number of event rows to return. Defaults to 20, matching frontend behavior.",
-          "type": "integer",
-          "required": false,
-          "position": "body",
-          "default": 20
-        },
-        {
-          "name": "offset",
-          "description": "Pagination offset for event rows. Defaults to 0.",
-          "type": "integer",
-          "required": false,
-          "position": "body",
-          "default": 0
-        },
-        {
-          "name": "aggregate_operation",
-          "description": "Optional aggregate operation object used by the frontend for event counts (for example COUNT on timestamp). Leave null for normal row listing.",
-          "type": "object",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "order_by",
-          "description": "Optional ordering array. Defaults to [{column:'timestamp', type:'DESC'}] to match frontend event viewing.",
-          "type": "array",
-          "required": false,
-          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -1487,7 +1450,7 @@
     },
     {
       "name": "createContractPrompt",
-      "description": "Create a new contract prompt and save it to the system.",
+      "description": "Save a reusable AI extraction prompt that drives contract data extraction (used by extractContractFromRaw). Use this to create / update / version the instructions the AI follows when parsing raw contract text.",
       "needsApproval": false,
       "approvalConfig": {
         "title": "Create Contract Prompt",
@@ -1503,21 +1466,21 @@
       "args": [
         {
           "name": "prompt_name",
-          "description": "A name for the prompt (required by API).",
+          "description": "Identifier for this prompt template (e.g., 'Standard Contract Extraction', 'SaaS Subscription v2'). Used to look up / version-track the prompt.",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "prompt_text",
-          "description": "The prompt text to save.",
+          "description": "AI instructions that tell the model how to extract contract fields from raw text (e.g., what to do with dates, products, pricing tiers, billing cadence). This is the system/user prompt body the extractor will run against.",
           "type": "string",
           "required": true,
           "position": "body"
         },
         {
           "name": "prompt_schema",
-          "description": "Optional schema for the prompt (e.g., 'billing_schema'). Can be null.",
+          "description": "Optional schema name pinning the expected output shape (e.g., 'billing_schema', 'subscription_schema'). Null lets the AI infer.",
           "type": [
             "string",
             "null"
@@ -2002,6 +1965,165 @@
       }
     },
     {
+      "name": "listRevenuePostings",
+      "description": "Retrieve a paginated list of revenue postings (per-period revenue allocations against revenue contracts and performance obligations). Supports filtering by contract, revenue contract, performance obligation, posting date, and currency.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of revenue postings to return per page.",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Sort order. Prefix with '-' for descending. Defaults to '-created_at'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Filter by billing contract UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "revenue_contract_id",
+          "description": "Filter by revenue recognition contract UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "revenue_contract_item_id",
+          "description": "Filter by revenue contract item UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "performance_obligation_id",
+          "description": "Filter by performance obligation UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posting_date__gte",
+          "description": "Posting date lower bound (inclusive, YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posting_date__lte",
+          "description": "Posting date upper bound (inclusive, YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry_id__isnull",
+          "description": "If true, return only postings not yet posted to a journal entry. If false, return only postings already journalised.",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/revenue_recognition_v3/revenue_postings",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Revenue Postings\n\n"
+      }
+    },
+    {
+      "name": "refreshRevenuePostings",
+      "description": "Recalculate and upsert revenue postings for a specific revenue contract item / performance obligation at a given posting date. All five identifiers are required (the backend rejects partial inputs). Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Refresh Revenue Postings",
+        "description": "This will recalculate and upsert revenue postings for the specified revenue contract item / performance obligation at the specified posting date.",
+        "warningText": "This action mutates revenue posting state and may shift period revenue figures. Review the identifiers and posting_date before confirming.",
+        "confirmText": "Refresh Postings",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "contract_id",
+          "revenue_contract_id",
+          "revenue_contract_item_id",
+          "performance_obligation_id",
+          "posting_date"
+        ]
+      },
+      "args": [
+        {
+          "name": "contract_id",
+          "description": "Billing contract UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "revenue_contract_id",
+          "description": "Revenue recognition contract UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "revenue_contract_item_id",
+          "description": "Revenue contract item UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "performance_obligation_id",
+          "description": "Performance obligation UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "posting_date",
+          "description": "Posting date in YYYY-MM-DD format (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/revenue_recognition_v3/revenue_postings/refresh",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Revenue Postings Refreshed\n\n"
+      }
+    },
+    {
       "name": "createBusinessEntity",
       "description": "Creates a new business entity in the system with various attributes including name, address, contact details, tax configuration, and logo. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
@@ -2299,6 +2421,20 @@
           "name": "business_entity_id",
           "description": "Business entity ID (UUID format, optional).",
           "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_data",
+          "description": "Custom key-value pairs for additional customer info (e.g., {\"industry\": \"saas\", \"account_tier\": \"enterprise\", \"sales_rep\": \"jane\"}). Optional.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_info",
+          "description": "List of tax identifiers. Each item: {country_code, tax_code, tax_id}. country_code uses mixed ISO formats (e.g. 'USA', 'IND', 'AUS', 'EU', 'GB'/'UK', 'SG', 'JP', 'BR', 'CA', and 2-letter codes for EU members like 'DE', 'FR', 'IT'). tax_code varies by country — common pairings: VAT (most of EU + UK + CH + most of MENA + IL/PH/ZA/EG/JO etc.), GST (India, Australia, Singapore), GST/HST (Canada), GST/IRD (NZ), TIN (USA, Qatar, Kuwait, Iraq, Libya), JCT (Japan), CNPJ (Brazil), SST (Malaysia), NPWP (Indonesia), MVA (Norway). Pair country_code + tax_code correctly. Optional.",
+          "type": "array",
           "required": false,
           "position": "body"
         }
@@ -2871,7 +3007,7 @@
     },
     {
       "name": "createContractPhasePricing",
-      "description": "Add pricing to a contract phase. Either pricing_id (reference existing product pricing) or pricing (inline pricing object) must be provided. Use product_id to associate with a product.",
+      "description": "Add pricing to a contract phase. REQUIRED: pass EXACTLY ONE of `pricing_id` (reference an existing product pricing) OR `pricing` (inline pricing object) — never both, never neither. Pair with `product_id` (existing product) or inline `product` to associate with a product.",
       "args": [
         {
           "name": "contractId",
@@ -3415,7 +3551,21 @@
     },
     {
       "name": "refundPayment",
-      "description": "Refund a payment (full or partial). Specify the refund amount, destination, and whether to write off associated invoices.",
+      "description": "Refund a payment (full or partial). Pass refund_amount=0 (or full original amount) for a full refund, or a smaller positive integer for a partial refund. refund_destination + writeoff_invoices control where the refund money goes and whether linked invoices are written off. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Refund Payment",
+        "description": "This will refund the payment via the selected destination and may write off linked invoices.",
+        "warningText": "DESTRUCTIVE — refunds money via the original payment method (or issues credits) and may write off invoices. Verify amount, destination, and writeoff flag before proceeding.",
+        "confirmText": "Refund Payment",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "paymentId",
+          "refund_amount",
+          "refund_destination",
+          "writeoff_invoices"
+        ]
+      },
       "args": [
         {
           "name": "paymentId",
@@ -3426,21 +3576,25 @@
         },
         {
           "name": "refund_amount",
-          "description": "Amount to refund.",
+          "description": "Refund amount in the smallest currency unit (integer cents/paise). Use 0 to refund the full payment, or a positive integer for a partial refund. Must not exceed the payment's remaining refundable amount.",
           "type": "number",
           "required": true,
           "position": "body"
         },
         {
           "name": "refund_destination",
-          "description": "Where to send the refund: original_payment_method, credits, etc.",
+          "description": "Where to send the refund. Valid values: 'original_payment_method' (refund back to the source card/bank), 'credits' (issue customer credits instead of returning money).",
           "type": "string",
           "required": true,
-          "position": "body"
+          "position": "body",
+          "enum": [
+            "original_payment_method",
+            "credits"
+          ]
         },
         {
           "name": "writeoff_invoices",
-          "description": "Whether to write off the associated invoices (true/false).",
+          "description": "If true, the invoice(s) linked to this payment are marked written off (no further collection). Set false to leave invoice balance owing after refund.",
           "type": "boolean",
           "required": true,
           "position": "body"
@@ -3467,6 +3621,34 @@
           "type": "string",
           "required": true,
           "position": "path"
+        },
+        {
+          "name": "connector",
+          "description": "Optional payment provider connector config object (e.g., {\"name\": \"stripe\", \"reference_id\": \"cus_xxx\"}). Backend auto-detects if omitted.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "source",
+          "description": "Optional source identifier for the charge.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "payment_method_types",
+          "description": "Optional list of allowed payment method types (e.g., [\"card\", \"ach\"]).",
+          "type": "array",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "skip_invoice_due_date_check",
+          "description": "If true, charge proceeds even if the invoice is not yet due. Defaults to false.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -3646,6 +3828,83 @@
           "type": "string",
           "required": false,
           "position": "body"
+        },
+        {
+          "name": "address_line3",
+          "description": "Address line 3.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line1",
+          "description": "Shipping address line 1.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line2",
+          "description": "Shipping address line 2.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_line3",
+          "description": "Shipping address line 3.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_city",
+          "description": "Shipping address city.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_state",
+          "description": "Shipping address state.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_zipCode",
+          "description": "Shipping address ZIP/postal code.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_country",
+          "description": "Shipping address country.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "ship_to_country_code",
+          "description": "Shipping address country code (e.g. US, GB).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "custom_data",
+          "description": "Custom key-value pairs for additional customer info (e.g., {\"industry\": \"saas\", \"account_tier\": \"enterprise\"}).",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "tax_info",
+          "description": "List of tax identifiers. Each item: {country_code, tax_code, tax_id}. country_code uses mixed ISO formats (e.g. 'USA', 'IND', 'AUS', 'EU', 'GB'/'UK', 'SG', 'JP', 'BR', 'CA', and 2-letter codes for EU members like 'DE', 'FR', 'IT'). tax_code varies by country — common pairings: VAT (most of EU + UK + CH + most of MENA + IL/PH/ZA/EG/JO etc.), GST (India, Australia, Singapore), GST/HST (Canada), GST/IRD (NZ), TIN (USA, Qatar, Kuwait, Iraq, Libya), JCT (Japan), CNPJ (Brazil), SST (Malaysia), NPWP (Indonesia), MVA (Norway). Pair country_code + tax_code correctly.",
+          "type": "array",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -3817,7 +4076,7 @@
     },
     {
       "name": "listJournalEntries",
-      "description": "Retrieve a paginated list of journal entries with optional filtering by date, account, or status.",
+      "description": "Retrieve a paginated list of journal entries with optional filtering by date, status, account, or job. Filters use fastapi-filter conventions (e.g. posted_at__gte=YYYY-MM-DD, lines__account_id=<uuid>).",
       "args": [
         {
           "name": "cursor",
@@ -3836,6 +4095,62 @@
         {
           "name": "search_query",
           "description": "Search query to filter journal entries.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Sort order. Prefix with '-' for descending. Defaults to '-created_at'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "id",
+          "description": "Filter by journal entry UUID (exact match).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posted_at__gte",
+          "description": "Posted-at date lower bound (inclusive). Accepts ISO date YYYY-MM-DD or full datetime.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "posted_at__lte",
+          "description": "Posted-at date upper bound (inclusive).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "status_type",
+          "description": "Filter by status. Common values: 'posted', 'draft'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "description__ilike",
+          "description": "Case-insensitive partial match on description.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "job_id",
+          "description": "Filter by originating job UUID (e.g. revenue recognition batch).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "lines__account_id",
+          "description": "Filter entries having a line on this account UUID.",
           "type": "string",
           "required": false,
           "position": "query"
@@ -3936,7 +4251,7 @@
     },
     {
       "name": "listJournalLines",
-      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries.",
+      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries. Supports filtering by customer, contract, account, currency, and parent journal entry posted date.",
       "args": [
         {
           "name": "cursor",
@@ -3958,6 +4273,83 @@
           "type": "string",
           "required": false,
           "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Sort order. Prefix with '-' for descending. Defaults to '-created_at'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Filter by customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Filter by billing contract UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "account_id",
+          "description": "Filter by GL account UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry_id",
+          "description": "Filter by parent journal entry UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "revenue_contract_id",
+          "description": "Filter by revenue recognition contract UUID (distinct from billing contract_id).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "performance_obligation_id",
+          "description": "Filter by performance obligation UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "invoice_id",
+          "description": "Filter by invoice UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__gte",
+          "description": "Parent entry posted-at lower bound (inclusive). YYYY-MM-DD or ISO datetime.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__lte",
+          "description": "Parent entry posted-at upper bound (inclusive).",
+          "type": "string",
+          "required": false,
+          "position": "query"
         }
       ],
       "requestTemplate": {
@@ -3973,7 +4365,7 @@
     },
     {
       "name": "getBalanceSheet",
-      "description": "Retrieve the balance sheet report showing assets, liabilities, and equity.",
+      "description": "Retrieve the balance sheet report (assets, liabilities, equity). Supports per-customer / per-contract / per-account scoping via filters and currency / cadence selection.",
       "args": [
         {
           "name": "start_date",
@@ -3986,6 +4378,69 @@
           "name": "end_date",
           "description": "End date for the balance sheet period (YYYY-MM-DD). Defaults to today.",
           "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cadence",
+          "description": "Bucket cadence for the report. One of 'month', 'quarter', 'year'. Defaults to 'month'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code to scope the report (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Restrict report to a single customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Restrict report to a single billing contract UUID (enables per-contract balance sheet).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "account_id__in",
+          "description": "Filter to a list of GL account UUIDs.",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "grouping_keys",
+          "description": "Optional grouping dimensions, e.g. ['customer_id'] or ['contract_id'].",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "get_changes",
+          "description": "If true, return period-over-period changes instead of cumulative values.",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum rows per page (default 10).",
+          "type": "integer",
           "required": false,
           "position": "query"
         }
@@ -4003,7 +4458,7 @@
     },
     {
       "name": "getIncomeStatement",
-      "description": "Retrieve the income statement (P&L) report showing revenue and expenses.",
+      "description": "Retrieve the income statement (P&L) report. Supports per-customer / per-contract / per-account scoping via filters and currency / cadence selection.",
       "args": [
         {
           "name": "start_date",
@@ -4016,6 +4471,69 @@
           "name": "end_date",
           "description": "End date for the income statement period (YYYY-MM-DD).",
           "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cadence",
+          "description": "Bucket cadence for the report. One of 'month', 'quarter', 'year'. Defaults to 'month'.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code to scope the report (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Restrict report to a single customer UUID (enables per-customer P&L).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Restrict report to a single billing contract UUID (enables per-contract P&L).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "account_id__in",
+          "description": "Filter to a list of GL account UUIDs.",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "grouping_keys",
+          "description": "Optional grouping dimensions, e.g. ['customer_id'] or ['contract_id'].",
+          "type": "array",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "get_changes",
+          "description": "If true, return period-over-period changes (default true for income statement).",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "cursor",
+          "description": "Cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum rows per page (default 10).",
+          "type": "integer",
           "required": false,
           "position": "query"
         }
@@ -4033,7 +4551,7 @@
     },
     {
       "name": "getAccountBalance",
-      "description": "Retrieve the balance for a specific accounting account.",
+      "description": "Retrieve the balance for a specific accounting account. Supports filtering by customer, contract, currency, and posted-at date range.",
       "args": [
         {
           "name": "accountId",
@@ -4045,6 +4563,41 @@
         {
           "name": "as_of",
           "description": "Date for the balance snapshot (YYYY-MM-DD).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "customer_id",
+          "description": "Filter the balance to a single customer UUID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "contract_id",
+          "description": "Filter the balance to a single billing contract UUID (enables per-contract GL balance).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "currency",
+          "description": "Three-letter ISO currency code (e.g. 'USD').",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__gte",
+          "description": "Lower bound on parent journal entry posted-at date (inclusive).",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "journal_entry__posted_at__lte",
+          "description": "Upper bound on parent journal entry posted-at date (inclusive).",
           "type": "string",
           "required": false,
           "position": "query"
@@ -4102,8 +4655,8 @@
         },
         {
           "name": "tax_codes",
-          "description": "Array of tax code objects for the product.",
-          "type": "array",
+          "description": "Tax code mapping object keyed by region/provider (e.g., {\"avalara\": \"PS081282\", \"stripe\": \"txcd_99999999\"}).",
+          "type": "object",
           "required": false,
           "position": "body"
         },
@@ -4823,6 +5376,13 @@
           "type": "string",
           "required": false,
           "position": "body"
+        },
+        {
+          "name": "phone_number",
+          "description": "Updated phone number (max 20 chars). Include country code (e.g., +1-555-0100).",
+          "type": "string",
+          "required": false,
+          "position": "body"
         }
       ],
       "requestTemplate": {
@@ -5095,8 +5655,8 @@
         },
         {
           "name": "connector",
-          "description": "Payment connector name (e.g., 'stripe').",
-          "type": "string",
+          "description": "Payment provider connector config object (e.g., {\"name\": \"stripe\", \"reference_id\": \"cus_xxx\"}). Either field is optional. If omitted, backend auto-detects from resource mappings.",
+          "type": "object",
           "required": false,
           "position": "body"
         },
@@ -5298,6 +5858,13 @@
         {
           "name": "end_date",
           "description": "Resume date — when the pause ends (ISO 8601). Set this to schedule a future resume.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "pause_phase_id",
+          "description": "UUID of the specific pause phase to edit. Optional — required only when a contract has multiple pause phases and you need to disambiguate which one to edit.",
           "type": "string",
           "required": false,
           "position": "body"
