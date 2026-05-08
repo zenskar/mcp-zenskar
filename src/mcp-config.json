@@ -4355,7 +4355,7 @@
     },
     {
       "name": "createPlan",
-      "description": "Create a new plan — a reusable contract template with phases and pricing.",
+      "description": "Create a new plan — a reusable contract template with products and pricing. Hits POST /plans (same store the Zenskar app's Plans page reads).",
       "args": [
         {
           "name": "name",
@@ -4365,34 +4365,51 @@
           "position": "body"
         },
         {
-          "name": "description",
-          "description": "Description of the plan.",
+          "name": "currency",
+          "description": "Three-letter ISO 4217 currency code (e.g., 'USD', 'EUR', 'GBP').",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "display_config",
+          "description": "Customer-facing display content. Object with fields like title, description, etc.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "duration",
+          "description": "Billing period in ISO 8601 duration format (e.g., 'P1M' for monthly, 'P1Y' for yearly).",
           "type": "string",
           "required": false,
           "position": "body"
         },
         {
-          "name": "status",
-          "description": "Plan status.",
-          "type": "string",
-          "required": true,
-          "position": "body",
-          "enum": [
-            "draft",
-            "active"
-          ]
-        },
-        {
-          "name": "schedule",
-          "description": "Schedule (duration) of the plan. Object: {duration: ISO 8601 string (e.g. 'P1Y' for one year, 'P1M' for one month), start_offset?: ISO 8601 string (default 'P0D'), trigger_type?: 'time_based'}.",
-          "type": "object",
-          "required": true,
+          "name": "products",
+          "description": "Array of products to add to plan, each with product_id and pricing configuration.",
+          "type": "array",
+          "required": false,
           "position": "body"
         },
         {
-          "name": "phases",
-          "description": "Array of plan phases. Each phase object: {name, description?, schedule (same shape as plan schedule), order, pricings? (array of phase-level pricings)}.",
-          "type": "array",
+          "name": "custom_attributes",
+          "description": "Custom attributes as key-value pairs.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "status",
+          "description": "Plan status. Default: 'draft'. Options: 'draft', 'active', 'archived'.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "business_entity_id",
+          "description": "Business entity ID for invoicing.",
+          "type": "string",
           "required": false,
           "position": "body"
         }
