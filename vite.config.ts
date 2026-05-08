@@ -1,13 +1,14 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
-import { viteSingleFile } from 'vite-plugin-singlefile';
-import { resolve } from 'node:path';
+import { resolve } from 'node:path'
+
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // Build a single shape per invocation. The runner script (src/ui/server/build.mjs)
 // iterates SHAPES and invokes vite once per shape so vite-plugin-singlefile can inline
 // each entry without the multi-input/codeSplitting conflict.
-const shape = process.env.UI_SHAPE || 'customer-table';
+const shape = process.env.UI_SHAPE || 'customer-table'
 
 export default defineConfig(({ mode }) => ({
   root: 'src/ui',
@@ -26,4 +27,4 @@ export default defineConfig(({ mode }) => ({
     sourcemap: false,
   },
   server: { port: 5173, open: '/dev/index.html' },
-}));
+}))

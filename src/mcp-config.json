@@ -594,9 +594,7 @@
         "warningText": "Money-moving action — funds will be charged. Verify the invoice and amount before confirming.",
         "confirmText": "Pay Invoice",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "payload"
-        ]
+        "sensitiveFields": ["payload"]
       },
       "args": [
         {
@@ -984,12 +982,7 @@
         "warningText": "Ensure the dataschema and slug values are correct before continuing.",
         "confirmText": "Create Usage Event Schema",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "name",
-          "api_slug",
-          "dataschema",
-          "column_order"
-        ]
+        "sensitiveFields": ["name", "api_slug", "dataschema", "column_order"]
       },
       "args": [
         {
@@ -1032,9 +1025,7 @@
           "type": "array",
           "required": false,
           "position": "body",
-          "default": [
-            "timestamp"
-          ]
+          "default": ["timestamp"]
         }
       ],
       "requestTemplate": {
@@ -1458,10 +1449,7 @@
         "warningText": "This will save a new contract prompt that may be used for AI-generated content.",
         "confirmText": "Create Prompt",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "prompt_name",
-          "prompt_text"
-        ]
+        "sensitiveFields": ["prompt_name", "prompt_text"]
       },
       "args": [
         {
@@ -1481,10 +1469,7 @@
         {
           "name": "prompt_schema",
           "description": "Optional schema name pinning the expected output shape (e.g., 'billing_schema', 'subscription_schema'). Null lets the AI infer.",
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "required": false,
           "position": "body"
         }
@@ -1777,13 +1762,7 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": [
-            "draft",
-            "active",
-            "paused",
-            "expired",
-            "disputed"
-          ]
+          "enum": ["draft", "active", "paused", "expired", "disputed"]
         },
         {
           "name": "status__in",
@@ -1811,11 +1790,7 @@
         "warningText": "This action will create a new entitlement record that may affect billing and access control.",
         "confirmText": "Create Entitlement",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "name",
-          "description",
-          "product_id"
-        ]
+        "sensitiveFields": ["name", "description", "product_id"]
       },
       "args": [
         {
@@ -1838,11 +1813,7 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": [
-            "Quantity",
-            "Feature",
-            "Credits"
-          ]
+          "enum": ["Quantity", "Feature", "Credits"]
         },
         {
           "name": "units",
@@ -1888,11 +1859,7 @@
         "warningText": "This action will approve the invoice and may trigger billing processes. This cannot be easily undone.",
         "confirmText": "Approve Invoice",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "invoiceId",
-          "customer_id",
-          "actor"
-        ]
+        "sensitiveFields": ["invoiceId", "customer_id", "actor"]
       },
       "args": [
         {
@@ -1940,9 +1907,7 @@
         "warningText": "This action will process revenue recognition which may affect financial reporting and accounting records.",
         "confirmText": "Recognise Revenue",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "end_date"
-        ]
+        "sensitiveFields": ["end_date"]
       },
       "args": [
         {
@@ -2133,12 +2098,7 @@
         "warningText": "This action will create a new business entity record that may affect billing and organizational structure.",
         "confirmText": "Create Business Entity",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "name",
-          "email",
-          "phone_number",
-          "address"
-        ]
+        "sensitiveFields": ["name", "email", "phone_number", "address"]
       },
       "args": [
         {
@@ -2256,11 +2216,7 @@
         "warningText": "This action will create a new customer record in your system.",
         "confirmText": "Create Customer",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "customer_name",
-          "email",
-          "phone_number"
-        ]
+        "sensitiveFields": ["customer_name", "email", "phone_number"]
       },
       "args": [
         {
@@ -2460,10 +2416,7 @@
         "warningText": "Ensure the data payload matches the Usage Event schema (raw metric schema) before proceeding.",
         "confirmText": "Ingest Usage Event",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "rawMetricSlug",
-          "event"
-        ]
+        "sensitiveFields": ["rawMetricSlug", "event"]
       },
       "args": [
         {
@@ -2584,12 +2537,7 @@
           "required": true,
           "position": "body",
           "default": "draft",
-          "enum": [
-            "draft",
-            "active",
-            "paused",
-            "disputed"
-          ]
+          "enum": ["draft", "active", "paused", "disputed"]
         },
         {
           "name": "currency",
@@ -2728,12 +2676,7 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": [
-            "draft",
-            "active",
-            "paused",
-            "disputed"
-          ]
+          "enum": ["draft", "active", "paused", "disputed"]
         },
         {
           "name": "currency",
@@ -2874,9 +2817,7 @@
         "warningText": "DESTRUCTIVE — this cannot be undone. Only draft contracts may be deleted; verify status before confirming.",
         "confirmText": "Delete Contract",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "contractId"
-        ]
+        "sensitiveFields": ["contractId"]
       },
       "args": [
         {
@@ -2959,11 +2900,7 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": [
-            "active",
-            "pause",
-            "trial"
-          ]
+          "enum": ["active", "pause", "trial"]
         },
         {
           "name": "description",
@@ -3122,10 +3059,7 @@
         "warningText": "Once expired, the contract cannot be re-activated through this endpoint. Future-dated phases beyond the expiry will be removed.",
         "confirmText": "Expire Contract",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "contractId",
-          "expiry_date"
-        ]
+        "sensitiveFields": ["contractId", "expiry_date"]
       },
       "args": [
         {
@@ -3164,9 +3098,7 @@
         "warningText": "Voiding affects accounting records and cannot be easily undone.",
         "confirmText": "Void Invoice",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "invoiceId"
-        ]
+        "sensitiveFields": ["invoiceId"]
       },
       "args": [
         {
@@ -3198,9 +3130,7 @@
         "warningText": "DESTRUCTIVE — invoice record will be removed and cannot be recovered.",
         "confirmText": "Delete Invoice",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "invoiceId"
-        ]
+        "sensitiveFields": ["invoiceId"]
       },
       "args": [
         {
@@ -3341,12 +3271,7 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": [
-            "in_progress",
-            "issued",
-            "void",
-            "paid"
-          ]
+          "enum": ["in_progress", "issued", "void", "paid"]
         }
       ],
       "requestTemplate": {
@@ -3525,9 +3450,7 @@
         "warningText": "DESTRUCTIVE — payment record will be removed and cannot be recovered. Linked invoice balance may shift as a result.",
         "confirmText": "Delete Payment",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "paymentId"
-        ]
+        "sensitiveFields": ["paymentId"]
       },
       "args": [
         {
@@ -3587,10 +3510,7 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": [
-            "original_payment_method",
-            "credits"
-          ]
+          "enum": ["original_payment_method", "credits"]
         },
         {
           "name": "writeoff_invoices",
@@ -4923,11 +4843,7 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": [
-            "draft",
-            "active",
-            "archived"
-          ]
+          "enum": ["draft", "active", "archived"]
         },
         {
           "name": "schedule",
@@ -5689,9 +5605,7 @@
         "warningText": "DESTRUCTIVE — customer record cannot be recovered. Verify there are no active contracts or unpaid invoices first.",
         "confirmText": "Delete Customer",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "customerId"
-        ]
+        "sensitiveFields": ["customerId"]
       },
       "args": [
         {
@@ -5723,9 +5637,7 @@
         "warningText": "DESTRUCTIVE — contact record will be removed and cannot be recovered.",
         "confirmText": "Delete Contact",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "contactId"
-        ]
+        "sensitiveFields": ["contactId"]
       },
       "args": [
         {
@@ -5757,10 +5669,7 @@
         "warningText": "DESTRUCTIVE — saved payment details will be removed. Any auto-charge or scheduled charge using this method will fail.",
         "confirmText": "Delete Payment Method",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "customerId",
-          "paymentMethodId"
-        ]
+        "sensitiveFields": ["customerId", "paymentMethodId"]
       },
       "args": [
         {
@@ -5813,10 +5722,7 @@
           "type": "string",
           "required": true,
           "position": "body",
-          "enum": [
-            "extend",
-            "overlap"
-          ]
+          "enum": ["extend", "overlap"]
         },
         {
           "name": "end_date",
@@ -5875,10 +5781,7 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": [
-            "extend",
-            "overlap"
-          ]
+          "enum": ["extend", "overlap"]
         }
       ],
       "requestTemplate": {

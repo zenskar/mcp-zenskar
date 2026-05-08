@@ -47,4 +47,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🌐 NPM Package" >> $GITHUB_STEP_SUMMARY
           echo "🔗 [View on NPM](https://www.npmjs.com/package/mcp-zenskar)" >> $GITHUB_STEP_SUMMARY
-

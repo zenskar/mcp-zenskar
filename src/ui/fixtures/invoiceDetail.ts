@@ -1,4 +1,4 @@
-import type { InvoiceDetailPayload } from '../types';
+import type { InvoiceDetailPayload } from '../types'
 
 export const invoiceDetailFixture: InvoiceDetailPayload = {
   invoice: {
@@ -21,7 +21,27 @@ export const invoiceDetailFixture: InvoiceDetailPayload = {
     custom_data: { po_number: 'PO-44215' },
   },
   line_items: [
-    { name: 'Platform subscription', description: 'Monthly recurring fee', pricing_model: 'flat-fee', subtotal: { value: 1200, unit: 'USD', display: '$1,200.00' }, quantity: { value: 1, unit: null, display: '1' }, price: null, service_start_date: '2026-04-01', service_end_date: '2026-04-30', is_billed: true },
-    { name: 'API requests', description: 'Per-1k usage', pricing_model: 'per-unit', subtotal: { value: 645.5, unit: 'USD', display: '$645.50' }, quantity: { value: 12910, unit: 'unit', display: '12,910 units' }, price: { value: 0.05, unit: 'USD/unit' }, service_start_date: '2026-04-01', service_end_date: '2026-04-30', is_billed: true },
+    {
+      name: 'Platform subscription',
+      description: 'Monthly recurring fee',
+      pricing_model: 'flat-fee',
+      subtotal: { value: 1200, unit: 'USD', display: '$1,200.00' },
+      quantity: { value: 1, unit: null, display: '1' },
+      price: null,
+      service_start_date: '2026-04-01',
+      service_end_date: '2026-04-30',
+      is_billed: true,
+    },
+    {
+      name: 'API requests',
+      description: 'Per-1k usage',
+      pricing_model: 'per-unit',
+      subtotal: { value: 645.5, unit: 'USD', display: '$645.50' },
+      quantity: { value: 12910, unit: 'unit', display: '12,910 units' },
+      price: { value: 0.05, unit: 'USD/unit' },
+      service_start_date: '2026-04-01',
+      service_end_date: '2026-04-30',
+      is_billed: true,
+    },
   ],
-};
+}

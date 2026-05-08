@@ -1,13 +1,16 @@
-import '../client/theme.css';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Shell } from '../client/Shell';
-import { CreditNoteTable } from '../components/CreditNoteTable';
-import type { CreditNoteTablePayload } from '../types';
+import '../client/theme.css'
 
-const FALLBACK: CreditNoteTablePayload = { credit_notes: [], total: 0 };
+import { StrictMode } from 'react'
 
-const el = document.getElementById('root');
+import { createRoot } from 'react-dom/client'
+
+import { Shell } from '../client/Shell'
+import { CreditNoteTable } from '../components/CreditNoteTable'
+import type { CreditNoteTablePayload } from '../types'
+
+const FALLBACK: CreditNoteTablePayload = { credit_notes: [], total: 0 }
+
+const el = document.getElementById('root')
 if (el) {
   createRoot(el).render(
     <StrictMode>
@@ -17,5 +20,5 @@ if (el) {
         render={(data) => <CreditNoteTable payload={data} />}
       />
     </StrictMode>
-  );
+  )
 }

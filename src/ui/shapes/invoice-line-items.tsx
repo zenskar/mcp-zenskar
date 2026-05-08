@@ -1,13 +1,16 @@
-import '../client/theme.css';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Shell } from '../client/Shell';
-import { InvoiceLineItems } from '../components/InvoiceLineItems';
-import type { InvoiceLineItemsPayload } from '../types';
+import '../client/theme.css'
 
-const FALLBACK: InvoiceLineItemsPayload = { lines: [] };
+import { StrictMode } from 'react'
 
-const el = document.getElementById('root');
+import { createRoot } from 'react-dom/client'
+
+import { Shell } from '../client/Shell'
+import { InvoiceLineItems } from '../components/InvoiceLineItems'
+import type { InvoiceLineItemsPayload } from '../types'
+
+const FALLBACK: InvoiceLineItemsPayload = { lines: [] }
+
+const el = document.getElementById('root')
 if (el) {
   createRoot(el).render(
     <StrictMode>
@@ -17,5 +20,5 @@ if (el) {
         render={(data) => <InvoiceLineItems payload={data} />}
       />
     </StrictMode>
-  );
+  )
 }

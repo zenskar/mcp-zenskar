@@ -1,4 +1,4 @@
-import type { CreditNoteDetailPayload } from '../types';
+import type { CreditNoteDetailPayload } from '../types'
 
 export const creditNoteDetailFixture: CreditNoteDetailPayload = {
   credit_note: {
@@ -16,4 +16,4 @@ export const creditNoteDetailFixture: CreditNoteDetailPayload = {
     business_entity_id: 'be_001',
     notes: 'Pro-rated for 18 hours of degraded service.',
   },
-};
+}

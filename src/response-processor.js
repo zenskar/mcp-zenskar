@@ -1,24 +1,27 @@
 class ResponseProcessor {
   constructor() {
-    this.maxResponseLength = 2000000;
+    this.maxResponseLength = 2000000
   }
 
   processResponse(responseData, toolName) {
     try {
-      let response = typeof responseData === 'string'
-        ? responseData
-        : JSON.stringify(responseData, null, 2);
+      let response =
+        typeof responseData === 'string'
+          ? responseData
+          : JSON.stringify(responseData, null, 2)
 
       if (response.length > this.maxResponseLength) {
-        response = response.substring(0, this.maxResponseLength) + '\n\n[Response truncated due to length]';
+        response =
+          response.substring(0, this.maxResponseLength) +
+          '\n\n[Response truncated due to length]'
       }
 
-      return response;
+      return response
     } catch (error) {
-      console.error('Response processing error:', error);
-      return 'Error processing response';
+      console.error('Response processing error:', error)
+      return 'Error processing response'
     }
   }
 }
 
-export default ResponseProcessor;
+export default ResponseProcessor

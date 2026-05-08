@@ -1,13 +1,18 @@
-import '../client/theme.css';
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { Shell } from '../client/Shell';
-import { CustomerDetail } from '../components/CustomerDetail';
-import type { CustomerDetailPayload } from '../types';
+import '../client/theme.css'
 
-const FALLBACK: CustomerDetailPayload = { customer: { id: '', name: null, external_id: null, email: null } };
+import { StrictMode } from 'react'
 
-const el = document.getElementById('root');
+import { createRoot } from 'react-dom/client'
+
+import { Shell } from '../client/Shell'
+import { CustomerDetail } from '../components/CustomerDetail'
+import type { CustomerDetailPayload } from '../types'
+
+const FALLBACK: CustomerDetailPayload = {
+  customer: { id: '', name: null, external_id: null, email: null },
+}
+
+const el = document.getElementById('root')
 if (el) {
   createRoot(el).render(
     <StrictMode>
@@ -17,5 +22,5 @@ if (el) {
         render={(data) => <CustomerDetail payload={data} />}
       />
     </StrictMode>
-  );
+  )
 }

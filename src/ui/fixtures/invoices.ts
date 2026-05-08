@@ -1,4 +1,4 @@
-import type { InvoiceTablePayload, InvoiceLineItemsPayload } from '../types';
+import type { InvoiceLineItemsPayload, InvoiceTablePayload } from '../types'
 
 export const invoiceFixture: InvoiceTablePayload = {
   total: 24077,
@@ -6,13 +6,78 @@ export const invoiceFixture: InvoiceTablePayload = {
   cursor: { next: 'eyJjdXJzb3IiOiJpbnZuZXh0In0=', prev: null },
   default_currency: 'USD',
   invoices: [
-    { id: '5c7c6311-19d7-440a-9990-c849b1ec12ee', invoice_number: 'def4e-DRAFT', customer_id: 'def4e67d-f02c-4548-abc8-c14c45bce3b5', status: 'draft', invoice_total: 100, amount_due: 100, due_date: null, invoice_period_begin: '2026-04-01', invoice_period_end: '2026-04-30', external_id: null, created_at: '2026-05-06T19:11:57Z', payment_url: null },
-    { id: '7ac4c15e-1070-4378-a291-9b3d38e4561b', invoice_number: 'INV-7AC4', customer_id: 'b2c1d9e0-1a2b-3c4d-5e6f-7a8b9c0d1e2f', status: 'approved', invoice_total: -500, amount_due: -500, due_date: '2026-05-31', invoice_period_begin: '2026-05-01', invoice_period_end: '2026-05-31', external_id: 'EXT-7AC4', created_at: '2026-05-04T08:00:00Z', payment_url: null },
-    { id: '11111111-2222-3333-4444-555555555555', invoice_number: 'INV-OVERDUE', customer_id: 'cust-globex-44', status: 'open', invoice_total: 4800, amount_due: 4800, due_date: '2026-04-15', invoice_period_begin: '2026-03-01', invoice_period_end: '2026-03-31', external_id: null, created_at: '2026-04-01T08:00:00Z', payment_url: null },
-    { id: '22222222-3333-4444-5555-666666666666', invoice_number: 'INV-PAID', customer_id: 'cust-acme-100', status: 'paid', invoice_total: 12450, amount_due: 0, due_date: '2026-04-30', invoice_period_begin: '2026-04-01', invoice_period_end: '2026-04-30', external_id: 'PO-ACME-2026-04', created_at: '2026-04-01T08:00:00Z', payment_url: null },
-    { id: '33333333-4444-5555-6666-777777777777', invoice_number: 'INV-VOID', customer_id: 'cust-hooli-7', status: 'void', invoice_total: 1200, amount_due: 0, due_date: '2026-04-30', invoice_period_begin: '2026-04-01', invoice_period_end: '2026-04-30', external_id: null, created_at: '2026-04-01T08:00:00Z', payment_url: null },
+    {
+      id: '5c7c6311-19d7-440a-9990-c849b1ec12ee',
+      invoice_number: 'def4e-DRAFT',
+      customer_id: 'def4e67d-f02c-4548-abc8-c14c45bce3b5',
+      status: 'draft',
+      invoice_total: 100,
+      amount_due: 100,
+      due_date: null,
+      invoice_period_begin: '2026-04-01',
+      invoice_period_end: '2026-04-30',
+      external_id: null,
+      created_at: '2026-05-06T19:11:57Z',
+      payment_url: null,
+    },
+    {
+      id: '7ac4c15e-1070-4378-a291-9b3d38e4561b',
+      invoice_number: 'INV-7AC4',
+      customer_id: 'b2c1d9e0-1a2b-3c4d-5e6f-7a8b9c0d1e2f',
+      status: 'approved',
+      invoice_total: -500,
+      amount_due: -500,
+      due_date: '2026-05-31',
+      invoice_period_begin: '2026-05-01',
+      invoice_period_end: '2026-05-31',
+      external_id: 'EXT-7AC4',
+      created_at: '2026-05-04T08:00:00Z',
+      payment_url: null,
+    },
+    {
+      id: '11111111-2222-3333-4444-555555555555',
+      invoice_number: 'INV-OVERDUE',
+      customer_id: 'cust-globex-44',
+      status: 'open',
+      invoice_total: 4800,
+      amount_due: 4800,
+      due_date: '2026-04-15',
+      invoice_period_begin: '2026-03-01',
+      invoice_period_end: '2026-03-31',
+      external_id: null,
+      created_at: '2026-04-01T08:00:00Z',
+      payment_url: null,
+    },
+    {
+      id: '22222222-3333-4444-5555-666666666666',
+      invoice_number: 'INV-PAID',
+      customer_id: 'cust-acme-100',
+      status: 'paid',
+      invoice_total: 12450,
+      amount_due: 0,
+      due_date: '2026-04-30',
+      invoice_period_begin: '2026-04-01',
+      invoice_period_end: '2026-04-30',
+      external_id: 'PO-ACME-2026-04',
+      created_at: '2026-04-01T08:00:00Z',
+      payment_url: null,
+    },
+    {
+      id: '33333333-4444-5555-6666-777777777777',
+      invoice_number: 'INV-VOID',
+      customer_id: 'cust-hooli-7',
+      status: 'void',
+      invoice_total: 1200,
+      amount_due: 0,
+      due_date: '2026-04-30',
+      invoice_period_begin: '2026-04-01',
+      invoice_period_end: '2026-04-30',
+      external_id: null,
+      created_at: '2026-04-01T08:00:00Z',
+      payment_url: null,
+    },
   ],
-};
+}
 
 export const lineItemsFixture: InvoiceLineItemsPayload = {
   invoice_id: '7ac4c15e-1070-4378-a291-9b3d38e4561b',
@@ -53,4 +118,4 @@ export const lineItemsFixture: InvoiceLineItemsPayload = {
       is_billed: true,
     },
   ],
-};
+}

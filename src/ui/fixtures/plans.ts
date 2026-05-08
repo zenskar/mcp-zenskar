@@ -1,13 +1,58 @@
-import type { PlanTablePayload } from '../types';
+import type { PlanTablePayload } from '../types'
 
 export const planFixture: PlanTablePayload = {
   total: 5,
   cursor: { next: null, prev: null },
   plans: [
-    { id: 'plan_001', name: 'Starter Annual', external_id: 'PLAN-STARTER-YR', status: 'active', currency: 'USD', phase_count: 2, mrr: { amount: 199, currency: 'USD' }, created_at: '2024-08-01T08:00:00Z' },
-    { id: 'plan_002', name: 'Growth Monthly', external_id: 'PLAN-GROWTH-M', status: 'active', currency: 'USD', phase_count: 1, mrr: { amount: 599, currency: 'USD' }, created_at: '2024-08-01T08:00:00Z' },
-    { id: 'plan_003', name: 'Enterprise Custom', external_id: 'PLAN-ENT', status: 'active', currency: 'USD', phase_count: 4, mrr: { amount: 4500, currency: 'USD' }, created_at: '2024-08-01T08:00:00Z' },
-    { id: 'plan_004', name: 'Pilot 90-day', external_id: 'PLAN-PILOT', status: 'draft', currency: 'USD', phase_count: 1, mrr: null, created_at: '2026-04-15T08:00:00Z' },
-    { id: 'plan_005', name: 'Legacy Tier 1', external_id: 'PLAN-LEG-1', status: 'archived', currency: 'USD', phase_count: 1, mrr: { amount: 99, currency: 'USD' }, created_at: '2023-02-01T08:00:00Z' },
+    {
+      id: 'plan_001',
+      name: 'Starter Annual',
+      external_id: 'PLAN-STARTER-YR',
+      status: 'active',
+      currency: 'USD',
+      phase_count: 2,
+      mrr: { amount: 199, currency: 'USD' },
+      created_at: '2024-08-01T08:00:00Z',
+    },
+    {
+      id: 'plan_002',
+      name: 'Growth Monthly',
+      external_id: 'PLAN-GROWTH-M',
+      status: 'active',
+      currency: 'USD',
+      phase_count: 1,
+      mrr: { amount: 599, currency: 'USD' },
+      created_at: '2024-08-01T08:00:00Z',
+    },
+    {
+      id: 'plan_003',
+      name: 'Enterprise Custom',
+      external_id: 'PLAN-ENT',
+      status: 'active',
+      currency: 'USD',
+      phase_count: 4,
+      mrr: { amount: 4500, currency: 'USD' },
+      created_at: '2024-08-01T08:00:00Z',
+    },
+    {
+      id: 'plan_004',
+      name: 'Pilot 90-day',
+      external_id: 'PLAN-PILOT',
+      status: 'draft',
+      currency: 'USD',
+      phase_count: 1,
+      mrr: null,
+      created_at: '2026-04-15T08:00:00Z',
+    },
+    {
+      id: 'plan_005',
+      name: 'Legacy Tier 1',
+      external_id: 'PLAN-LEG-1',
+      status: 'archived',
+      currency: 'USD',
+      phase_count: 1,
+      mrr: { amount: 99, currency: 'USD' },
+      created_at: '2023-02-01T08:00:00Z',
+    },
   ],
-};
+}
