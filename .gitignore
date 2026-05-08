@@ -13,3 +13,6 @@ progress/
 CLAUDE.md
 .omx/
 .tmp-probe/
+
+# Octopus tooling state
+.claude-octopus/
