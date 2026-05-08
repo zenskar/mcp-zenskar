@@ -2433,7 +2433,7 @@
         },
         {
           "name": "tax_info",
-          "description": "List of tax identifiers for the customer. Each item: {country_code: 'US'|'GB'|..., tax_id_type: e.g. 'vat'|'gst', tax_id: string}. Optional.",
+          "description": "List of tax identifiers for the customer. Each item: {country_code: 'US'|'GB'|..., tax_code: e.g. 'VAT'|'GST'|'EIN', tax_id: string}. Optional.",
           "type": "array",
           "required": false,
           "position": "body"
@@ -3901,7 +3901,7 @@
         },
         {
           "name": "tax_info",
-          "description": "List of tax identifiers. Each item: {country_code, tax_id_type, tax_id}.",
+          "description": "List of tax identifiers. Each item: {country_code, tax_code: e.g. 'VAT'|'GST'|'EIN', tax_id: string}.",
           "type": "array",
           "required": false,
           "position": "body"
