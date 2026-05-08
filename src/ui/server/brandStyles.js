@@ -16,7 +16,7 @@ export function generateBrandStyle(brand) {
   const b = { ...DEFAULT_BRAND, ...(brand || {}) };
   return [
     '<style id="zenskar-brand">',
-    ':root{',
+    ':root{color-scheme:light dark;',
     `--brand-primary:${b.primary};`,
     `--brand-primary-fg:${b.primaryFg};`,
     `--brand-accent:${b.accent};`,
@@ -29,6 +29,7 @@ export function generateBrandStyle(brand) {
     `--brand-border:${b.border};`,
     `--brand-row-hover:${b.rowHover};`,
     '}',
+    '@media (prefers-color-scheme:dark){:root{--brand-bg:#0a0a0a;--brand-fg:#f5f5f5;}}',
     '</style>',
   ].join('');
 }

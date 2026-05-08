@@ -9,7 +9,9 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "predev:ui": "node scripts/gen-shape-html.mjs",
     "dev:ui": "vite --config vite.config.ts",
+    "prebuild:ui": "node scripts/gen-shape-html.mjs",
     "build:ui": "node src/ui/server/build.mjs",
     "smoke": "tsx src/ui/test/smoke.ts",
     "test": "npm run smoke"

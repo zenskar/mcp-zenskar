@@ -1,4 +1,4 @@
-import { useApp } from '@modelcontextprotocol/ext-apps/react';
+import { App } from '@modelcontextprotocol/ext-apps';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { notifyHost } from './postMessage';
 
@@ -25,18 +25,22 @@ export function Shell<T>({ fallback, readyMarker, render }: ShellProps<T>) {
   );
   const ref = useRef<HTMLDivElement>(null);
 
-  // MCP Apps bridge — Claude Desktop / VS Code / Goose.
-  useApp({
-    appInfo: { name: 'Zenskar', version: '1.0.0' },
-    capabilities: {},
-    onAppCreated: (app: any) => {
-      app.ontoolresult = (result: any) => {
-        if (result && Object.prototype.hasOwnProperty.call(result, 'structuredContent')) {
-          setData((result.structuredContent as T | null) ?? null);
-        }
-      };
-    },
-  });
+  // MCP Apps bridge — Claude Desktop / VS Code / Goose. Vanilla App class (skips
+  // /react subpath which transitively pulls SDK Protocol + zod locales).
+  useEffect(() => {
+    const app = new App({ name: 'Zenskar', version: '1.0.0' }, {});
+    app.ontoolresult = (params: { structuredContent?: unknown } | undefined) => {
+      if (params && Object.prototype.hasOwnProperty.call(params, 'structuredContent')) {
+        setData((params.structuredContent as T | null) ?? null);
+      }
+    };
+    app.connect().catch(() => {
+      // Host absent (dev preview / no parent frame) — leave fallback in place.
+    });
+    return () => {
+      app.close().catch(() => { /* ignore */ });
+    };
+  }, []);
 
   // OpenAI bridge — ChatGPT iframe.
   useEffect(() => {

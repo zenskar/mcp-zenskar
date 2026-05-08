@@ -61,6 +61,11 @@ check('contains terracotta primary', () => {
   const s = generateBrandStyle(DEFAULT_BRAND);
   assert(s.toLowerCase().includes('#ed765e'));
 });
+check('emits prefers-color-scheme dark probe', () => {
+  const s = generateBrandStyle({});
+  assert(s.includes('prefers-color-scheme'), 'dark-mode media query missing');
+  assert(s.includes('color-scheme:light dark'), 'color-scheme declaration missing');
+});
 
 console.log('• resourceUriFor()');
 check('uri shape stable per shape', () => {
@@ -198,6 +203,10 @@ for (const shape of SHAPES) {
     const html = readFileSync(bundle, 'utf8');
     assert(html.includes('--brand-primary') || html.includes('--color-brand-primary'), 'expected brand CSS var inlined by Tailwind');
     assert(!/<link[^>]+href=["']https?:/i.test(html), 'no external CSS allowed');
+  });
+  check(`${shape}.html ships dark-mode probe`, () => {
+    const html = readFileSync(bundle, 'utf8');
+    assert(html.includes('prefers-color-scheme'), 'expected @media (prefers-color-scheme: dark) block in bundled CSS');
   });
 }
 
