@@ -2495,7 +2495,7 @@
         }
       ],
       "requestTemplate": {
-        "url": "/usage_events/{rawMetricSlug}",
+        "url": "/usage/{rawMetricSlug}",
         "method": "POST",
         "headers": {
           "Content-Type": "application/json",
