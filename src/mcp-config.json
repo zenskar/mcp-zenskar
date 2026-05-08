@@ -2433,7 +2433,7 @@
         },
         {
           "name": "tax_info",
-          "description": "List of tax identifiers for the customer. Each item: {country_code: 'US'|'GB'|..., tax_code: e.g. 'VAT'|'GST'|'EIN', tax_id: string}. Optional.",
+          "description": "List of tax identifiers. Each item: {country_code, tax_code, tax_id}. country_code uses mixed ISO formats (e.g. 'USA', 'IND', 'AUS', 'EU', 'GB'/'UK', 'SG', 'JP', 'BR', 'CA', and 2-letter codes for EU members like 'DE', 'FR', 'IT'). tax_code varies by country — common pairings: VAT (most of EU + UK + CH + most of MENA + IL/PH/ZA/EG/JO etc.), GST (India, Australia, Singapore), GST/HST (Canada), GST/IRD (NZ), TIN (USA, Qatar, Kuwait, Iraq, Libya), JCT (Japan), CNPJ (Brazil), SST (Malaysia), NPWP (Indonesia), MVA (Norway). Pair country_code + tax_code correctly. Optional.",
           "type": "array",
           "required": false,
           "position": "body"
@@ -3901,7 +3901,7 @@
         },
         {
           "name": "tax_info",
-          "description": "List of tax identifiers. Each item: {country_code, tax_code: e.g. 'VAT'|'GST'|'EIN', tax_id: string}.",
+          "description": "List of tax identifiers. Each item: {country_code, tax_code, tax_id}. country_code uses mixed ISO formats (e.g. 'USA', 'IND', 'AUS', 'EU', 'GB'/'UK', 'SG', 'JP', 'BR', 'CA', and 2-letter codes for EU members like 'DE', 'FR', 'IT'). tax_code varies by country — common pairings: VAT (most of EU + UK + CH + most of MENA + IL/PH/ZA/EG/JO etc.), GST (India, Australia, Singapore), GST/HST (Canada), GST/IRD (NZ), TIN (USA, Qatar, Kuwait, Iraq, Libya), JCT (Japan), CNPJ (Brazil), SST (Malaysia), NPWP (Indonesia), MVA (Norway). Pair country_code + tax_code correctly.",
           "type": "array",
           "required": false,
           "position": "body"
