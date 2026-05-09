@@ -1,20 +1,10 @@
 import '../client/theme.css'
 
-import {
-  StrictMode,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { StrictMode, useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { createRoot } from 'react-dom/client'
 
-import {
-  callHost,
-  notifyHost,
-  onNotification,
-} from '../client/postMessage'
+import { callHost, notifyHost, onNotification } from '../client/postMessage'
 import { AddressList } from '../components/AddressList'
 import { AggregateTable } from '../components/AggregateTable'
 import { ContactTable } from '../components/ContactTable'

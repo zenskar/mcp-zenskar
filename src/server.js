@@ -795,6 +795,10 @@ function convertArgsToZodSchema(args) {
       approval: z
         .object({
           approved: z.boolean(),
+          // Single-use token issued by server in the approval_required response.
+          // Without this in the schema, Zod strips it from __userContext.approval
+          // and consumeApprovalToken() always sees undefined → infinite re-approval loop.
+          token: z.string().optional(),
           modifiedArguments: z.record(z.any()).optional(),
           originalArguments: z.record(z.any()).optional(),
           toolName: z.string().optional(),
