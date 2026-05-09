@@ -6,7 +6,7 @@ import { defineConfig } from 'vite'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // Single shared bundle (Phase 2 of bundle reduction). The runner script
-// (src/ui/server/build.mjs) invokes vite once with UI_SHAPE=app.
+// (src/ui/server/build.js) invokes vite once with UI_SHAPE=app.
 const shape = process.env.UI_SHAPE || 'app'
 
 export default defineConfig(({ mode }) => ({
