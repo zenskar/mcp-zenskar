@@ -93,8 +93,8 @@ console.log('• wrapToolResponse() — text-only mode')
       {}
     )
     assert.equal(r.content.length, 1)
-    assert.equal(r.content[0].type, 'text')
-    assert.equal(r.content[0].text, 'fallback prose')
+    assert.equal(r.content[0]!.type, 'text')
+    assert.equal(r.content[0]!.text, 'fallback prose')
     assert(
       !('structuredContent' in r),
       'structuredContent must not be present in text-only mode'
@@ -154,7 +154,7 @@ check(
         },
       ],
     }
-    const r = wrapToolResponse('listInvoices', raw, 'fallback', {})
+    const r = wrapToolResponse('listInvoices', raw, 'fallback', {}) as UIResult
     assertUIResult(r, 'invoices')
     assert.equal((r.structuredContent as any).total, 24077)
   }
@@ -172,10 +172,10 @@ check('listInvoices wrapped responseTemplate envelope handled', () => {
       ],
     },
   }
-  const r = wrapToolResponse('listInvoices', raw, 'fallback', {})
+  const r = wrapToolResponse('listInvoices', raw, 'fallback', {}) as UIResult
   assertUIResult(r, 'invoices')
   assert(
-    (r.content[0].text || '').includes('1 invoice'),
+    (r.content[0]!.text || '').includes('1 invoice'),
     'stub should reflect 1 invoice'
   )
 })
@@ -321,7 +321,7 @@ check('text-only tools never get structuredContent', () => {
     {}
   )
   assert.equal(r.content.length, 1)
-  assert.equal(r.content[0].type, 'text')
+  assert.equal(r.content[0]!.type, 'text')
   assert(
     !('structuredContent' in r),
     'structuredContent must be absent for text-only tools'
@@ -336,7 +336,7 @@ check('unmapped tool returns text fallback', () => {
     {}
   )
   assert.equal(r.content.length, 1)
-  assert.equal(r.content[0].type, 'text')
+  assert.equal(r.content[0]!.type, 'text')
   assert(
     !('structuredContent' in r),
     'structuredContent must be absent for unmapped tools'

@@ -284,9 +284,9 @@ function sortRows(
       case 'outstanding':
         return r.outstanding?.amount ?? null
       case 'created_at':
-        return r.created_at
+        return r.created_at ?? null
       case 'last_activity_at':
-        return r.last_activity_at
+        return r.last_activity_at ?? null
     }
   }
   return [...rows].sort((a, b) => {
