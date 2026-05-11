@@ -15,7 +15,7 @@ export function CreditNoteDetail({
       <header className="flex items-start justify-between gap-3">
         <div>
           <h2 className="m-0 flex items-center gap-2 text-lg font-semibold">
-            <span className="font-mono">{cn.external_id || cn.id}</span>
+            <span className="font-mono">{cn.credit_note_number || cn.id}</span>
             {cn.status ? <StatusPill status={cn.status} /> : null}
           </h2>
           <div className="text-muted-foreground mt-0.5 font-mono text-xs">
@@ -50,7 +50,16 @@ export function CreditNoteDetail({
           value={cn.amount != null ? fmtMoney(cn.amount, cur) : <Dim>—</Dim>}
         />
         <Stat label="Currency" value={cur} />
-        <Stat label="Issue Date" value={fmtDate(cn.issue_date)} />
+        <Stat
+          label="Credits Returned"
+          value={
+            cn.credits_returned != null ? (
+              cn.credits_returned.toLocaleString()
+            ) : (
+              <Dim>—</Dim>
+            )
+          }
+        />
         <Stat label="Created" value={fmtDate(cn.created_at)} />
       </div>
 
@@ -73,34 +82,26 @@ export function CreditNoteDetail({
             <Dim>—</Dim>
           )}
         </Field>
-        <Field label="Business Entity">
-          {cn.business_entity_id ? (
-            <span className="font-mono text-xs">
-              {shortId(cn.business_entity_id, 14)}
-            </span>
-          ) : (
-            <Dim>—</Dim>
-          )}
-        </Field>
-        <Field label="External ID">
-          {cn.external_id ? (
-            <span className="font-mono text-xs">{cn.external_id}</span>
-          ) : (
-            <Dim>—</Dim>
-          )}
+        <Field label="Repayment Method">
+          {cn.repayment_method || <Dim>—</Dim>}
         </Field>
       </div>
 
-      {cn.reason ? (
-        <Section title="Reason">
-          <div className="text-sm">{cn.reason}</div>
+      {cn.custom_data && Object.keys(cn.custom_data).length > 0 ? (
+        <Section title="Custom Data">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {Object.entries(cn.custom_data).map(([k, v]) => (
+              <div key={k} className="border-border rounded border px-2 py-1">
+                <div className="text-muted-foreground">{k}</div>
+                <div className="font-mono">
+                  {typeof v === 'object' ? JSON.stringify(v) : String(v ?? '')}
+                </div>
+              </div>
+            ))}
+          </div>
         </Section>
       ) : null}
-      {cn.notes ? (
-        <Section title="Notes">
-          <div className="text-sm">{cn.notes}</div>
-        </Section>
-      ) : null}
+
       {cn.line_items_url ? (
         <Section title="Line Items">
           <a

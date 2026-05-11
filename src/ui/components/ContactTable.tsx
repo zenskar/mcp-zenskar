@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { ContactRow, ContactTablePayload } from '../types'
-import { Dim, fmtDate, shortId } from './format'
+import { Dim, shortId } from './format'
 
-type SortKey = 'name' | 'email' | 'created_at'
+type SortKey = 'name' | 'email'
 type SortDir = 'asc' | 'desc'
 
 export function ContactTable({ payload }: { payload: ContactTablePayload }) {
@@ -63,24 +63,16 @@ export function ContactTable({ payload }: { payload: ContactTablePayload }) {
               >
                 Email
               </Th>
-              <Th>Phone</Th>
               <Th>Customer</Th>
-              <Th>Role</Th>
-              <Th
-                sortable
-                active={sortKey === 'created_at'}
-                dir={sortDir}
-                onClick={() => toggle('created_at')}
-              >
-                Created
-              </Th>
+              <Th>Send Invoice</Th>
+              <Th>Send Contract</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No contacts match.
@@ -102,17 +94,26 @@ export function ContactTable({ payload }: { payload: ContactTablePayload }) {
                   <td className="text-secondary px-3 py-2">
                     {r.email || <Dim>—</Dim>}
                   </td>
-                  <td className="px-3 py-2 text-xs">
-                    {r.phone || <Dim>—</Dim>}
-                  </td>
                   <td className="px-3 py-2 font-mono text-xs">
                     {shortId(r.customer_id, 10)}
                   </td>
                   <td className="px-3 py-2 text-xs">
-                    {r.role || <Dim>—</Dim>}
+                    {r.send_invoice == null ? (
+                      <Dim>—</Dim>
+                    ) : r.send_invoice ? (
+                      'yes'
+                    ) : (
+                      'no'
+                    )}
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {fmtDate(r.created_at)}
+                  <td className="px-3 py-2 text-xs">
+                    {r.send_contract == null ? (
+                      <Dim>—</Dim>
+                    ) : r.send_contract ? (
+                      'yes'
+                    ) : (
+                      'no'
+                    )}
                   </td>
                 </tr>
               ))
@@ -130,14 +131,12 @@ function sortRows(
   dir: SortDir
 ): ContactRow[] {
   const mult = dir === 'asc' ? 1 : -1
-  const get = (r: ContactRow): string | number | null => {
+  const get = (r: ContactRow): string | null => {
     switch (key) {
       case 'name':
         return r.name
       case 'email':
         return r.email
-      case 'created_at':
-        return r.created_at
     }
   }
   return [...rows].sort((a, b) => {

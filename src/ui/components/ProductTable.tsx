@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { ProductRow, ProductTablePayload } from '../types'
-import { Dim, fmtDate, StatusPill } from './format'
+import { Dim, fmtDate } from './format'
 
-type SortKey = 'name' | 'pricing_count' | 'created_at'
+type SortKey = 'name' | 'created_at'
 type SortDir = 'asc' | 'desc'
 
 export function ProductTable({ payload }: { payload: ProductTablePayload }) {
@@ -42,7 +42,7 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row → pricings · headers sort
+          click row to open in Zenskar · headers sort
         </span>
       </header>
       <div className="border-border overflow-auto rounded-md border">
@@ -58,18 +58,10 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
               >
                 Name
               </Th>
-              <Th>SKU / External</Th>
+              <Th>SKU</Th>
+              <Th>Type</Th>
+              <Th>Active</Th>
               <Th>Description</Th>
-              <Th>Status</Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'pricing_count'}
-                dir={sortDir}
-                onClick={() => toggle('pricing_count')}
-              >
-                Pricings
-              </Th>
               <Th
                 sortable
                 active={sortKey === 'created_at'}
@@ -104,16 +96,22 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
                     {r.name || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">
-                    {r.external_id || <Dim>—</Dim>}
+                    {r.sku || <Dim>—</Dim>}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {r.product_type || <Dim>—</Dim>}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {r.is_active == null ? (
+                      <Dim>—</Dim>
+                    ) : r.is_active ? (
+                      'yes'
+                    ) : (
+                      'no'
+                    )}
                   </td>
                   <td className="text-muted-foreground px-3 py-2 text-xs">
                     {r.description || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={r.status} />
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {r.pricing_count ?? <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}
@@ -134,12 +132,10 @@ function sortRows(
   dir: SortDir
 ): ProductRow[] {
   const mult = dir === 'asc' ? 1 : -1
-  const get = (r: ProductRow): string | number | null => {
+  const get = (r: ProductRow): string | null => {
     switch (key) {
       case 'name':
         return r.name
-      case 'pricing_count':
-        return r.pricing_count
       case 'created_at':
         return r.created_at
     }

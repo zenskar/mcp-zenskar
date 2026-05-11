@@ -1,6 +1,6 @@
 import { callHost, notifyHost } from '../client/postMessage'
 import type { ContractDetailPayload, ContractPhase } from '../types'
-import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
+import { Dim, fmtDate, shortId, StatusPill } from './format'
 
 export function ContractDetail({
   payload,
@@ -44,41 +44,6 @@ export function ContractDetail({
         </div>
       </header>
 
-      <div className="border-border grid grid-cols-2 gap-3 rounded-md border p-3 sm:grid-cols-4">
-        <Stat
-          label="MRR"
-          value={c.mrr ? fmtMoney(c.mrr.amount, c.mrr.currency) : <Dim>—</Dim>}
-        />
-        <Stat
-          label="Total Value"
-          value={
-            c.total_value ? (
-              fmtMoney(c.total_value.amount, c.total_value.currency)
-            ) : (
-              <Dim>—</Dim>
-            )
-          }
-        />
-        <Stat
-          label="Phases"
-          value={
-            c.phase_count != null ? c.phase_count.toString() : <Dim>—</Dim>
-          }
-        />
-        <Stat
-          label="Term"
-          value={
-            c.start_date && c.end_date ? (
-              <span className="text-sm">
-                {c.start_date.slice(0, 10)} → {c.end_date.slice(0, 10)}
-              </span>
-            ) : (
-              <Dim>—</Dim>
-            )
-          }
-        />
-      </div>
-
       <div className="border-border grid grid-cols-1 gap-3 rounded-md border p-3 sm:grid-cols-2">
         <Field label="Customer">
           {c.customer_id ? (
@@ -89,16 +54,39 @@ export function ContractDetail({
             <Dim>—</Dim>
           )}
         </Field>
-        <Field label="External ID">
-          {c.external_id ? (
-            <span className="font-mono text-xs">{c.external_id}</span>
+        <Field label="Currency">
+          {c.currency ? (
+            <span className="font-mono text-xs">{c.currency}</span>
           ) : (
             <Dim>—</Dim>
           )}
         </Field>
+        <Field label="Term">
+          {c.start_date && c.end_date ? (
+            <span className="text-sm">
+              {c.start_date.slice(0, 10)} → {c.end_date.slice(0, 10)}
+            </span>
+          ) : (
+            <Dim>—</Dim>
+          )}
+        </Field>
+        <Field label="Anchor Date">{fmtDate(c.anchor_date)}</Field>
         <Field label="Renewal Policy">{c.renewal_policy || <Dim>—</Dim>}</Field>
+        <Field label="Plan">
+          {c.plan_id ? (
+            <span className="font-mono text-xs">{shortId(c.plan_id, 14)}</span>
+          ) : (
+            <Dim>—</Dim>
+          )}
+        </Field>
         <Field label="Created">{fmtDate(c.created_at)}</Field>
       </div>
+
+      {c.description ? (
+        <Section title="Description">
+          <div className="text-sm">{c.description}</div>
+        </Section>
+      ) : null}
 
       {phases.length > 0 ? (
         <Section title={`Phases (${phases.length})`}>
@@ -122,12 +110,6 @@ export function ContractDetail({
               </div>
             ))}
           </div>
-        </Section>
-      ) : null}
-
-      {c.notes ? (
-        <Section title="Notes">
-          <div className="text-sm">{c.notes}</div>
         </Section>
       ) : null}
     </div>
@@ -166,17 +148,11 @@ function PhaseRow({
       </div>
       <div className="mt-1 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
         <div>
-          <span className="text-muted-foreground">MRR:</span>{' '}
-          <span className="tabular-nums">
-            {phase.mrr ? fmtMoney(phase.mrr.amount, phase.mrr.currency) : '—'}
-          </span>
-        </div>
-        <div>
           <span className="text-muted-foreground">Products:</span>{' '}
           <span className="tabular-nums">{phase.product_count ?? '—'}</span>
         </div>
         {phase.pricing_summary ? (
-          <div className="text-muted-foreground col-span-full sm:col-span-1">
+          <div className="text-muted-foreground col-span-full sm:col-span-2">
             {phase.pricing_summary}
           </div>
         ) : null}
@@ -222,17 +198,6 @@ function Field({
         {label}
       </div>
       <div className="text-sm">{children}</div>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className="text-base font-semibold tabular-nums">{value}</div>
     </div>
   )
 }

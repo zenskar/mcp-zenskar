@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { JobRow, JobTablePayload } from '../types'
-import { Dim, fmtDate, shortId, StatusPill } from './format'
+import { Dim, fmtDate, StatusPill } from './format'
 
-type SortKey = 'started_at' | 'duration_ms' | 'status'
+type SortKey = 'name' | 'created_at' | 'status'
 type SortDir = 'asc' | 'desc'
 
 export function JobTable({ payload }: { payload: JobTablePayload }) {
-  const [sortKey, setSortKey] = useState<SortKey>('started_at')
+  const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const rows = useMemo(
     () => sortRows(payload.jobs, sortKey, sortDir),
@@ -49,8 +49,16 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
           <thead className="bg-muted text-muted-foreground text-xs tracking-wide uppercase">
             <tr>
               <Th>#</Th>
-              <Th>ID</Th>
+              <Th
+                sortable
+                active={sortKey === 'name'}
+                dir={sortDir}
+                onClick={() => toggle('name')}
+              >
+                Name
+              </Th>
               <Th>Type</Th>
+              <Th>Resource</Th>
               <Th
                 sortable
                 active={sortKey === 'status'}
@@ -59,24 +67,15 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
               >
                 Status
               </Th>
+              <Th>Description</Th>
               <Th
                 sortable
-                active={sortKey === 'started_at'}
+                active={sortKey === 'created_at'}
                 dir={sortDir}
-                onClick={() => toggle('started_at')}
+                onClick={() => toggle('created_at')}
               >
-                Started
+                Created
               </Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'duration_ms'}
-                dir={sortDir}
-                onClick={() => toggle('duration_ms')}
-              >
-                Duration
-              </Th>
-              <Th>Error</Th>
             </tr>
           </thead>
           <tbody>
@@ -99,23 +98,23 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    {shortId(r.id, 12)}
+                  <td className="px-3 py-2 font-medium">
+                    {r.name || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 text-xs">
-                    {r.type || <Dim>—</Dim>}
+                    {r.job_type || <Dim>—</Dim>}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {r.resource || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2">
                     <StatusPill status={r.status} />
                   </td>
+                  <td className="text-muted-foreground max-w-xs truncate px-3 py-2 text-xs">
+                    {r.description || <Dim>—</Dim>}
+                  </td>
                   <td className="px-3 py-2 text-xs whitespace-nowrap">
-                    {r.started_at ? fmtDate(r.started_at) : <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums">
-                    {fmtDuration(r.duration_ms)}
-                  </td>
-                  <td className="text-destructive max-w-xs truncate px-3 py-2 text-xs">
-                    {r.error || <Dim>—</Dim>}
+                    {fmtDate(r.created_at)}
                   </td>
                 </tr>
               ))
@@ -127,25 +126,14 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
   )
 }
 
-function fmtDuration(ms: number | null): React.ReactNode {
-  if (ms == null) return <Dim>—</Dim>
-  if (ms < 1000) return `${ms}ms`
-  const s = ms / 1000
-  if (s < 60) return `${s.toFixed(1)}s`
-  const m = s / 60
-  if (m < 60) return `${m.toFixed(1)}m`
-  const h = m / 60
-  return `${h.toFixed(1)}h`
-}
-
 function sortRows(rows: JobRow[], key: SortKey, dir: SortDir): JobRow[] {
   const mult = dir === 'asc' ? 1 : -1
-  const get = (r: JobRow): string | number | null => {
+  const get = (r: JobRow): string | null => {
     switch (key) {
-      case 'started_at':
-        return r.started_at
-      case 'duration_ms':
-        return r.duration_ms
+      case 'name':
+        return r.name
+      case 'created_at':
+        return r.created_at
       case 'status':
         return r.status
     }

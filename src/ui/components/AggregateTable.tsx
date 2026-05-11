@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { AggregateRow, AggregateTablePayload } from '../types'
-import { Dim, fmtDate, StatusPill } from './format'
+import { Dim, fmtDate, shortId } from './format'
 
-type SortKey = 'name' | 'last_run_at' | 'created_at'
+type SortKey = 'name' | 'created_at'
 type SortDir = 'asc' | 'desc'
 
 export function AggregateTable({
@@ -12,7 +12,7 @@ export function AggregateTable({
 }: {
   payload: AggregateTablePayload
 }) {
-  const [sortKey, setSortKey] = useState<SortKey>('last_run_at')
+  const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const rows = useMemo(
     () => sortRows(payload.aggregates, sortKey, sortDir),
@@ -63,16 +63,13 @@ export function AggregateTable({
                 Name
               </Th>
               <Th>Datasource</Th>
-              <Th>Formula</Th>
-              <Th>Unit</Th>
-              <Th>Status</Th>
               <Th
                 sortable
-                active={sortKey === 'last_run_at'}
+                active={sortKey === 'created_at'}
                 dir={sortDir}
-                onClick={() => toggle('last_run_at')}
+                onClick={() => toggle('created_at')}
               >
-                Last Run
+                Created
               </Th>
             </tr>
           </thead>
@@ -80,7 +77,7 @@ export function AggregateTable({
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={4}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No aggregates match.
@@ -99,20 +96,11 @@ export function AggregateTable({
                   <td className="px-3 py-2 font-medium">
                     {r.name || <Dim>—</Dim>}
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    {r.datasource || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    {r.formula || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {r.unit || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={r.status} />
+                  <td className="text-muted-foreground px-3 py-2 font-mono text-xs">
+                    {shortId(r.datasource, 12)}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    {fmtDate(r.last_run_at)}
+                    {fmtDate(r.created_at)}
                   </td>
                 </tr>
               ))
@@ -134,8 +122,6 @@ function sortRows(
     switch (key) {
       case 'name':
         return r.name
-      case 'last_run_at':
-        return r.last_run_at
       case 'created_at':
         return r.created_at
     }

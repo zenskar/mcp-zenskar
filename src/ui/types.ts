@@ -132,14 +132,13 @@ export interface PaymentTablePayload {
 
 export interface CreditNoteRow {
   id: string
-  external_id: string | null
+  credit_note_number: string | null
   customer_id: string | null
   invoice_id: string | null
   status: string | null
   amount: number | null
   currency: string | null
-  reason: string | null
-  issue_date: string | null
+  repayment_method: string | null
   created_at: string | null
 }
 
@@ -153,15 +152,12 @@ export interface CreditNoteTablePayload {
 
 export interface ContractRow {
   id: string
-  external_id: string | null
   customer_id: string | null
   name: string | null
   status: string | null
+  currency: string | null
   start_date: string | null
   end_date: string | null
-  mrr: { amount: number; currency: string } | null
-  total_value: { amount: number; currency: string } | null
-  phase_count: number | null
   created_at: string | null
 }
 
@@ -201,16 +197,17 @@ export interface ContractPhase {
   name?: string | null
   start_date?: string | null
   end_date?: string | null
-  mrr?: { amount: number; currency: string } | null
   pricing_summary?: string | null
   product_count?: number | null
 }
 
 export interface ContractDetailPayload {
   contract: ContractRow & {
+    description?: string | null
     custom_attributes?: Record<string, unknown> | null
     renewal_policy?: string | null
-    notes?: string | null
+    anchor_date?: string | null
+    plan_id?: string | null
   }
   phases: ContractPhase[]
 }
@@ -218,8 +215,8 @@ export interface ContractDetailPayload {
 export interface CreditNoteDetailPayload {
   credit_note: CreditNoteRow & {
     line_items_url?: string | null
-    business_entity_id?: string | null
-    notes?: string | null
+    credits_returned?: number | null
+    custom_data?: Record<string, unknown> | null
   }
 }
 
@@ -228,10 +225,10 @@ export interface CreditNoteDetailPayload {
 export interface ProductRow {
   id: string
   name: string | null
-  external_id: string | null
+  sku: string | null
   description: string | null
-  status: string | null
-  pricing_count: number | null
+  product_type: string | null
+  is_active: boolean | null
   created_at: string | null
 }
 export interface ProductTablePayload {
@@ -244,11 +241,9 @@ export interface ProductTablePayload {
 export interface PlanRow {
   id: string
   name: string | null
-  external_id: string | null
+  description: string | null
   status: string | null
-  currency: string | null
-  phase_count: number | null
-  mrr: { amount: number; currency: string } | null
+  plan_version: number | null
   created_at: string | null
 }
 export interface PlanTablePayload {
@@ -260,14 +255,14 @@ export interface PlanTablePayload {
 
 export interface JournalEntryRow {
   id: string
-  entry_number: string | null
-  date: string | null
-  account_id: string | null
-  account_name: string | null
-  debit: number | null
-  credit: number | null
-  currency: string | null
+  posted_at: string | null
+  event: string | null
   description: string | null
+  status_type: string | null
+  currency: string | null
+  total_debit: number | null
+  total_credit: number | null
+  line_count: number | null
   created_at: string | null
 }
 export interface JournalTablePayload {
@@ -280,12 +275,11 @@ export interface JournalTablePayload {
 
 export interface JobRow {
   id: string
-  type: string | null
+  name: string | null
+  description: string | null
+  job_type: string | null
+  resource: string | null
   status: string | null
-  started_at: string | null
-  completed_at: string | null
-  duration_ms: number | null
-  error: string | null
   created_at: string | null
 }
 export interface JobTablePayload {
@@ -300,10 +294,9 @@ export interface ContactRow {
   id: string
   name: string | null
   email: string | null
-  phone: string | null
   customer_id: string | null
-  role: string | null
-  created_at: string | null
+  send_invoice: boolean | null
+  send_contract: boolean | null
 }
 export interface ContactTablePayload {
   contacts: ContactRow[]
@@ -316,9 +309,7 @@ export interface RawMetricRow {
   id: string
   name: string | null
   api_slug: string | null
-  api_type: string | null
-  status: string | null
-  description: string | null
+  usage_upload_enabled: boolean | null
   created_at: string | null
 }
 export interface RawMetricTablePayload {
@@ -332,10 +323,6 @@ export interface AggregateRow {
   id: string
   name: string | null
   datasource: string | null
-  status: string | null
-  formula: string | null
-  unit: string | null
-  last_run_at: string | null
   created_at: string | null
 }
 export interface AggregateTablePayload {
@@ -381,11 +368,10 @@ export interface PaymentMethodListPayload {
 export interface EntityRow {
   id: string
   name: string | null
-  code: string | null
+  email: string | null
+  phone_number: string | null
   country: string | null
-  default_currency: string | null
-  status: string | null
-  created_at: string | null
+  is_default: boolean | null
 }
 export interface EntityTablePayload {
   entities: EntityRow[]

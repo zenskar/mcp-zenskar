@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { RawMetricRow, RawMetricTablePayload } from '../types'
-import { Dim, fmtDate, StatusPill } from './format'
+import { Dim, fmtDate } from './format'
 
 type SortKey = 'name' | 'created_at'
 type SortDir = 'asc' | 'desc'
@@ -63,9 +63,7 @@ export function RawMetricTable({
                 Name
               </Th>
               <Th>API Slug</Th>
-              <Th>Type</Th>
-              <Th>Status</Th>
-              <Th>Description</Th>
+              <Th>Upload Enabled</Th>
               <Th
                 sortable
                 active={sortKey === 'created_at'}
@@ -80,7 +78,7 @@ export function RawMetricTable({
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={5}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No raw metrics match.
@@ -103,13 +101,13 @@ export function RawMetricTable({
                     {r.api_slug || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 text-xs">
-                    {r.api_type || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={r.status} />
-                  </td>
-                  <td className="text-muted-foreground px-3 py-2 text-xs">
-                    {r.description || <Dim>—</Dim>}
+                    {r.usage_upload_enabled == null ? (
+                      <Dim>—</Dim>
+                    ) : r.usage_upload_enabled ? (
+                      'yes'
+                    ) : (
+                      'no'
+                    )}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}

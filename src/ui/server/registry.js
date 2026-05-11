@@ -385,26 +385,24 @@ function normalizeCreditNote(c) {
   if (!c || typeof c !== 'object')
     return {
       id: '',
-      external_id: null,
+      credit_note_number: null,
       customer_id: null,
       invoice_id: null,
       status: null,
       amount: null,
       currency: null,
-      reason: null,
-      issue_date: null,
+      repayment_method: null,
       created_at: null,
     }
   return {
     id: String(c.id || c.credit_note_id || ''),
-    external_id: c.external_id ?? null,
+    credit_note_number: c.credit_note_number ?? null,
     customer_id: c.customer_id ?? null,
     invoice_id: c.invoice_id ?? null,
     status: c.status ?? null,
     amount: numOrNull(c.amount ?? c.total ?? c.value),
     currency: c.currency_code ?? c.currency ?? null,
-    reason: c.reason ?? c.notes ?? c.description ?? null,
-    issue_date: c.issue_date ?? c.issued_at ?? c.effective_date ?? null,
+    repayment_method: c.repayment_method ?? null,
     created_at: c.created_at ?? null,
   }
 }
@@ -431,31 +429,22 @@ function normalizeContract(c) {
   if (!c || typeof c !== 'object')
     return {
       id: '',
-      external_id: null,
       customer_id: null,
       name: null,
       status: null,
+      currency: null,
       start_date: null,
       end_date: null,
-      mrr: null,
-      total_value: null,
-      phase_count: null,
       created_at: null,
     }
-  const phases = Array.isArray(c.phases) ? c.phases : []
   return {
     id: String(c.id || c.contract_id || ''),
-    external_id: c.external_id ?? null,
     customer_id: c.customer_id ?? null,
     name: c.name ?? c.contract_name ?? null,
     status: c.status ?? c.state ?? null,
+    currency: c.currency ?? c.currency_code ?? null,
     start_date: c.start_date ?? null,
     end_date: c.end_date ?? null,
-    mrr: pickMoney(c.mrr ?? c.monthly_recurring_revenue),
-    total_value: pickMoney(
-      c.total_value ?? c.contract_value ?? c.total_contract_value
-    ),
-    phase_count: numOrNull(c.phase_count ?? phases.length ?? null),
     created_at: c.created_at ?? null,
   }
 }
@@ -520,9 +509,11 @@ function contractDetailToPayload(raw) {
   return {
     contract: {
       ...base,
+      description: c.description ?? null,
       custom_attributes: c.custom_attributes ?? null,
       renewal_policy: c.renewal_policy ?? null,
-      notes: c.notes ?? null,
+      anchor_date: c.anchor_date ?? null,
+      plan_id: c.plan_id ?? null,
     },
     phases: phases.map(normalizePhase),
   }
@@ -535,7 +526,6 @@ function normalizePhase(p) {
       name: null,
       start_date: null,
       end_date: null,
-      mrr: null,
       pricing_summary: null,
       product_count: null,
     }
@@ -545,7 +535,6 @@ function normalizePhase(p) {
     name: p.name ?? p.phase_name ?? null,
     start_date: p.start_date ?? null,
     end_date: p.end_date ?? null,
-    mrr: pickMoney(p.mrr ?? p.monthly_recurring_revenue),
     pricing_summary: p.pricing_summary ?? null,
     product_count: prods.length || numOrNull(p.product_count),
   }
@@ -559,8 +548,8 @@ function creditNoteDetailToPayload(raw) {
     credit_note: {
       ...base,
       line_items_url: c.line_items_url ?? null,
-      business_entity_id: c.business_entity_id ?? null,
-      notes: c.notes ?? null,
+      credits_returned: numOrNull(c.credits_returned),
+      custom_data: c.custom_data ?? null,
     },
   }
 }
@@ -588,24 +577,19 @@ function normalizeProduct(p) {
     return {
       id: '',
       name: null,
-      external_id: null,
+      sku: null,
       description: null,
-      status: null,
-      pricing_count: null,
+      product_type: null,
+      is_active: null,
       created_at: null,
     }
-  const pricings = Array.isArray(p.pricings)
-    ? p.pricings
-    : Array.isArray(p.pricing_configurations)
-      ? p.pricing_configurations
-      : null
   return {
     id: String(p.id || p.product_id || ''),
     name: p.name ?? p.product_name ?? null,
-    external_id: p.external_id ?? p.sku ?? null,
+    sku: p.sku ?? null,
     description: p.description ?? null,
-    status: p.status ?? p.state ?? null,
-    pricing_count: pricings ? pricings.length : numOrNull(p.pricing_count),
+    product_type: p.product_type ?? p.type ?? null,
+    is_active: typeof p.is_active === 'boolean' ? p.is_active : null,
     created_at: p.created_at ?? null,
   }
 }
@@ -631,22 +615,17 @@ function normalizePlan(p) {
     return {
       id: '',
       name: null,
-      external_id: null,
+      description: null,
       status: null,
-      currency: null,
-      phase_count: null,
-      mrr: null,
+      plan_version: null,
       created_at: null,
     }
-  const phases = Array.isArray(p.phases) ? p.phases : []
   return {
     id: String(p.id || p.plan_id || ''),
     name: p.name ?? p.plan_name ?? null,
-    external_id: p.external_id ?? null,
+    description: p.description ?? null,
     status: p.status ?? p.state ?? null,
-    currency: p.currency ?? p.currency_code ?? null,
-    phase_count: phases.length || numOrNull(p.phase_count),
-    mrr: pickMoney(p.mrr ?? p.monthly_recurring_revenue),
+    plan_version: numOrNull(p.plan_version),
     created_at: p.created_at ?? null,
   }
 }
@@ -677,26 +656,33 @@ function normalizeJournalEntry(e) {
   if (!e || typeof e !== 'object')
     return {
       id: '',
-      entry_number: null,
-      date: null,
-      account_id: null,
-      account_name: null,
-      debit: null,
-      credit: null,
-      currency: null,
+      posted_at: null,
+      event: null,
       description: null,
+      status_type: null,
+      currency: null,
+      total_debit: null,
+      total_credit: null,
+      line_count: null,
       created_at: null,
     }
+  const lines = Array.isArray(e.journal_lines) ? e.journal_lines : []
+  let totalDebit = 0
+  let totalCredit = 0
+  for (const l of lines) {
+    if (Number.isFinite(l?.debits)) totalDebit += l.debits
+    if (Number.isFinite(l?.credits)) totalCredit += l.credits
+  }
   return {
     id: String(e.id || e.journal_entry_id || ''),
-    entry_number: e.entry_number ?? e.reference ?? null,
-    date: e.date ?? e.transaction_date ?? e.posted_at ?? null,
-    account_id: e.account_id ?? null,
-    account_name: e.account_name ?? null,
-    debit: numOrNull(e.debit ?? e.debit_amount),
-    credit: numOrNull(e.credit ?? e.credit_amount),
+    posted_at: e.posted_at ?? null,
+    event: e.event ?? null,
+    description: e.description ?? null,
+    status_type: e.status_type ?? null,
     currency: e.currency ?? e.currency_code ?? null,
-    description: e.description ?? e.memo ?? null,
+    total_debit: lines.length ? totalDebit : null,
+    total_credit: lines.length ? totalCredit : null,
+    line_count: lines.length || null,
     created_at: e.created_at ?? null,
   }
 }
@@ -728,30 +714,20 @@ function normalizeJob(j) {
   if (!j || typeof j !== 'object')
     return {
       id: '',
-      type: null,
+      name: null,
+      description: null,
+      job_type: null,
+      resource: null,
       status: null,
-      started_at: null,
-      completed_at: null,
-      duration_ms: null,
-      error: null,
       created_at: null,
     }
-  const start = j.started_at ?? j.start_time ?? null
-  const end = j.completed_at ?? j.end_time ?? null
-  let duration_ms = null
-  if (start && end) {
-    const a = Date.parse(start)
-    const b = Date.parse(end)
-    if (Number.isFinite(a) && Number.isFinite(b)) duration_ms = b - a
-  }
   return {
     id: String(j.id || j.job_id || ''),
-    type: j.type ?? j.job_type ?? j.kind ?? null,
+    name: j.name ?? null,
+    description: j.description ?? null,
+    job_type: j.job_type ?? j.type ?? null,
+    resource: j.resource ?? null,
     status: j.status ?? null,
-    started_at: start,
-    completed_at: end,
-    duration_ms,
-    error: j.error ?? j.error_message ?? null,
     created_at: j.created_at ?? null,
   }
 }
@@ -778,22 +754,27 @@ function normalizeContact(c) {
       id: '',
       name: null,
       email: null,
-      phone: null,
       customer_id: null,
-      role: null,
-      created_at: null,
+      send_invoice: null,
+      send_contract: null,
     }
   const first = c.first_name ?? ''
   const last = c.last_name ?? ''
   const composedName = [first, last].filter(Boolean).join(' ').trim()
+  const customerRef = c.customer
+  const customerId =
+    typeof customerRef === 'string'
+      ? customerRef
+      : (customerRef && typeof customerRef === 'object' ? customerRef.id : null) ??
+        c.customer_id ??
+        null
   return {
     id: String(c.id || c.contact_id || ''),
     name: c.name ?? (composedName || null),
     email: c.email ?? c.primary_email ?? null,
-    phone: c.phone ?? c.primary_phone ?? null,
-    customer_id: c.customer_id ?? null,
-    role: c.role ?? c.title ?? c.position ?? null,
-    created_at: c.created_at ?? null,
+    customer_id: customerId ?? null,
+    send_invoice: typeof c.send_invoice === 'boolean' ? c.send_invoice : null,
+    send_contract: typeof c.send_contract === 'boolean' ? c.send_contract : null,
   }
 }
 
@@ -825,18 +806,17 @@ function normalizeRawMetric(m) {
       id: '',
       name: null,
       api_slug: null,
-      api_type: null,
-      status: null,
-      description: null,
+      usage_upload_enabled: null,
       created_at: null,
     }
   return {
     id: String(m.id || m.raw_metric_id || ''),
     name: m.name ?? null,
     api_slug: m.api_slug ?? null,
-    api_type: m.api_type ?? null,
-    status: m.status ?? null,
-    description: m.description ?? null,
+    usage_upload_enabled:
+      typeof m.usage_upload_enabled === 'boolean'
+        ? m.usage_upload_enabled
+        : null,
     created_at: m.created_at ?? null,
   }
 }
@@ -863,20 +843,12 @@ function normalizeAggregate(a) {
       id: '',
       name: null,
       datasource: null,
-      status: null,
-      formula: null,
-      unit: null,
-      last_run_at: null,
       created_at: null,
     }
   return {
     id: String(a.id || a.aggregate_id || ''),
     name: a.name ?? null,
     datasource: a.datasource ?? a.data_source ?? a.raw_metric_name ?? null,
-    status: a.status ?? null,
-    formula: a.formula ?? a.aggregation ?? null,
-    unit: a.unit ?? null,
-    last_run_at: a.last_run_at ?? a.updated_at ?? null,
     created_at: a.created_at ?? null,
   }
 }
@@ -990,21 +962,18 @@ function normalizeEntity(e) {
     return {
       id: '',
       name: null,
-      code: null,
+      email: null,
+      phone_number: null,
       country: null,
-      default_currency: null,
-      status: null,
-      created_at: null,
+      is_default: null,
     }
   return {
     id: String(e.id || e.business_entity_id || ''),
     name: e.name ?? e.business_entity_name ?? null,
-    code: e.code ?? e.short_code ?? null,
-    country:
-      e.country ?? e.country_code ?? (e.address && e.address.country) ?? null,
-    default_currency: e.default_currency ?? e.currency ?? null,
-    status: e.status ?? null,
-    created_at: e.created_at ?? null,
+    email: e.email ?? null,
+    phone_number: e.phone_number ?? null,
+    country: (e.address && e.address.country) ?? e.country ?? null,
+    is_default: typeof e.is_default === 'boolean' ? e.is_default : null,
   }
 }
 

@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { EntityRow, EntityTablePayload } from '../types'
-import { Dim, fmtDate, StatusPill } from './format'
+import { Dim } from './format'
 
-type SortKey = 'name' | 'created_at'
+type SortKey = 'name'
 type SortDir = 'asc' | 'desc'
 
 export function EntityTable({ payload }: { payload: EntityTablePayload }) {
@@ -49,25 +49,17 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
               >
                 Name
               </Th>
-              <Th>Code</Th>
+              <Th>Email</Th>
+              <Th>Phone</Th>
               <Th>Country</Th>
-              <Th>Currency</Th>
-              <Th>Status</Th>
-              <Th
-                sortable
-                active={sortKey === 'created_at'}
-                dir={sortDir}
-                onClick={() => toggle('created_at')}
-              >
-                Created
-              </Th>
+              <Th>Default</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No entities.
@@ -86,20 +78,23 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
                   <td className="px-3 py-2 font-medium">
                     {r.name || <Dim>—</Dim>}
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    {r.code || <Dim>—</Dim>}
+                  <td className="text-secondary px-3 py-2 text-xs">
+                    {r.email || <Dim>—</Dim>}
                   </td>
-                  <td className="px-3 py-2 text-xs uppercase">
+                  <td className="px-3 py-2 font-mono text-xs">
+                    {r.phone_number || <Dim>—</Dim>}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
                     {r.country || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 text-xs">
-                    {r.default_currency || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={r.status} />
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {fmtDate(r.created_at)}
+                    {r.is_default == null ? (
+                      <Dim>—</Dim>
+                    ) : r.is_default ? (
+                      'yes'
+                    ) : (
+                      'no'
+                    )}
                   </td>
                 </tr>
               ))
@@ -117,8 +112,6 @@ function sortRows(rows: EntityRow[], key: SortKey, dir: SortDir): EntityRow[] {
     switch (key) {
       case 'name':
         return r.name
-      case 'created_at':
-        return r.created_at
     }
   }
   return [...rows].sort((a, b) => {
@@ -139,16 +132,14 @@ function Th({
   active,
   dir,
   onClick,
-  align = 'left',
 }: {
   children: React.ReactNode
   sortable?: boolean
   active?: boolean
   dir?: SortDir
   onClick?: () => void
-  align?: 'left' | 'right'
 }) {
-  const cls = `px-3 py-2 font-semibold ${align === 'right' ? 'text-right' : 'text-left'} ${sortable ? 'cursor-pointer select-none hover:text-foreground' : ''} ${active ? 'text-foreground' : ''}`
+  const cls = `px-3 py-2 text-left font-semibold ${sortable ? 'cursor-pointer select-none hover:text-foreground' : ''} ${active ? 'text-foreground' : ''}`
   return (
     <th className={cls} onClick={onClick}>
       {children}

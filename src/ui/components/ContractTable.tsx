@@ -2,16 +2,9 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { ContractRow, ContractTablePayload } from '../types'
-import {
-  daysBetween,
-  Dim,
-  fmtDate,
-  fmtMoney,
-  shortId,
-  StatusPill,
-} from './format'
+import { daysBetween, Dim, fmtDate, shortId, StatusPill } from './format'
 
-type SortKey = 'name' | 'start_date' | 'end_date' | 'mrr' | 'created_at'
+type SortKey = 'name' | 'start_date' | 'end_date' | 'created_at'
 type SortDir = 'asc' | 'desc'
 
 export function ContractTable({ payload }: { payload: ContractTablePayload }) {
@@ -71,17 +64,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
               </Th>
               <Th>Customer</Th>
               <Th>Status</Th>
-              <Th align="right">Phases</Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'mrr'}
-                dir={sortDir}
-                onClick={() => toggle('mrr')}
-              >
-                MRR
-              </Th>
-              <Th align="right">Total Value</Th>
+              <Th>Currency</Th>
               <Th
                 sortable
                 active={sortKey === 'start_date'}
@@ -105,7 +88,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={8}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No contracts match.
@@ -137,14 +120,8 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
                     <td className="px-3 py-2">
                       <StatusPill status={r.status} />
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {r.phase_count ?? <Dim>—</Dim>}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {fmtMoneyPair(r.mrr)}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {fmtMoneyPair(r.total_value)}
+                    <td className="px-3 py-2 font-mono text-xs">
+                      {r.currency || <Dim>—</Dim>}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {fmtDate(r.start_date)}
@@ -170,14 +147,8 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
           </tbody>
         </table>
       </div>
-
     </div>
   )
-}
-
-function fmtMoneyPair(m: { amount: number; currency: string } | null) {
-  if (!m || !Number.isFinite(m.amount)) return <Dim>—</Dim>
-  return fmtMoney(m.amount, m.currency || 'USD')
 }
 
 function Th({
@@ -210,7 +181,7 @@ function sortRows(
   dir: SortDir
 ): ContractRow[] {
   const mult = dir === 'asc' ? 1 : -1
-  const get = (r: ContractRow): string | number | null => {
+  const get = (r: ContractRow): string | null => {
     switch (key) {
       case 'name':
         return r.name
@@ -218,10 +189,8 @@ function sortRows(
         return r.start_date
       case 'end_date':
         return r.end_date
-      case 'mrr':
-        return r.mrr?.amount ?? null
       case 'created_at':
-        return r.created_at
+        return r.created_at ?? null
     }
   }
   return [...rows].sort((a, b) => {

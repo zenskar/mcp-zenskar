@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { PlanRow, PlanTablePayload } from '../types'
-import { Dim, fmtDate, fmtMoney, StatusPill } from './format'
+import { Dim, fmtDate, StatusPill } from './format'
 
-type SortKey = 'name' | 'phase_count' | 'mrr' | 'created_at'
+type SortKey = 'name' | 'created_at'
 type SortDir = 'asc' | 'desc'
 
 export function PlanTable({ payload }: { payload: PlanTablePayload }) {
@@ -42,7 +42,7 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row → details · headers sort
+          click row to open in Zenskar · headers sort
         </span>
       </header>
       <div className="border-border overflow-auto rounded-md border">
@@ -58,27 +58,9 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
               >
                 Name
               </Th>
-              <Th>External ID</Th>
+              <Th>Description</Th>
               <Th>Status</Th>
-              <Th>Currency</Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'phase_count'}
-                dir={sortDir}
-                onClick={() => toggle('phase_count')}
-              >
-                Phases
-              </Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'mrr'}
-                dir={sortDir}
-                onClick={() => toggle('mrr')}
-              >
-                MRR
-              </Th>
+              <Th align="right">Version</Th>
               <Th
                 sortable
                 active={sortKey === 'created_at'}
@@ -93,7 +75,7 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No plans match.
@@ -112,24 +94,14 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
                   <td className="px-3 py-2 font-medium">
                     {r.name || <Dim>—</Dim>}
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    {r.external_id || <Dim>—</Dim>}
+                  <td className="text-muted-foreground px-3 py-2 text-xs">
+                    {r.description || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2">
                     <StatusPill status={r.status} />
                   </td>
-                  <td className="px-3 py-2 text-xs">
-                    {r.currency || <Dim>—</Dim>}
-                  </td>
                   <td className="px-3 py-2 text-right tabular-nums">
-                    {r.phase_count ?? <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {r.mrr ? (
-                      fmtMoney(r.mrr.amount, r.mrr.currency)
-                    ) : (
-                      <Dim>—</Dim>
-                    )}
+                    {r.plan_version ?? <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}
@@ -146,14 +118,10 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
 
 function sortRows(rows: PlanRow[], key: SortKey, dir: SortDir): PlanRow[] {
   const mult = dir === 'asc' ? 1 : -1
-  const get = (r: PlanRow): string | number | null => {
+  const get = (r: PlanRow): string | null => {
     switch (key) {
       case 'name':
         return r.name
-      case 'phase_count':
-        return r.phase_count
-      case 'mrr':
-        return r.mrr?.amount ?? null
       case 'created_at':
         return r.created_at
     }

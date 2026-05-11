@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import type { CreditNoteRow, CreditNoteTablePayload } from '../types'
 import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
 
-type SortKey = 'amount' | 'issue_date' | 'created_at' | 'status'
+type SortKey = 'amount' | 'created_at' | 'status'
 type SortDir = 'asc' | 'desc'
 
 export function CreditNoteTable({
@@ -43,9 +43,7 @@ export function CreditNoteTable({
             </span>
           ) : null}
         </h2>
-        <span className="text-muted-foreground text-xs">
-          headers sort
-        </span>
+        <span className="text-muted-foreground text-xs">headers sort</span>
       </header>
 
       <div className="border-border overflow-auto rounded-md border">
@@ -53,7 +51,7 @@ export function CreditNoteTable({
           <thead className="bg-muted text-muted-foreground text-xs tracking-wide uppercase">
             <tr>
               <Th>#</Th>
-              <Th>External ID</Th>
+              <Th>Number</Th>
               <Th>Customer</Th>
               <Th>Invoice</Th>
               <Th
@@ -73,15 +71,7 @@ export function CreditNoteTable({
               >
                 Amount
               </Th>
-              <Th>Reason</Th>
-              <Th
-                sortable
-                active={sortKey === 'issue_date'}
-                dir={sortDir}
-                onClick={() => toggle('issue_date')}
-              >
-                Issued
-              </Th>
+              <Th>Repayment</Th>
               <Th
                 sortable
                 active={sortKey === 'created_at'}
@@ -96,7 +86,7 @@ export function CreditNoteTable({
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={8}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No credit notes match.
@@ -109,7 +99,7 @@ export function CreditNoteTable({
                     {i + 1}
                   </td>
                   <td className="px-3 py-2 font-mono text-xs">
-                    {r.external_id || <Dim>—</Dim>}
+                    {r.credit_note_number || <Dim>—</Dim>}
                   </td>
                   <td className="text-secondary px-3 py-2 font-mono text-xs">
                     {shortId(r.customer_id, 10)}
@@ -123,14 +113,8 @@ export function CreditNoteTable({
                   <td className="text-destructive px-3 py-2 text-right tabular-nums">
                     {fmtMoney(r.amount, r.currency || cur)}
                   </td>
-                  <td
-                    className="max-w-[18rem] truncate px-3 py-2 text-xs"
-                    title={r.reason || ''}
-                  >
-                    {r.reason || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {fmtDate(r.issue_date)}
+                  <td className="px-3 py-2 text-xs">
+                    {r.repayment_method || <Dim>—</Dim>}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}
@@ -141,7 +125,6 @@ export function CreditNoteTable({
           </tbody>
         </table>
       </div>
-
     </div>
   )
 }
@@ -180,8 +163,6 @@ function sortRows(
     switch (key) {
       case 'amount':
         return r.amount
-      case 'issue_date':
-        return r.issue_date
       case 'created_at':
         return r.created_at
       case 'status':
