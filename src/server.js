@@ -683,6 +683,11 @@ function convertArgsToZodSchema(args) {
       zodType = z.record(z.any());
     } else if (arg.type === 'array') {
       zodType = z.array(z.any());
+    } else if (arg.type === 'datetime') {
+      // Accept ISO-8601 string or numeric unix seconds. Backend Pydantic
+      // datetime fields parse both. Lets the LLM copy ISO strings directly
+      // from getContractBillingCycles output instead of converting to unix.
+      zodType = z.union([z.string(), z.number()]);
     } else {
       zodType = z.string();
     }
@@ -833,9 +838,26 @@ async function executeAPICall(tool, args) {
   // Build request body
   let body = null;
   if (method !== 'GET' && method !== 'DELETE' && tool.args) {
+    // Pydantic datetime fields on the Zenskar backend accept both ISO strings
+    // and unix int — but downstream code paths assume naive UTC datetimes
+    // (.astimezone() on aware datetimes raises). The UI normalises everything
+    // to unix int via dayjs.utc(...).unix(); we do the same here so the LLM
+    // can pass either form without producing a 500.
+    const coerceDatetime = (v) => {
+      if (typeof v === 'number') return Number.isFinite(v) ? Math.floor(v) : v;
+      if (typeof v === 'string') {
+        const t = Date.parse(v);
+        return Number.isFinite(t) ? Math.floor(t / 1000) : v;
+      }
+      return v;
+    };
     const bodyParams = {};
     tool.args.forEach(arg => {
       if (arg.position === 'body' && cleanArgs[arg.name] !== undefined) {
+        if (arg.type === 'datetime') {
+          bodyParams[arg.name] = coerceDatetime(cleanArgs[arg.name]);
+          return;
+        }
         if (tool.name === 'ingestRawMetricEvent' && arg.name === 'event') {
           const eventPayload = normalizeUsageEventPayload(cleanArgs[arg.name]);
           if (eventPayload && typeof eventPayload === 'object' && !Array.isArray(eventPayload)) {
@@ -1347,10 +1369,26 @@ function validateToolArgs(toolName, args) {
   }
 
   if (toolName === 'generateInvoice') {
-    if (!Number.isInteger(args.from_date)) errors.push("'from_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
-    if (!Number.isInteger(args.to_date)) errors.push("'to_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
-    if (Number.isInteger(args.from_date) && Number.isInteger(args.to_date) && args.to_date <= args.from_date) {
+    const toUnix = (v) => {
+      if (typeof v === 'number') return Number.isInteger(v) ? v : null;
+      if (typeof v === 'string') {
+        const t = Date.parse(v);
+        return Number.isFinite(t) ? Math.floor(t / 1000) : null;
+      }
+      return null;
+    };
+    const from = toUnix(args.from_date);
+    const to = toUnix(args.to_date);
+    if (from === null) errors.push("'from_date' must be either an integer UNIX timestamp (seconds) or an ISO-8601 datetime string. Copy from getContractBillingCycles.start_date.");
+    if (to === null) errors.push("'to_date' must be either an integer UNIX timestamp (seconds) or an ISO-8601 datetime string. Copy from getContractBillingCycles.end_date.");
+    if (from !== null && to !== null && to <= from) {
       errors.push("'to_date' must be strictly greater than 'from_date'.");
+    }
+    if (toUnix(args.bill_for_date) === null) {
+      errors.push("'bill_for_date' is REQUIRED (UNIX seconds or ISO-8601 string). Without it the API returns a $0 invoice. Copy from getContractBillingCycles.bill_for_date — do NOT compute.");
+    }
+    if (!Number.isInteger(args.billing_cycle_start_day) || args.billing_cycle_start_day < 1 || args.billing_cycle_start_day > 31) {
+      errors.push("'billing_cycle_start_day' is REQUIRED and must be an integer 1-31. Copy from getContractBillingCycles.billing_cycle_start_day.");
     }
   }
 
