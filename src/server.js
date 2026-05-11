@@ -996,11 +996,13 @@ async function executeAPICall(tool, args) {
     throw new Error('Authorization is required. Set ZENSKAR_AUTH_TOKEN (JWT) or ZENSKAR_API_KEY env var.');
   }
 
-  // Add any other headers from user context
+  // Add any other headers from user context (case-insensitive collision check)
   if (userContext?.headers) {
+    const existingLower = new Set(Object.keys(headers).map(k => k.toLowerCase()));
     Object.keys(userContext.headers).forEach(key => {
-      if (userContext.headers[key] && !headers[key.toLowerCase()]) {
+      if (userContext.headers[key] && !existingLower.has(key.toLowerCase())) {
         headers[key] = userContext.headers[key];
+        existingLower.add(key.toLowerCase());
       }
     });
   }
@@ -1124,13 +1126,19 @@ async function executeAPICall(tool, args) {
 const APPROVAL_TOKEN_TTL_MS = 5 * 60 * 1000;
 const approvalTokens = new Map(); // token -> {toolName, issuedAt, expiresAt}
 
-function issueApprovalToken(toolName) {
+function issueApprovalToken(toolName, args) {
   const token = uuidv4();
   const issuedAt = Date.now();
+  // Snapshot args at issue time so the second invocation can restore them
+  // even when the host does not echo them at the top level (e.g. Claude
+  // Desktop's approval dialog only echoes __userContext.approval).
+  const snapshot = args ? { ...args } : {};
+  delete snapshot.__userContext;
   approvalTokens.set(token, {
     toolName,
     issuedAt,
-    expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS
+    expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS,
+    args: snapshot
   });
   // Opportunistic cleanup of expired tokens.
   for (const [t, entry] of approvalTokens) {
@@ -1140,13 +1148,13 @@ function issueApprovalToken(toolName) {
 }
 
 function consumeApprovalToken(token, toolName) {
-  if (!token || typeof token !== 'string') return false;
+  if (!token || typeof token !== 'string') return null;
   const entry = approvalTokens.get(token);
-  if (!entry) return false;
+  if (!entry) return null;
   approvalTokens.delete(token); // single-use regardless of validity
-  if (entry.toolName !== toolName) return false;
-  if (entry.expiresAt < Date.now()) return false;
-  return true;
+  if (entry.toolName !== toolName) return null;
+  if (entry.expiresAt < Date.now()) return null;
+  return entry;
 }
 
 // Function to check if tool needs approval
@@ -1160,21 +1168,33 @@ function checkNeedsApproval(tool, args) {
   const userContext = args.__userContext;
   const approval = userContext && userContext.approval;
   if (approval && approval.approved === true) {
-    if (consumeApprovalToken(approval.token, tool.name)) {
+    const tokenEntry = consumeApprovalToken(approval.token, tool.name);
+    if (tokenEntry) {
       logger.info(`[${tool.name}] Approval token verified, executing with approved arguments`);
 
-      // Replace current args with user-approved/modified arguments
-      const modifiedArgs = approval.modifiedArguments;
-      if (modifiedArgs) {
+      // Argument resolution order on re-invoke:
+      //   1. modifiedArguments — host let the user edit fields in the dialog
+      //   2. top-level args already present (host echoed original call)
+      //   3. originalArguments echoed back inside the approval block
+      //   4. snapshot stored alongside the token at issue time
+      // (4) is the safety net for hosts like Claude Desktop that only echo
+      // __userContext.approval on re-invoke; without it the URL/body lose all
+      // path/body params and the API rejects the call as malformed.
+      const hasTopLevelArgs = Object.keys(args).some(k => k !== '__userContext');
+      const resolvedArgs =
+        approval.modifiedArguments ||
+        (hasTopLevelArgs ? null : (approval.originalArguments || tokenEntry.args));
+
+      if (resolvedArgs) {
         const savedUserContext = args.__userContext;
         Object.keys(args).forEach(key => {
           if (key !== '__userContext') {
             delete args[key];
           }
         });
-        Object.assign(args, modifiedArgs);
+        Object.assign(args, resolvedArgs);
         args.__userContext = savedUserContext;
-        logger.info(`[${tool.name}] Using user-modified arguments:`, modifiedArgs);
+        logger.info(`[${tool.name}] Restored arguments for approved execution:`, Object.keys(resolvedArgs));
       }
 
       return false; // Skip approval, execute with approved args
@@ -1197,7 +1217,7 @@ function generateApprovalRequest(tool, args) {
   const userContext = args.__userContext;
   const cleanArgs = { ...args };
   delete cleanArgs.__userContext;
-  const approvalToken = issueApprovalToken(tool.name);
+  const approvalToken = issueApprovalToken(tool.name, args);
 
   return {
     type: 'approval_required',
