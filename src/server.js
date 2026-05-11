@@ -1181,9 +1181,13 @@ function checkNeedsApproval(tool, args) {
       // __userContext.approval on re-invoke; without it the URL/body lose all
       // path/body params and the API rejects the call as malformed.
       const hasTopLevelArgs = Object.keys(args).some(k => k !== '__userContext');
-      const resolvedArgs =
-        approval.modifiedArguments ||
-        (hasTopLevelArgs ? null : (approval.originalArguments || tokenEntry.args));
+      const nonEmpty = (obj) => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
+      // Treat {} as "nothing to apply" — Claude Desktop sends modifiedArguments:{}
+      // even when the user did not edit any fields. An empty truthy object would
+      // otherwise wipe the top-level args and leave path params unbound.
+      const resolvedArgs = nonEmpty(approval.modifiedArguments)
+        ? approval.modifiedArguments
+        : (hasTopLevelArgs ? null : (nonEmpty(approval.originalArguments) ? approval.originalArguments : tokenEntry.args));
 
       if (resolvedArgs) {
         const savedUserContext = args.__userContext;
