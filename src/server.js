@@ -999,9 +999,15 @@ async function executeAPICall(tool, args) {
   // Add any other headers from user context (case-insensitive collision check).
   // Object keys cannot duplicate across casings within the same object, so the
   // Set only needs to be built once from the existing `headers`.
+  // Filter prototype-pollution keys: `userContext.headers` may originate from
+  // a JSON payload where an attacker could set `__proto__` to mutate the
+  // local `headers` prototype.
   if (userContext?.headers) {
     const existingLower = new Set(Object.keys(headers).map(k => k.toLowerCase()));
+    const POISON_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
     Object.keys(userContext.headers).forEach(key => {
+      if (POISON_KEYS.has(key)) return;
+      if (!Object.prototype.hasOwnProperty.call(userContext.headers, key)) return;
       if (userContext.headers[key] && !existingLower.has(key.toLowerCase())) {
         headers[key] = userContext.headers[key];
       }
@@ -1183,30 +1189,23 @@ setInterval(() => {
 }, APPROVAL_TOKEN_CLEANUP_MS).unref();
 
 // Pure resolver: decides which arg source wins for an approved re-invoke.
-// Returns { args, source } where args is the object to apply (or null when
-// the existing top-level args should be left untouched), and source names
-// the tier that won — useful for logging the four-tier fallback.
-function resolveApprovedArgs(approval, tokenEntry, currentArgs) {
+// Returns { args, source } where args is the object to apply (always non-null
+// for valid tokens), and source names the tier that won.
+//
+// SECURITY MODEL: the token snapshot stored at issue time is the canonical
+// record of what the user approved. We DO NOT trust top-level args on a
+// re-invoke — a malicious LLM holding a valid token could otherwise swap
+// in arbitrary path/body params (e.g. a different invoiceId) and still pass
+// the gate. The only host-supplied override accepted is
+// `approval.modifiedArguments`, which represents user edits performed inside
+// the approval dialog. Those edits MUST be re-validated by the caller
+// against the tool schema before the API call is executed.
+function resolveApprovedArgs(approval, tokenEntry) {
   const nonEmptyObj = (obj) =>
     obj && typeof obj === 'object' && !Array.isArray(obj) && Object.keys(obj).length > 0;
 
-  // Top-level args count only if they carry at least one meaningful value.
-  // A host echoing `{invoiceId: ""}` or `{invoiceId: null}` should not block
-  // the snapshot fallback — empty values still fail UUID/path validation.
-  const hasTopLevelValues = Object.keys(currentArgs).some(k => {
-    if (k === '__userContext') return false;
-    const v = currentArgs[k];
-    return v !== undefined && v !== null && v !== '';
-  });
-
   if (nonEmptyObj(approval.modifiedArguments)) {
     return { args: approval.modifiedArguments, source: 'modifiedArguments' };
-  }
-  if (hasTopLevelValues) {
-    return { args: null, source: 'topLevel' };
-  }
-  if (nonEmptyObj(approval.originalArguments)) {
-    return { args: approval.originalArguments, source: 'originalArguments' };
   }
   return { args: tokenEntry.args, source: 'tokenSnapshot' };
 }
@@ -1239,19 +1238,15 @@ function checkNeedsApproval(tool, args) {
   if (approval && approval.approved === true) {
     const tokenEntry = consumeApprovalToken(approval.token, tool.name);
     if (tokenEntry) {
-      // Argument resolution priority (see resolveApprovedArgs):
-      //   1. approval.modifiedArguments  — user edited fields in dialog
-      //   2. top-level args (with values) — host echoed original call
-      //   3. approval.originalArguments  — host echoed inside approval block
-      //   4. tokenEntry.args             — snapshot from issue time
-      // (4) is the safety net for hosts like Claude Desktop that only echo
-      // __userContext.approval on re-invoke.
-      const { args: resolvedArgs, source } = resolveApprovedArgs(approval, tokenEntry, args);
+      // Snapshot is canonical (see resolveApprovedArgs). The only host-supplied
+      // override accepted is `approval.modifiedArguments` (user edits from the
+      // approval dialog); those are re-validated against the tool schema in
+      // the caller. Top-level args on the re-invoke are ignored to prevent a
+      // valid token from acting as a blank check on path/body params.
+      const { args: resolvedArgs, source } = resolveApprovedArgs(approval, tokenEntry);
       logger.info(`[${tool.name}] Approval token verified; arg source=${source}`);
-      if (resolvedArgs) {
-        applyResolvedArgs(args, resolvedArgs);
-        logger.info(`[${tool.name}] Restored arguments for approved execution:`, Object.keys(resolvedArgs));
-      }
+      applyResolvedArgs(args, resolvedArgs);
+      logger.info(`[${tool.name}] Restored arguments for approved execution:`, Object.keys(resolvedArgs));
       return false;
     }
     logger.warn(`[${tool.name}] Approval received without valid token (got: ${approval.token ? 'expired/mismatched' : 'missing'}); requiring re-approval`);
@@ -1467,7 +1462,31 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
               approvalRequest: approvalRequest
             };
           }
-          
+
+          // Re-validate after the approval gate. checkNeedsApproval may have
+          // swapped path/body params with user-supplied `modifiedArguments`
+          // (host dialog edits), which were not part of the pre-approval
+          // validation pass. Bypass attempts via crafted modifiedArguments
+          // get caught here.
+          const postApprovalValidation = validateToolArgs(tool.name, args);
+          if (!postApprovalValidation.valid) {
+            logger.error(`[${tool.name}] Approved arguments failed validation:`, postApprovalValidation.errors);
+            tokenUsageStatus = 'blocked';
+            tokenUsageReason = `invalid_args_post_approval: ${postApprovalValidation.errors.join('; ')}`;
+            return {
+              content: [
+                { type: "text", text: JSON.stringify({ type: 'invalid_arguments', toolName: tool.name, errors: postApprovalValidation.errors }, null, 2) },
+                {
+                  type: "text",
+                  text: `ACTION_NOT_EXECUTED — INVALID_ARGUMENTS\n\nApproved arguments failed validation. The user-edited values from the approval dialog do not satisfy the tool schema:\n\n` +
+                        postApprovalValidation.errors.map((e, i) => `${i + 1}. ${e}`).join('\n') +
+                        `\n\nRe-issue the call with corrected arguments; a new approval gate will be required.`
+                }
+              ],
+              isError: true
+            };
+          }
+
           // Extract user context for token usage tracking
           const userId = userContext?.userId || 'unknown';
           const chatId = userContext?.chatId || null; // Use NULL for direct MCP calls
@@ -1518,7 +1537,8 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             };
           }
           
-          // (validateToolArgs already ran pre-approval; no duplicate check here.)
+          // (validateToolArgs ran pre-approval; post-approval re-validation
+          // ran immediately after the approval gate. No third check here.)
 
           // Use adjusted args with enforced limits
           const adjustedArgs = limitsValidation.adjustedArgs;
