@@ -683,6 +683,11 @@ function convertArgsToZodSchema(args) {
       zodType = z.record(z.any());
     } else if (arg.type === 'array') {
       zodType = z.array(z.any());
+    } else if (arg.type === 'datetime') {
+      // Accept ISO-8601 string or numeric unix seconds. Backend Pydantic
+      // datetime fields parse both. Lets the LLM copy ISO strings directly
+      // from getContractBillingCycles output instead of converting to unix.
+      zodType = z.union([z.string(), z.number()]);
     } else {
       zodType = z.string();
     }
@@ -833,9 +838,26 @@ async function executeAPICall(tool, args) {
   // Build request body
   let body = null;
   if (method !== 'GET' && method !== 'DELETE' && tool.args) {
+    // Pydantic datetime fields on the Zenskar backend accept both ISO strings
+    // and unix int — but downstream code paths assume naive UTC datetimes
+    // (.astimezone() on aware datetimes raises). The UI normalises everything
+    // to unix int via dayjs.utc(...).unix(); we do the same here so the LLM
+    // can pass either form without producing a 500.
+    const coerceDatetime = (v) => {
+      if (typeof v === 'number') return Number.isFinite(v) ? Math.floor(v) : v;
+      if (typeof v === 'string') {
+        const t = Date.parse(v);
+        return Number.isFinite(t) ? Math.floor(t / 1000) : v;
+      }
+      return v;
+    };
     const bodyParams = {};
     tool.args.forEach(arg => {
       if (arg.position === 'body' && cleanArgs[arg.name] !== undefined) {
+        if (arg.type === 'datetime') {
+          bodyParams[arg.name] = coerceDatetime(cleanArgs[arg.name]);
+          return;
+        }
         if (tool.name === 'ingestRawMetricEvent' && arg.name === 'event') {
           const eventPayload = normalizeUsageEventPayload(cleanArgs[arg.name]);
           if (eventPayload && typeof eventPayload === 'object' && !Array.isArray(eventPayload)) {
@@ -996,10 +1018,19 @@ async function executeAPICall(tool, args) {
     throw new Error('Authorization is required. Set ZENSKAR_AUTH_TOKEN (JWT) or ZENSKAR_API_KEY env var.');
   }
 
-  // Add any other headers from user context
+  // Add any other headers from user context (case-insensitive collision check).
+  // Object keys cannot duplicate across casings within the same object, so the
+  // Set only needs to be built once from the existing `headers`.
+  // Filter prototype-pollution keys: `userContext.headers` may originate from
+  // a JSON payload where an attacker could set `__proto__` to mutate the
+  // local `headers` prototype.
   if (userContext?.headers) {
+    const existingLower = new Set(Object.keys(headers).map(k => k.toLowerCase()));
+    const POISON_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
     Object.keys(userContext.headers).forEach(key => {
-      if (userContext.headers[key] && !headers[key.toLowerCase()]) {
+      if (POISON_KEYS.has(key)) return;
+      if (!Object.prototype.hasOwnProperty.call(userContext.headers, key)) return;
+      if (userContext.headers[key] && !existingLower.has(key.toLowerCase())) {
         headers[key] = userContext.headers[key];
       }
     });
@@ -1122,73 +1153,131 @@ async function executeAPICall(tool, args) {
 // scenarios where an LLM fabricates `approval.approved=true` to bypass the dialog.
 // Tokens are single-use and expire after 5 minutes.
 const APPROVAL_TOKEN_TTL_MS = 5 * 60 * 1000;
-const approvalTokens = new Map(); // token -> {toolName, issuedAt, expiresAt}
+const APPROVAL_TOKEN_CLEANUP_MS = 60 * 1000;
+const approvalTokens = new Map(); // token -> {toolName, issuedAt, expiresAt, args}
 
-function issueApprovalToken(toolName) {
+// Deep clone via structuredClone when available, JSON fallback otherwise.
+// Approval args may include nested objects (addresses, pricing_data) that
+// executeAPICall mutates downstream; a shallow spread would share refs.
+function deepCloneArgs(value) {
+  if (value == null) return value;
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(value); } catch (_) { /* fall through to JSON */ }
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
+function issueApprovalToken(toolName, args) {
   const token = uuidv4();
   const issuedAt = Date.now();
+  // Snapshot args at issue time so the second invocation can restore them
+  // even when the host does not echo them at the top level (e.g. Claude
+  // Desktop's approval dialog only echoes __userContext.approval).
+  // Note: `args` here is the initial tool invocation. generateApprovalRequest
+  // only runs when checkNeedsApproval returned true, which means there was no
+  // valid approval block. We still strip __userContext defensively in case a
+  // host replays a stale approval block alongside fresh top-level args.
+  const snapshot = args ? deepCloneArgs(args) : {};
+  delete snapshot.__userContext;
   approvalTokens.set(token, {
     toolName,
     issuedAt,
-    expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS
+    expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS,
+    args: snapshot
   });
-  // Opportunistic cleanup of expired tokens.
-  for (const [t, entry] of approvalTokens) {
-    if (entry.expiresAt < issuedAt) approvalTokens.delete(t);
-  }
   return token;
 }
 
 function consumeApprovalToken(token, toolName) {
-  if (!token || typeof token !== 'string') return false;
+  if (!token || typeof token !== 'string') return null;
   const entry = approvalTokens.get(token);
-  if (!entry) return false;
-  approvalTokens.delete(token); // single-use regardless of validity
-  if (entry.toolName !== toolName) return false;
-  if (entry.expiresAt < Date.now()) return false;
-  return true;
+  if (!entry) return null;
+  // Single-use: delete on first lookup regardless of toolName/expiry. A wrong
+  // toolName here means either a replay attack or a host bug; either way the
+  // token should not survive. Legitimate users get a fresh token via re-approval.
+  approvalTokens.delete(token);
+  if (entry.toolName !== toolName) return null;
+  if (entry.expiresAt < Date.now()) return null;
+  return entry;
 }
 
-// Function to check if tool needs approval
+// Periodic sweep so expired tokens (and the args they snapshot) don't linger
+// in memory past their TTL even when no new approval is issued.
+setInterval(() => {
+  const now = Date.now();
+  for (const [t, entry] of approvalTokens) {
+    if (entry.expiresAt < now) approvalTokens.delete(t);
+  }
+}, APPROVAL_TOKEN_CLEANUP_MS).unref();
+
+// Pure resolver: decides which arg source wins for an approved re-invoke.
+// Returns { args, source } where args is the object to apply (always non-null
+// for valid tokens), and source names the tier that won.
+//
+// SECURITY MODEL: the token snapshot stored at issue time is the canonical
+// record of what the user approved. We DO NOT trust top-level args on a
+// re-invoke — a malicious LLM holding a valid token could otherwise swap
+// in arbitrary path/body params (e.g. a different invoiceId) and still pass
+// the gate. The only host-supplied override accepted is
+// `approval.modifiedArguments`, which represents user edits performed inside
+// the approval dialog. Those edits MUST be re-validated by the caller
+// against the tool schema before the API call is executed.
+function resolveApprovedArgs(approval, tokenEntry) {
+  const nonEmptyObj = (obj) =>
+    obj && typeof obj === 'object' && !Array.isArray(obj) && Object.keys(obj).length > 0;
+
+  if (nonEmptyObj(approval.modifiedArguments)) {
+    return { args: approval.modifiedArguments, source: 'modifiedArguments' };
+  }
+  return { args: tokenEntry.args, source: 'tokenSnapshot' };
+}
+
+// Replace `args` contents with `resolvedArgs` while preserving __userContext.
+// Kept separate from the resolver so the decision logic stays pure/testable.
+function applyResolvedArgs(args, resolvedArgs) {
+  const savedUserContext = args.__userContext;
+  Object.keys(args).forEach(key => {
+    if (key !== '__userContext') delete args[key];
+  });
+  Object.assign(args, resolvedArgs);
+  args.__userContext = savedUserContext;
+}
+
+// Decides whether `tool` still needs approval given the current `args`.
+// As a side effect, when a valid approval token is present this function
+// also restores path/body params onto `args` from the resolver's chosen
+// tier. The mutation is deliberate — the MCP SDK passes `args` by
+// reference, and downstream callers (validateToolLimits, executeAPICall)
+// read from the same object. Argument resolution is itself pure, see
+// resolveApprovedArgs above.
 function checkNeedsApproval(tool, args) {
   if (!tool.needsApproval) {
     return false;
   }
 
-  // Check if this is a re-execution after approval. The host must echo the
-  // server-issued one-time token; bare `approved: true` is no longer trusted.
   const userContext = args.__userContext;
   const approval = userContext && userContext.approval;
   if (approval && approval.approved === true) {
-    if (consumeApprovalToken(approval.token, tool.name)) {
-      logger.info(`[${tool.name}] Approval token verified, executing with approved arguments`);
-
-      // Replace current args with user-approved/modified arguments
-      const modifiedArgs = approval.modifiedArguments;
-      if (modifiedArgs) {
-        const savedUserContext = args.__userContext;
-        Object.keys(args).forEach(key => {
-          if (key !== '__userContext') {
-            delete args[key];
-          }
-        });
-        Object.assign(args, modifiedArgs);
-        args.__userContext = savedUserContext;
-        logger.info(`[${tool.name}] Using user-modified arguments:`, modifiedArgs);
-      }
-
-      return false; // Skip approval, execute with approved args
+    const tokenEntry = consumeApprovalToken(approval.token, tool.name);
+    if (tokenEntry) {
+      // Snapshot is canonical (see resolveApprovedArgs). The only host-supplied
+      // override accepted is `approval.modifiedArguments` (user edits from the
+      // approval dialog); those are re-validated against the tool schema in
+      // the caller. Top-level args on the re-invoke are ignored to prevent a
+      // valid token from acting as a blank check on path/body params.
+      const { args: resolvedArgs, source } = resolveApprovedArgs(approval, tokenEntry);
+      logger.info(`[${tool.name}] Approval token verified; arg source=${source}`);
+      applyResolvedArgs(args, resolvedArgs);
+      logger.info(`[${tool.name}] Restored arguments for approved execution:`, Object.keys(resolvedArgs));
+      return false;
     }
     logger.warn(`[${tool.name}] Approval received without valid token (got: ${approval.token ? 'expired/mismatched' : 'missing'}); requiring re-approval`);
     // Fall through to issue a fresh approval_required response.
   }
 
-  // If needsApproval is a function, evaluate it
   if (typeof tool.needsApproval === 'function') {
     return tool.needsApproval(args);
   }
-
-  // If it's a boolean true, always needs approval
   return tool.needsApproval === true;
 }
 
@@ -1197,7 +1286,7 @@ function generateApprovalRequest(tool, args) {
   const userContext = args.__userContext;
   const cleanArgs = { ...args };
   delete cleanArgs.__userContext;
-  const approvalToken = issueApprovalToken(tool.name);
+  const approvalToken = issueApprovalToken(tool.name, args);
 
   return {
     type: 'approval_required',
@@ -1280,10 +1369,26 @@ function validateToolArgs(toolName, args) {
   }
 
   if (toolName === 'generateInvoice') {
-    if (!Number.isInteger(args.from_date)) errors.push("'from_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
-    if (!Number.isInteger(args.to_date)) errors.push("'to_date' must be an INTEGER UNIX timestamp (seconds), not a date string.");
-    if (Number.isInteger(args.from_date) && Number.isInteger(args.to_date) && args.to_date <= args.from_date) {
+    const toUnix = (v) => {
+      if (typeof v === 'number') return Number.isInteger(v) ? v : null;
+      if (typeof v === 'string') {
+        const t = Date.parse(v);
+        return Number.isFinite(t) ? Math.floor(t / 1000) : null;
+      }
+      return null;
+    };
+    const from = toUnix(args.from_date);
+    const to = toUnix(args.to_date);
+    if (from === null) errors.push("'from_date' must be either an integer UNIX timestamp (seconds) or an ISO-8601 datetime string. Copy from getContractBillingCycles.start_date.");
+    if (to === null) errors.push("'to_date' must be either an integer UNIX timestamp (seconds) or an ISO-8601 datetime string. Copy from getContractBillingCycles.end_date.");
+    if (from !== null && to !== null && to <= from) {
       errors.push("'to_date' must be strictly greater than 'from_date'.");
+    }
+    if (toUnix(args.bill_for_date) === null) {
+      errors.push("'bill_for_date' is REQUIRED (UNIX seconds or ISO-8601 string). Without it the API returns a $0 invoice. Copy from getContractBillingCycles.bill_for_date — do NOT compute.");
+    }
+    if (!Number.isInteger(args.billing_cycle_start_day) || args.billing_cycle_start_day < 1 || args.billing_cycle_start_day > 31) {
+      errors.push("'billing_cycle_start_day' is REQUIRED and must be an integer 1-31. Copy from getContractBillingCycles.billing_cycle_start_day.");
     }
   }
 
@@ -1395,7 +1500,31 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
               approvalRequest: approvalRequest
             };
           }
-          
+
+          // Re-validate after the approval gate. checkNeedsApproval may have
+          // swapped path/body params with user-supplied `modifiedArguments`
+          // (host dialog edits), which were not part of the pre-approval
+          // validation pass. Bypass attempts via crafted modifiedArguments
+          // get caught here.
+          const postApprovalValidation = validateToolArgs(tool.name, args);
+          if (!postApprovalValidation.valid) {
+            logger.error(`[${tool.name}] Approved arguments failed validation:`, postApprovalValidation.errors);
+            tokenUsageStatus = 'blocked';
+            tokenUsageReason = `invalid_args_post_approval: ${postApprovalValidation.errors.join('; ')}`;
+            return {
+              content: [
+                { type: "text", text: JSON.stringify({ type: 'invalid_arguments', toolName: tool.name, errors: postApprovalValidation.errors }, null, 2) },
+                {
+                  type: "text",
+                  text: `ACTION_NOT_EXECUTED — INVALID_ARGUMENTS\n\nApproved arguments failed validation. The user-edited values from the approval dialog do not satisfy the tool schema:\n\n` +
+                        postApprovalValidation.errors.map((e, i) => `${i + 1}. ${e}`).join('\n') +
+                        `\n\nRe-issue the call with corrected arguments; a new approval gate will be required.`
+                }
+              ],
+              isError: true
+            };
+          }
+
           // Extract user context for token usage tracking
           const userId = userContext?.userId || 'unknown';
           const chatId = userContext?.chatId || null; // Use NULL for direct MCP calls
@@ -1446,7 +1575,8 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             };
           }
           
-          // (validateToolArgs already ran pre-approval; no duplicate check here.)
+          // (validateToolArgs ran pre-approval; post-approval re-validation
+          // ran immediately after the approval gate. No third check here.)
 
           // Use adjusted args with enforced limits
           const adjustedArgs = limitsValidation.adjustedArgs;

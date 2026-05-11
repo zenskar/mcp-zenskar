@@ -2922,6 +2922,37 @@
       }
     },
     {
+      "name": "getContractBillingCycles",
+      "description": "Returns the contract's pre-computed billing cycles as a list of {name, start_date, end_date, bill_for_date, billing_cycle_start_day}. REQUIRED before calling generateInvoice. Workflow: (1) call this tool, (2) pick the cycle entry whose date range covers the period you want to invoice, (3) pass that entry's `start_date` → `from_date`, `end_date` → `to_date`, `bill_for_date`, `billing_cycle_start_day` to generateInvoice — copy the values verbatim, no math. The backend matches `bill_for_date` exactly against this list; arbitrary dates produce empty invoice arrays.",
+      "args": [
+        {
+          "name": "contractId",
+          "description": "The unique identifier (UUID) of the contract.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of cycles to return (default 10). Increase if the contract spans many years.",
+          "type": "integer",
+          "required": false,
+          "default": 10,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/contracts/{contractId}/billingCycles",
+        "method": "GET",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Contract Billing Cycles\n\n"
+      }
+    },
+    {
       "name": "createContractPhase",
       "description": "Add a new phase to an existing contract. Use this for add-on expansions, mid-contract changes, or creating distinct billing periods with different pricing. Phase type enum: active, pause, trial.",
       "args": [
@@ -3261,7 +3292,7 @@
     },
     {
       "name": "generateInvoice",
-      "description": "STOP — read this before calling. Granularity is PER PHASE, NOT per product. ONE call generates ONE invoice covering ALL products active in the (contract, customer, from_date, to_date) window — every product becomes a line item on the same invoice. NEVER iterate over products. Iterate over PHASES only. CORRECT: a 2-phase contract with 2 products per phase → exactly 2 calls (one per phase), producing 2 invoices each with 2 line items. WRONG: 4 calls (one per product per phase) → produces 4 fragmented duplicate invoices, which is the #1 bug reported on this tool. Before calling, fetch the contract's phases via getContractById and use each phase's start_date / end_date as from_date / to_date. Use for billing replay or on-demand invoice generation.",
+      "description": "Generate an invoice for a single contract+customer over a billing window.\n\nGranularity is PER PHASE, NOT per product. ONE call generates ONE invoice covering ALL products active in the (contract, customer, from_date, to_date) window — every product becomes a line item on the same invoice. NEVER iterate over products.\n\nMANDATORY PRE-STEP: call `getContractBillingCycles` first to fetch the list of valid {start_date, end_date, bill_for_date, billing_cycle_start_day} entries for this contract. Pick ONE entry. Copy its `start_date` → `from_date`, `end_date` → `to_date`, `bill_for_date`, `billing_cycle_start_day` verbatim. DO NOT compute these from contract.start_date, pricing.billing_period, or human intuition — the backend matches `bill_for_date` exactly against the pre-computed list.\n\nDate fields accept ISO-8601 strings (e.g. `\"2026-04-28T00:00:00Z\"`) or integer UNIX seconds. Prefer pasting ISO strings verbatim from getContractBillingCycles output — the server converts to unix internally before sending to the API.\n\nKnown failure modes:\n  • `{invoice_ids: []}` → `bill_for_date` did not match any cycle. Re-fetch billingCycles and copy the exact value.\n  • $0 invoice → bill_for_date/billing_cycle_start_day omitted entirely.\n  • InvoiceAlreadyGeneratedForThisBillingPeriod → an approved invoice already exists for this cycle.",
       "args": [
         {
           "name": "contract_id",
@@ -3279,15 +3310,29 @@
         },
         {
           "name": "from_date",
-          "description": "Start date of the billing period as a UNIX timestamp in seconds (e.g. 1709251200 for 2024-03-01). Must be an integer, NOT a date string.",
-          "type": "number",
+          "description": "Start of billing period. Accepts ISO-8601 string (e.g. `2026-04-28T00:00:00Z`) or UNIX seconds integer. PREFER ISO string copied verbatim from getContractBillingCycles.start_date — avoids timezone bugs.",
+          "type": "datetime",
           "required": true,
           "position": "body"
         },
         {
           "name": "to_date",
-          "description": "End date of the billing period as a UNIX timestamp in seconds (e.g. 1711929600 for 2024-03-31). Must be an integer, NOT a date string.",
-          "type": "number",
+          "description": "End of billing period. Accepts ISO-8601 string or UNIX seconds integer. PREFER ISO string copied verbatim from getContractBillingCycles.end_date.",
+          "type": "datetime",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "bill_for_date",
+          "description": "REQUIRED. Anchors which billing cycle this invoice belongs to. Accepts ISO-8601 string or UNIX seconds. MUST match exactly one of the `bill_for_date` values returned by getContractBillingCycles — pasting the ISO string verbatim is the safest path. Arbitrary dates produce `invoice_ids: []`.",
+          "type": "datetime",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "billing_cycle_start_day",
+          "description": "REQUIRED. Day of month (1-31) anchoring the recurring billing cycle. Fetch from the contract or plan's billing_period; if unsure, use the day-of-month of contract.start_date. Omitting this causes the API to return a $0 invoice because no billing cycle matches.",
+          "type": "integer",
           "required": true,
           "position": "body"
         }
