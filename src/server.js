@@ -996,13 +996,14 @@ async function executeAPICall(tool, args) {
     throw new Error('Authorization is required. Set ZENSKAR_AUTH_TOKEN (JWT) or ZENSKAR_API_KEY env var.');
   }
 
-  // Add any other headers from user context (case-insensitive collision check)
+  // Add any other headers from user context (case-insensitive collision check).
+  // Object keys cannot duplicate across casings within the same object, so the
+  // Set only needs to be built once from the existing `headers`.
   if (userContext?.headers) {
     const existingLower = new Set(Object.keys(headers).map(k => k.toLowerCase()));
     Object.keys(userContext.headers).forEach(key => {
       if (userContext.headers[key] && !existingLower.has(key.toLowerCase())) {
         headers[key] = userContext.headers[key];
-        existingLower.add(key.toLowerCase());
       }
     });
   }
@@ -1124,7 +1125,19 @@ async function executeAPICall(tool, args) {
 // scenarios where an LLM fabricates `approval.approved=true` to bypass the dialog.
 // Tokens are single-use and expire after 5 minutes.
 const APPROVAL_TOKEN_TTL_MS = 5 * 60 * 1000;
-const approvalTokens = new Map(); // token -> {toolName, issuedAt, expiresAt}
+const APPROVAL_TOKEN_CLEANUP_MS = 60 * 1000;
+const approvalTokens = new Map(); // token -> {toolName, issuedAt, expiresAt, args}
+
+// Deep clone via structuredClone when available, JSON fallback otherwise.
+// Approval args may include nested objects (addresses, pricing_data) that
+// executeAPICall mutates downstream; a shallow spread would share refs.
+function deepCloneArgs(value) {
+  if (value == null) return value;
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(value); } catch (_) { /* fall through to JSON */ }
+  }
+  return JSON.parse(JSON.stringify(value));
+}
 
 function issueApprovalToken(toolName, args) {
   const token = uuidv4();
@@ -1132,7 +1145,11 @@ function issueApprovalToken(toolName, args) {
   // Snapshot args at issue time so the second invocation can restore them
   // even when the host does not echo them at the top level (e.g. Claude
   // Desktop's approval dialog only echoes __userContext.approval).
-  const snapshot = args ? { ...args } : {};
+  // Note: `args` here is the initial tool invocation. generateApprovalRequest
+  // only runs when checkNeedsApproval returned true, which means there was no
+  // valid approval block. We still strip __userContext defensively in case a
+  // host replays a stale approval block alongside fresh top-level args.
+  const snapshot = args ? deepCloneArgs(args) : {};
   delete snapshot.__userContext;
   approvalTokens.set(token, {
     toolName,
@@ -1140,10 +1157,6 @@ function issueApprovalToken(toolName, args) {
     expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS,
     args: snapshot
   });
-  // Opportunistic cleanup of expired tokens.
-  for (const [t, entry] of approvalTokens) {
-    if (entry.expiresAt < issuedAt) approvalTokens.delete(t);
-  }
   return token;
 }
 
@@ -1151,68 +1164,103 @@ function consumeApprovalToken(token, toolName) {
   if (!token || typeof token !== 'string') return null;
   const entry = approvalTokens.get(token);
   if (!entry) return null;
-  approvalTokens.delete(token); // single-use regardless of validity
+  // Single-use: delete on first lookup regardless of toolName/expiry. A wrong
+  // toolName here means either a replay attack or a host bug; either way the
+  // token should not survive. Legitimate users get a fresh token via re-approval.
+  approvalTokens.delete(token);
   if (entry.toolName !== toolName) return null;
   if (entry.expiresAt < Date.now()) return null;
   return entry;
 }
 
-// Function to check if tool needs approval
+// Periodic sweep so expired tokens (and the args they snapshot) don't linger
+// in memory past their TTL even when no new approval is issued.
+setInterval(() => {
+  const now = Date.now();
+  for (const [t, entry] of approvalTokens) {
+    if (entry.expiresAt < now) approvalTokens.delete(t);
+  }
+}, APPROVAL_TOKEN_CLEANUP_MS).unref();
+
+// Pure resolver: decides which arg source wins for an approved re-invoke.
+// Returns { args, source } where args is the object to apply (or null when
+// the existing top-level args should be left untouched), and source names
+// the tier that won — useful for logging the four-tier fallback.
+function resolveApprovedArgs(approval, tokenEntry, currentArgs) {
+  const nonEmptyObj = (obj) =>
+    obj && typeof obj === 'object' && !Array.isArray(obj) && Object.keys(obj).length > 0;
+
+  // Top-level args count only if they carry at least one meaningful value.
+  // A host echoing `{invoiceId: ""}` or `{invoiceId: null}` should not block
+  // the snapshot fallback — empty values still fail UUID/path validation.
+  const hasTopLevelValues = Object.keys(currentArgs).some(k => {
+    if (k === '__userContext') return false;
+    const v = currentArgs[k];
+    return v !== undefined && v !== null && v !== '';
+  });
+
+  if (nonEmptyObj(approval.modifiedArguments)) {
+    return { args: approval.modifiedArguments, source: 'modifiedArguments' };
+  }
+  if (hasTopLevelValues) {
+    return { args: null, source: 'topLevel' };
+  }
+  if (nonEmptyObj(approval.originalArguments)) {
+    return { args: approval.originalArguments, source: 'originalArguments' };
+  }
+  return { args: tokenEntry.args, source: 'tokenSnapshot' };
+}
+
+// Replace `args` contents with `resolvedArgs` while preserving __userContext.
+// Kept separate from the resolver so the decision logic stays pure/testable.
+function applyResolvedArgs(args, resolvedArgs) {
+  const savedUserContext = args.__userContext;
+  Object.keys(args).forEach(key => {
+    if (key !== '__userContext') delete args[key];
+  });
+  Object.assign(args, resolvedArgs);
+  args.__userContext = savedUserContext;
+}
+
+// Decides whether `tool` still needs approval given the current `args`.
+// As a side effect, when a valid approval token is present this function
+// also restores path/body params onto `args` from the resolver's chosen
+// tier. The mutation is deliberate — the MCP SDK passes `args` by
+// reference, and downstream callers (validateToolLimits, executeAPICall)
+// read from the same object. Argument resolution is itself pure, see
+// resolveApprovedArgs above.
 function checkNeedsApproval(tool, args) {
   if (!tool.needsApproval) {
     return false;
   }
 
-  // Check if this is a re-execution after approval. The host must echo the
-  // server-issued one-time token; bare `approved: true` is no longer trusted.
   const userContext = args.__userContext;
   const approval = userContext && userContext.approval;
   if (approval && approval.approved === true) {
     const tokenEntry = consumeApprovalToken(approval.token, tool.name);
     if (tokenEntry) {
-      logger.info(`[${tool.name}] Approval token verified, executing with approved arguments`);
-
-      // Argument resolution order on re-invoke:
-      //   1. modifiedArguments — host let the user edit fields in the dialog
-      //   2. top-level args already present (host echoed original call)
-      //   3. originalArguments echoed back inside the approval block
-      //   4. snapshot stored alongside the token at issue time
+      // Argument resolution priority (see resolveApprovedArgs):
+      //   1. approval.modifiedArguments  — user edited fields in dialog
+      //   2. top-level args (with values) — host echoed original call
+      //   3. approval.originalArguments  — host echoed inside approval block
+      //   4. tokenEntry.args             — snapshot from issue time
       // (4) is the safety net for hosts like Claude Desktop that only echo
-      // __userContext.approval on re-invoke; without it the URL/body lose all
-      // path/body params and the API rejects the call as malformed.
-      const hasTopLevelArgs = Object.keys(args).some(k => k !== '__userContext');
-      const nonEmpty = (obj) => obj && typeof obj === 'object' && Object.keys(obj).length > 0;
-      // Treat {} as "nothing to apply" — Claude Desktop sends modifiedArguments:{}
-      // even when the user did not edit any fields. An empty truthy object would
-      // otherwise wipe the top-level args and leave path params unbound.
-      const resolvedArgs = nonEmpty(approval.modifiedArguments)
-        ? approval.modifiedArguments
-        : (hasTopLevelArgs ? null : (nonEmpty(approval.originalArguments) ? approval.originalArguments : tokenEntry.args));
-
+      // __userContext.approval on re-invoke.
+      const { args: resolvedArgs, source } = resolveApprovedArgs(approval, tokenEntry, args);
+      logger.info(`[${tool.name}] Approval token verified; arg source=${source}`);
       if (resolvedArgs) {
-        const savedUserContext = args.__userContext;
-        Object.keys(args).forEach(key => {
-          if (key !== '__userContext') {
-            delete args[key];
-          }
-        });
-        Object.assign(args, resolvedArgs);
-        args.__userContext = savedUserContext;
+        applyResolvedArgs(args, resolvedArgs);
         logger.info(`[${tool.name}] Restored arguments for approved execution:`, Object.keys(resolvedArgs));
       }
-
-      return false; // Skip approval, execute with approved args
+      return false;
     }
     logger.warn(`[${tool.name}] Approval received without valid token (got: ${approval.token ? 'expired/mismatched' : 'missing'}); requiring re-approval`);
     // Fall through to issue a fresh approval_required response.
   }
 
-  // If needsApproval is a function, evaluate it
   if (typeof tool.needsApproval === 'function') {
     return tool.needsApproval(args);
   }
-
-  // If it's a boolean true, always needs approval
   return tool.needsApproval === true;
 }
 
