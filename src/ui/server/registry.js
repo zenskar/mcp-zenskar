@@ -290,24 +290,11 @@ function normalizeMoney(m) {
 function normalizeCustomer(c) {
   if (!c || typeof c !== 'object')
     return { id: '', name: null, external_id: null, email: null }
-  const inv = c.invoice_details || {}
   return {
     id: String(c.id || c.customer_id || ''),
     name: c.customer_name ?? c.name ?? null,
     external_id: c.external_id ?? null,
     email: c.email ?? c.primary_email ?? null,
-    invoice_count: numOrNull(inv.no_of_invoices ?? c.invoice_count),
-    mrr: pickMoney(c.mrr ?? c.monthly_recurring_revenue),
-    outstanding: pickMoney(
-      c.outstanding ??
-        c.outstanding_amount ??
-        c.amount_outstanding ??
-        inv.total_amount_due
-    ),
-    status:
-      c.status ?? (c.communications_enabled === false ? 'paused' : 'active'),
-    last_activity_at:
-      c.last_activity_at ?? c.last_seen_at ?? c.updated_at ?? null,
     created_at: c.created_at ?? c.created ?? null,
   }
 }

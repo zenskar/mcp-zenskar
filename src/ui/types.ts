@@ -97,11 +97,6 @@ export interface CustomerRow {
   name: string | null
   external_id: string | null
   email: string | null
-  invoice_count?: number | null
-  mrr?: { amount: number; currency: string } | null
-  outstanding?: { amount: number; currency: string } | null
-  status?: 'active' | 'churned' | 'paused' | null
-  last_activity_at?: string | null
   created_at?: string | null
 }
 

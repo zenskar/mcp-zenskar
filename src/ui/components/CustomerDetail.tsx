@@ -1,6 +1,6 @@
 import { callHost, notifyHost } from '../client/postMessage'
 import type { CustomerDetailPayload } from '../types'
-import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
+import { Dim, fmtDate, shortId } from './format'
 
 export function CustomerDetail({
   payload,
@@ -26,7 +26,6 @@ export function CustomerDetail({
         <div>
           <h2 className="m-0 flex items-center gap-2 text-lg font-semibold">
             {c.name || <Dim>—</Dim>}
-            {c.status ? <StatusPill status={c.status} /> : null}
           </h2>
           <div className="text-muted-foreground mt-0.5 font-mono text-xs">
             {c.id}
@@ -73,35 +72,6 @@ export function CustomerDetail({
           )}
         </Field>
         <Field label="Created">{fmtDate(c.created_at)}</Field>
-        <Field label="Last Activity">{fmtDate(c.last_activity_at)}</Field>
-      </Grid>
-
-      <Grid cols={3}>
-        <Stat
-          label="Invoices"
-          value={
-            c.invoice_count != null ? (
-              c.invoice_count.toLocaleString()
-            ) : (
-              <Dim>—</Dim>
-            )
-          }
-        />
-        <Stat
-          label="MRR"
-          value={c.mrr ? fmtMoney(c.mrr.amount, c.mrr.currency) : <Dim>—</Dim>}
-        />
-        <Stat
-          label="Outstanding"
-          value={
-            c.outstanding ? (
-              fmtMoney(c.outstanding.amount, c.outstanding.currency)
-            ) : (
-              <Dim>—</Dim>
-            )
-          }
-          tone={c.outstanding && c.outstanding.amount > 0 ? 'warn' : 'ok'}
-        />
       </Grid>
 
       {addrLine ? (
@@ -193,28 +163,6 @@ function Field({
         {label}
       </div>
       <div className="text-sm">{children}</div>
-    </div>
-  )
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: React.ReactNode
-  tone?: 'ok' | 'warn'
-}) {
-  const cls = tone === 'warn' ? 'text-destructive' : ''
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className={`text-base font-semibold tabular-nums ${cls}`}>
-        {value}
-      </div>
     </div>
   )
 }

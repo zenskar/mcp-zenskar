@@ -2,14 +2,8 @@ import { useMemo, useState } from 'react'
 
 import { openZenskarPath } from '../client/postMessage'
 import type { CustomerRow, CustomerTablePayload } from '../types'
-import { StatusPill } from './format'
 
-type SortKey =
-  | 'name'
-  | 'mrr'
-  | 'outstanding'
-  | 'created_at'
-  | 'last_activity_at'
+type SortKey = 'name' | 'created_at'
 type SortDir = 'asc' | 'desc'
 
 export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
@@ -69,34 +63,6 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
               </Th>
               <Th>External ID</Th>
               <Th>Email</Th>
-              <Th align="right">Invoices</Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'mrr'}
-                dir={sortDir}
-                onClick={() => toggleSort('mrr')}
-              >
-                MRR
-              </Th>
-              <Th
-                align="right"
-                sortable
-                active={sortKey === 'outstanding'}
-                dir={sortDir}
-                onClick={() => toggleSort('outstanding')}
-              >
-                Outstanding
-              </Th>
-              <Th>Status</Th>
-              <Th
-                sortable
-                active={sortKey === 'last_activity_at'}
-                dir={sortDir}
-                onClick={() => toggleSort('last_activity_at')}
-              >
-                Last Activity
-              </Th>
               <Th
                 sortable
                 active={sortKey === 'created_at'}
@@ -111,7 +77,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={5}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No customers match.
@@ -136,23 +102,6 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
                   <td className="text-secondary px-3 py-2">
                     {c.email || <Dim>—</Dim>}
                   </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {c.invoice_count ?? <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">
-                    {fmtMoney(c.mrr)}
-                  </td>
-                  <td
-                    className={`px-3 py-2 text-right tabular-nums ${c.outstanding && c.outstanding.amount > 0 ? 'text-destructive font-medium' : ''}`}
-                  >
-                    {fmtMoney(c.outstanding)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <StatusPill status={c.status} />
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {fmtDate(c.last_activity_at)}
-                  </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(c.created_at)}
                   </td>
@@ -162,7 +111,6 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
           </tbody>
         </table>
       </div>
-
     </div>
   )
 }
@@ -173,16 +121,14 @@ function Th({
   active,
   dir,
   onClick,
-  align = 'left',
 }: {
   children: React.ReactNode
   sortable?: boolean
   active?: boolean
   dir?: SortDir
   onClick?: () => void
-  align?: 'left' | 'right'
 }) {
-  const cls = `px-3 py-2 font-semibold ${align === 'right' ? 'text-right' : 'text-left'} ${sortable ? 'cursor-pointer select-none hover:text-foreground' : ''} ${active ? 'text-foreground' : ''}`
+  const cls = `px-3 py-2 text-left font-semibold ${sortable ? 'cursor-pointer select-none hover:text-foreground' : ''} ${active ? 'text-foreground' : ''}`
   return (
     <th className={cls} onClick={onClick}>
       {children}
@@ -193,19 +139,6 @@ function Th({
 
 function Dim({ children }: { children: React.ReactNode }) {
   return <span className="text-muted-foreground">{children}</span>
-}
-
-function fmtMoney(m: { amount: number; currency: string } | null | undefined) {
-  if (!m || !Number.isFinite(m.amount)) return <Dim>—</Dim>
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: m.currency || 'USD',
-      maximumFractionDigits: 2,
-    }).format(m.amount)
-  } catch {
-    return `${m.currency} ${m.amount.toLocaleString()}`
-  }
 }
 
 function fmtDate(s: string | null | undefined) {
@@ -221,18 +154,12 @@ function sortRows(
   dir: SortDir
 ): CustomerRow[] {
   const mult = dir === 'asc' ? 1 : -1
-  const get = (r: CustomerRow): string | number | null => {
+  const get = (r: CustomerRow): string | null => {
     switch (key) {
       case 'name':
         return r.name
-      case 'mrr':
-        return r.mrr?.amount ?? null
-      case 'outstanding':
-        return r.outstanding?.amount ?? null
       case 'created_at':
         return r.created_at ?? null
-      case 'last_activity_at':
-        return r.last_activity_at ?? null
     }
   }
   return [...rows].sort((a, b) => {
