@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
+import { openZenskarPath } from '../client/postMessage'
 import type { ContractRow, ContractTablePayload } from '../types'
 import {
   daysBetween,
@@ -33,18 +33,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
 
   const openContract = (r: ContractRow) => {
     if (!r.id) return
-    callHost('tools/call', {
-      name: 'getContractById',
-      arguments: { contractId: r.id },
-    })
-      .then(() =>
-        notifyHost('ui/message', { text: `Opened contract ${r.name || r.id}.` })
-      )
-      .catch(() =>
-        notifyHost('ui/message', {
-          text: `Run: getContractById contractId=${r.id}`,
-        })
-      )
+    openZenskarPath(`/contractsv2/${r.id}/edit`)
   }
 
   return (
@@ -63,7 +52,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open · headers sort
+          click row to open in Zenskar · headers sort
         </span>
       </header>
 
@@ -182,22 +171,6 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
         </table>
       </div>
 
-      {payload.cursor?.next || payload.cursor?.prev ? (
-        <nav className="flex items-center justify-end gap-2 text-sm">
-          <PaginateButton
-            disabled={!payload.cursor?.prev}
-            onClick={() => paginate(payload.cursor?.prev)}
-          >
-            ← Prev
-          </PaginateButton>
-          <PaginateButton
-            disabled={!payload.cursor?.next}
-            onClick={() => paginate(payload.cursor?.next)}
-          >
-            Next →
-          </PaginateButton>
-        </nav>
-      ) : null}
     </div>
   )
 }
@@ -205,37 +178,6 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
 function fmtMoneyPair(m: { amount: number; currency: string } | null) {
   if (!m || !Number.isFinite(m.amount)) return <Dim>—</Dim>
   return fmtMoney(m.amount, m.currency || 'USD')
-}
-
-function paginate(cursor: string | null | undefined) {
-  if (!cursor) return
-  callHost('tools/call', {
-    name: 'listContracts',
-    arguments: { cursor },
-  }).catch(() =>
-    notifyHost('ui/message', { text: `Run: listContracts cursor=${cursor}` })
-  )
-}
-
-function PaginateButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
-  )
 }
 
 function Th({

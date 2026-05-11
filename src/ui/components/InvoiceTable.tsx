@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
+import { openZenskarPath } from '../client/postMessage'
 import type { InvoiceRow, InvoiceTablePayload } from '../types'
 import {
   daysBetween,
@@ -39,20 +39,7 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
 
   const openInvoice = (r: InvoiceRow) => {
     if (!r.id) return
-    callHost('tools/call', {
-      name: 'getInvoiceLineItems',
-      arguments: { invoiceId: r.id },
-    })
-      .then(() =>
-        notifyHost('ui/message', {
-          text: `Opened invoice ${r.invoice_number || r.id}.`,
-        })
-      )
-      .catch(() =>
-        notifyHost('ui/message', {
-          text: `Run: getInvoiceLineItems invoiceId=${r.id}`,
-        })
-      )
+    openZenskarPath(`/invoices/${r.id}/view`)
   }
 
   return (
@@ -71,7 +58,7 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row → line items · headers sort
+          click row to open in Zenskar · headers sort
         </span>
       </header>
 
@@ -197,52 +184,7 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
         </table>
       </div>
 
-      {payload.cursor?.next || payload.cursor?.prev ? (
-        <nav className="flex items-center justify-end gap-2 text-sm">
-          <PaginateButton
-            disabled={!payload.cursor?.prev}
-            onClick={() => paginate(payload.cursor?.prev)}
-          >
-            ← Prev
-          </PaginateButton>
-          <PaginateButton
-            disabled={!payload.cursor?.next}
-            onClick={() => paginate(payload.cursor?.next)}
-          >
-            Next →
-          </PaginateButton>
-        </nav>
-      ) : null}
     </div>
-  )
-}
-
-function paginate(cursor: string | null | undefined) {
-  if (!cursor) return
-  callHost('tools/call', { name: 'listInvoices', arguments: { cursor } }).catch(
-    () =>
-      notifyHost('ui/message', { text: `Run: listInvoices cursor=${cursor}` })
-  )
-}
-
-function PaginateButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
   )
 }
 

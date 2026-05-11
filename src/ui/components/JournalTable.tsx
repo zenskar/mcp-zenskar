@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
 import type { JournalEntryRow, JournalTablePayload } from '../types'
 import { Dim, fmtDate, fmtMoney, shortId } from './format'
 
@@ -22,13 +21,6 @@ export function JournalTable({ payload }: { payload: JournalTablePayload }) {
       setSortDir(k === 'date' ? 'desc' : 'asc')
     }
   }
-  const open = (r: JournalEntryRow) =>
-    fireTool(
-      'getJournalEntry',
-      { entryId: r.id },
-      `Opened entry ${r.entry_number || r.id}.`
-    )
-
   const totals = useMemo(() => {
     let d = 0,
       c = 0
@@ -113,11 +105,7 @@ export function JournalTable({ payload }: { payload: JournalTablePayload }) {
               </tr>
             ) : (
               rows.map((r, i) => (
-                <tr
-                  key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => open(r)}
-                >
+                <tr key={r.id || i} className="border-border border-t">
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
                   </td>
@@ -160,7 +148,6 @@ export function JournalTable({ payload }: { payload: JournalTablePayload }) {
           </tbody>
         </table>
       </div>
-      <Pager cursor={payload.cursor} tool="listJournalEntries" />
     </div>
   )
 }
@@ -193,59 +180,6 @@ function sortRows(
     if (av > bv) return 1 * mult
     return 0
   })
-}
-
-function fireTool(name: string, args: Record<string, unknown>, ok?: string) {
-  callHost('tools/call', { name, arguments: args })
-    .then(() => (ok ? notifyHost('ui/message', { text: ok }) : undefined))
-    .catch(() =>
-      notifyHost('ui/message', { text: `Run: ${name} ${JSON.stringify(args)}` })
-    )
-}
-
-function Pager({
-  cursor,
-  tool,
-}: {
-  cursor?: { next?: string | null; prev?: string | null }
-  tool: string
-}) {
-  if (!cursor || (!cursor.next && !cursor.prev)) return null
-  const go = (c: string | null | undefined) => {
-    if (!c) return
-    fireTool(tool, { cursor: c })
-  }
-  return (
-    <nav className="flex items-center justify-end gap-2 text-sm">
-      <PagerButton disabled={!cursor.prev} onClick={() => go(cursor.prev)}>
-        ← Prev
-      </PagerButton>
-      <PagerButton disabled={!cursor.next} onClick={() => go(cursor.next)}>
-        Next →
-      </PagerButton>
-    </nav>
-  )
-}
-
-function PagerButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
-  )
 }
 
 function Th({

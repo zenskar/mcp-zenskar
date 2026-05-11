@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
+import { openZenskarPath } from '../client/postMessage'
 import type { CustomerRow, CustomerTablePayload } from '../types'
 import { StatusPill } from './format'
 
@@ -31,14 +31,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
 
   const openCustomer = (c: CustomerRow) => {
     if (!c.id) return
-    callHost('tools/call', { name: 'getCustomer', arguments: { id: c.id } })
-      .then(() =>
-        notifyHost('ui/message', { text: `Opened customer ${c.name || c.id}.` })
-      )
-      .catch(() => {
-        /* host may not support nested calls; fall back to text emission */
-        notifyHost('ui/message', { text: `Run: getCustomer id=${c.id}` })
-      })
+    openZenskarPath(`/customers/${c.id}/view`)
   }
 
   return (
@@ -57,7 +50,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open · click headers to sort
+          click row to open in Zenskar · click headers to sort
         </span>
       </header>
 
@@ -170,54 +163,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
         </table>
       </div>
 
-      {payload.cursor?.next || payload.cursor?.prev ? (
-        <nav className="flex items-center justify-end gap-2 text-sm">
-          <PaginateButton
-            disabled={!payload.cursor?.prev}
-            onClick={() => paginate('prev', payload.cursor?.prev)}
-          >
-            ← Prev
-          </PaginateButton>
-          <PaginateButton
-            disabled={!payload.cursor?.next}
-            onClick={() => paginate('next', payload.cursor?.next)}
-          >
-            Next →
-          </PaginateButton>
-        </nav>
-      ) : null}
     </div>
-  )
-}
-
-function paginate(_dir: 'next' | 'prev', cursor: string | null | undefined) {
-  if (!cursor) return
-  callHost('tools/call', {
-    name: 'listCustomers',
-    arguments: { cursor },
-  }).catch(() =>
-    notifyHost('ui/message', { text: `Run: listCustomers cursor=${cursor}` })
-  )
-}
-
-function PaginateButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
   )
 }
 

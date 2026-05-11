@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
 import type { CreditNoteRow, CreditNoteTablePayload } from '../types'
 import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
 
@@ -29,24 +28,6 @@ export function CreditNoteTable({
     }
   }
 
-  const openCreditNote = (r: CreditNoteRow) => {
-    if (!r.id) return
-    callHost('tools/call', {
-      name: 'getCreditNoteById',
-      arguments: { creditNoteId: r.id },
-    })
-      .then(() =>
-        notifyHost('ui/message', {
-          text: `Opened credit note ${r.external_id || r.id}.`,
-        })
-      )
-      .catch(() =>
-        notifyHost('ui/message', {
-          text: `Run: getCreditNoteById creditNoteId=${r.id}`,
-        })
-      )
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -63,7 +44,7 @@ export function CreditNoteTable({
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open · headers sort
+          headers sort
         </span>
       </header>
 
@@ -123,11 +104,7 @@ export function CreditNoteTable({
               </tr>
             ) : (
               rows.map((r, i) => (
-                <tr
-                  key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => openCreditNote(r)}
-                >
+                <tr key={r.id || i} className="border-border border-t">
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
                   </td>
@@ -165,54 +142,7 @@ export function CreditNoteTable({
         </table>
       </div>
 
-      {payload.cursor?.next || payload.cursor?.prev ? (
-        <nav className="flex items-center justify-end gap-2 text-sm">
-          <PaginateButton
-            disabled={!payload.cursor?.prev}
-            onClick={() => paginate(payload.cursor?.prev)}
-          >
-            ← Prev
-          </PaginateButton>
-          <PaginateButton
-            disabled={!payload.cursor?.next}
-            onClick={() => paginate(payload.cursor?.next)}
-          >
-            Next →
-          </PaginateButton>
-        </nav>
-      ) : null}
     </div>
-  )
-}
-
-function paginate(cursor: string | null | undefined) {
-  if (!cursor) return
-  callHost('tools/call', {
-    name: 'listCreditNotes',
-    arguments: { cursor },
-  }).catch(() =>
-    notifyHost('ui/message', { text: `Run: listCreditNotes cursor=${cursor}` })
-  )
-}
-
-function PaginateButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
   )
 }
 

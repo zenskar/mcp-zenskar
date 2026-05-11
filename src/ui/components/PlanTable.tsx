@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
+import { openZenskarPath } from '../client/postMessage'
 import type { PlanRow, PlanTablePayload } from '../types'
 import { Dim, fmtDate, fmtMoney, StatusPill } from './format'
 
@@ -21,8 +21,10 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
       setSortDir(k === 'name' ? 'asc' : 'desc')
     }
   }
-  const open = (r: PlanRow) =>
-    fireTool('getPlanById', { planId: r.id }, `Opened plan ${r.name || r.id}.`)
+  const open = (r: PlanRow) => {
+    if (!r.id) return
+    openZenskarPath(`/plansv2/${r.id}/edit`)
+  }
 
   return (
     <div className="space-y-3">
@@ -138,7 +140,6 @@ export function PlanTable({ payload }: { payload: PlanTablePayload }) {
           </tbody>
         </table>
       </div>
-      <Pager cursor={payload.cursor} tool="listPlans" />
     </div>
   )
 }
@@ -167,59 +168,6 @@ function sortRows(rows: PlanRow[], key: SortKey, dir: SortDir): PlanRow[] {
     if (av > bv) return 1 * mult
     return 0
   })
-}
-
-function fireTool(name: string, args: Record<string, unknown>, ok?: string) {
-  callHost('tools/call', { name, arguments: args })
-    .then(() => (ok ? notifyHost('ui/message', { text: ok }) : undefined))
-    .catch(() =>
-      notifyHost('ui/message', { text: `Run: ${name} ${JSON.stringify(args)}` })
-    )
-}
-
-function Pager({
-  cursor,
-  tool,
-}: {
-  cursor?: { next?: string | null; prev?: string | null }
-  tool: string
-}) {
-  if (!cursor || (!cursor.next && !cursor.prev)) return null
-  const go = (c: string | null | undefined) => {
-    if (!c) return
-    fireTool(tool, { cursor: c })
-  }
-  return (
-    <nav className="flex items-center justify-end gap-2 text-sm">
-      <PagerButton disabled={!cursor.prev} onClick={() => go(cursor.prev)}>
-        ← Prev
-      </PagerButton>
-      <PagerButton disabled={!cursor.next} onClick={() => go(cursor.next)}>
-        Next →
-      </PagerButton>
-    </nav>
-  )
-}
-
-function PagerButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
-  )
 }
 
 function Th({

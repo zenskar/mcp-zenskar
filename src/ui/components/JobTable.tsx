@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { callHost, notifyHost } from '../client/postMessage'
+import { openZenskarPath } from '../client/postMessage'
 import type { JobRow, JobTablePayload } from '../types'
 import { Dim, fmtDate, shortId, StatusPill } from './format'
 
@@ -21,8 +21,10 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
       setSortDir('desc')
     }
   }
-  const open = (r: JobRow) =>
-    fireTool('getJobById', { jobId: r.id }, `Opened job ${r.id}.`)
+  const open = (r: JobRow) => {
+    if (!r.id) return
+    openZenskarPath(`/jobs/${r.id}/view`)
+  }
   const counts = payload.status_counts || {}
 
   return (
@@ -121,7 +123,6 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
           </tbody>
         </table>
       </div>
-      <Pager cursor={payload.cursor} tool="listJobs" />
     </div>
   )
 }
@@ -159,59 +160,6 @@ function sortRows(rows: JobRow[], key: SortKey, dir: SortDir): JobRow[] {
     if (av > bv) return 1 * mult
     return 0
   })
-}
-
-function fireTool(name: string, args: Record<string, unknown>, ok?: string) {
-  callHost('tools/call', { name, arguments: args })
-    .then(() => (ok ? notifyHost('ui/message', { text: ok }) : undefined))
-    .catch(() =>
-      notifyHost('ui/message', { text: `Run: ${name} ${JSON.stringify(args)}` })
-    )
-}
-
-function Pager({
-  cursor,
-  tool,
-}: {
-  cursor?: { next?: string | null; prev?: string | null }
-  tool: string
-}) {
-  if (!cursor || (!cursor.next && !cursor.prev)) return null
-  const go = (c: string | null | undefined) => {
-    if (!c) return
-    fireTool(tool, { cursor: c })
-  }
-  return (
-    <nav className="flex items-center justify-end gap-2 text-sm">
-      <PagerButton disabled={!cursor.prev} onClick={() => go(cursor.prev)}>
-        ← Prev
-      </PagerButton>
-      <PagerButton disabled={!cursor.next} onClick={() => go(cursor.next)}>
-        Next →
-      </PagerButton>
-    </nav>
-  )
-}
-
-function PagerButton({
-  children,
-  disabled,
-  onClick,
-}: {
-  children: React.ReactNode
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      {children}
-    </button>
-  )
 }
 
 function Th({

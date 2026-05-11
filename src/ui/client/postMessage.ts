@@ -78,6 +78,22 @@ export function notifyHost(method: string, params?: unknown): void {
   window.parent.postMessage({ jsonrpc: '2.0', method, params }, '*')
 }
 
+const ZENSKAR_APP_BASE = 'https://app.zenskar.com'
+
+// Open Zenskar dashboard route in an external browser. Prefer the host's
+// `ui/open-link` (Claude Desktop / VS Code Apps SDK); fall back to window.open
+// for dev preview / hosts without the bridge.
+export function openZenskarPath(path: string): void {
+  const url = `${ZENSKAR_APP_BASE}${path.startsWith('/') ? path : `/${path}`}`
+  callHost('ui/open-link', { url }).catch(() => {
+    try {
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch {
+      notifyHost('ui/message', { text: `Open: ${url}` })
+    }
+  })
+}
+
 export function onNotification(
   method: string,
   handler: (params: unknown) => void
