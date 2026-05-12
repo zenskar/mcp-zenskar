@@ -17,5 +17,7 @@ export const creditNoteDetailFixture: CreditNoteDetailPayload = {
       refund_reason: 'Service outage credit (April 2026 incident)',
       tax_calculated: true,
     },
+    customer_name: 'ACME Corp',
+    invoice_number: 'INV-2026-0142',
   },
 }

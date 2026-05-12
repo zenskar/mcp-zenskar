@@ -1,4 +1,3 @@
-import { callHost, notifyHost } from '../client/postMessage'
 import type { ContractDetailPayload, ContractPhase } from '../types'
 import { Dim, fmtDate, shortId, StatusPill } from './format'
 
@@ -34,23 +33,6 @@ export function ContractDetail({
               Open
             </a>
           ) : null}
-          <ActionButton
-            onClick={() =>
-              fireTool('getContractAmendments', { contractId: c.id })
-            }
-          >
-            Amendments
-          </ActionButton>
-          <ActionButton
-            onClick={() =>
-              fireTool('listInvoices', {
-                customer_id: c.customer_id,
-                contract_id: c.id,
-              })
-            }
-          >
-            Invoices
-          </ActionButton>
         </div>
       </header>
 
@@ -184,30 +166,6 @@ function PhaseRow({
         ) : null}
       </div>
     </div>
-  )
-}
-
-function fireTool(name: string, args: Record<string, unknown>) {
-  callHost('tools/call', { name, arguments: args }).catch(() =>
-    notifyHost('ui/message', { text: `Run: ${name} ${JSON.stringify(args)}` })
-  )
-}
-
-function ActionButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 text-xs transition-colors"
-    >
-      {children}
-    </button>
   )
 }
 

@@ -15,6 +15,10 @@ export const contractDetailFixture: ContractDetailPayload = {
     renewal_policy: 'auto-renew-12m',
     anchor_date: '2024-11-02',
     plan_id: 'plan_001',
+    customer_name: 'ACME Corp',
+    contract_type: 'subscription',
+    tags: ['enterprise', 'multi-year', 'NA'],
+    contract_link: 'https://app.zenskar.com/contracts/ctr_001',
   },
   phases: [
     {

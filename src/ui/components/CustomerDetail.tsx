@@ -1,4 +1,3 @@
-import { callHost, notifyHost } from '../client/postMessage'
 import type { CustomerDetailPayload } from '../types'
 import { Dim, fmtDate, shortId } from './format'
 
@@ -35,25 +34,6 @@ export function CustomerDetail({
           <div className="text-muted-foreground mt-0.5 font-mono text-xs">
             {c.id}
           </div>
-        </div>
-        <div className="flex gap-2">
-          <ActionButton
-            onClick={() => fireTool('listInvoices', { customer_id: c.id })}
-          >
-            Invoices
-          </ActionButton>
-          <ActionButton
-            onClick={() => fireTool('listContracts', { customer_id: c.id })}
-          >
-            Contracts
-          </ActionButton>
-          <ActionButton
-            onClick={() =>
-              fireTool('listCustomerAddresses', { customerId: c.id })
-            }
-          >
-            Addresses
-          </ActionButton>
         </div>
       </header>
 
@@ -183,29 +163,6 @@ export function CustomerDetail({
   )
 }
 
-function fireTool(name: string, args: Record<string, unknown>) {
-  callHost('tools/call', { name, arguments: args }).catch(() =>
-    notifyHost('ui/message', { text: `Run: ${name} ${JSON.stringify(args)}` })
-  )
-}
-
-function ActionButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 text-xs transition-colors"
-    >
-      {children}
-    </button>
-  )
-}
 
 function Grid({
   children,

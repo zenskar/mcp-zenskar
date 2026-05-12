@@ -1,4 +1,3 @@
-import { callHost, notifyHost } from '../client/postMessage'
 import type { InvoiceDetailPayload } from '../types'
 import {
   daysBetween,
@@ -43,16 +42,6 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
           {i.payment_url ? (
             <ActionLink href={i.payment_url}>Pay link</ActionLink>
           ) : null}
-          <ActionButton
-            onClick={() => fireTool('getInvoiceLineItems', { invoiceId: i.id })}
-          >
-            Line items
-          </ActionButton>
-          <ActionButton
-            onClick={() => fireTool('getInvoicePayments', { invoiceId: i.id })}
-          >
-            Payments
-          </ActionButton>
         </div>
       </header>
 
@@ -231,30 +220,6 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
         </Section>
       ) : null}
     </div>
-  )
-}
-
-function fireTool(name: string, args: Record<string, unknown>) {
-  callHost('tools/call', { name, arguments: args }).catch(() =>
-    notifyHost('ui/message', { text: `Run: ${name} ${JSON.stringify(args)}` })
-  )
-}
-
-function ActionButton({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="border-border bg-background hover:bg-accent hover:text-accent-foreground rounded border px-3 py-1 text-xs transition-colors"
-    >
-      {children}
-    </button>
   )
 }
 

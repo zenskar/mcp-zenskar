@@ -19,6 +19,13 @@ export const invoiceDetailFixture: InvoiceDetailPayload = {
     business_entity_id: 'be_001',
     notes: 'Net 30 — wire transfer preferred.',
     custom_data: { po_number: 'PO-44215' },
+    customer_name: 'ACME Corp',
+    contract_id: 'ctr_001',
+    contract_name: 'ACME Master Services Agreement',
+    invoice_pdf: 'https://api.zenskar.example/invoices/inv_001/pdf',
+    approved_at: '2026-05-01T10:30:00Z',
+    paid_at: null,
+    sent_at: '2026-05-01T11:00:00Z',
   },
   line_items: [
     {
