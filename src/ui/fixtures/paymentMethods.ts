@@ -13,6 +13,8 @@ export const paymentMethodFixture: PaymentMethodListPayload = {
       exp_year: 2027,
       is_default: true,
       created_at: '2024-11-02T08:00:00Z',
+      connector_name: null,
+      status: null,
     },
     {
       id: 'pm_002',
@@ -23,6 +25,8 @@ export const paymentMethodFixture: PaymentMethodListPayload = {
       exp_year: 2026,
       is_default: false,
       created_at: '2025-03-12T08:00:00Z',
+      connector_name: null,
+      status: null,
     },
     {
       id: 'pm_003',
@@ -33,6 +37,8 @@ export const paymentMethodFixture: PaymentMethodListPayload = {
       exp_year: null,
       is_default: false,
       created_at: '2025-08-19T08:00:00Z',
+      connector_name: null,
+      status: null,
     },
   ],
 }

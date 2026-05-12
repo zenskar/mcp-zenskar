@@ -272,9 +272,12 @@ function normalizeLineItem(l) {
     subtotal: normalizeMoney(l.subtotal),
     quantity: normalizeMoney(l.quantity),
     price: l.price ? normalizeMoney(l.price) : null,
-    service_start_date: l.service_start_date ?? null,
-    service_end_date: l.service_end_date ?? null,
+    service_start_date: l.service_start_date ?? l.billing_period_start ?? null,
+    service_end_date: l.service_end_date ?? l.billing_period_end ?? null,
     is_billed: typeof l.is_billed === 'boolean' ? l.is_billed : null,
+    line_item_type: l.line_item_type ?? null,
+    is_adjustment: typeof l.is_adjustment === 'boolean' ? l.is_adjustment : null,
+    adjustment_type: l.adjustment_type ?? null,
   }
 }
 
@@ -455,12 +458,19 @@ function customerDetailToPayload(raw) {
   const body = unwrapTemplate(raw)
   const c = body.customer ?? body
   const base = normalizeCustomer(c)
+  const be = c.business_entity
+  const dpm = c.default_payment_method
+  const contacts = Array.isArray(c.contacts) ? c.contacts : []
+  const taxInfo = Array.isArray(c.tax_info) ? c.tax_info : []
   return {
     customer: {
       ...base,
-      phone: c.phone ?? c.primary_phone ?? null,
+      phone: c.phone_number ?? c.phone ?? c.primary_phone ?? null,
       business_entity_id: c.business_entity_id ?? null,
+      business_entity_name:
+        (be && typeof be === 'object' ? be.name : null) ?? null,
       address: c.address ?? null,
+      ship_to_address: c.ship_to_address ?? null,
       communications_enabled:
         typeof c.communications_enabled === 'boolean'
           ? c.communications_enabled
@@ -470,6 +480,37 @@ function customerDetailToPayload(raw) {
           ? c.auto_charge_enabled
           : null,
       custom_data: c.custom_data ?? null,
+      tax_info: taxInfo.length
+        ? taxInfo.map((t) => ({
+            country_code: t.country_code ?? null,
+            tax_code: t.tax_code ?? null,
+            tax_id: t.tax_id ?? null,
+          }))
+        : null,
+      contacts: contacts.length
+        ? contacts.map((ct) => {
+            const first = ct.first_name ?? ''
+            const last = ct.last_name ?? ''
+            return {
+              name: [first, last].filter(Boolean).join(' ') || null,
+              email: ct.email ?? null,
+              send_invoice:
+                typeof ct.send_invoice === 'boolean' ? ct.send_invoice : null,
+              send_contract:
+                typeof ct.send_contract === 'boolean' ? ct.send_contract : null,
+            }
+          })
+        : null,
+      default_payment_method:
+        dpm && typeof dpm === 'object'
+          ? {
+              type: dpm.type ?? null,
+              brand: (dpm.details && dpm.details.brand) ?? dpm.brand ?? null,
+              last4: (dpm.details && dpm.details.last4) ?? dpm.last4 ?? null,
+              connector_name: dpm.connector_name ?? null,
+            }
+          : null,
+      updated_at: c.updated_at ?? null,
     },
   }
 }
@@ -483,6 +524,8 @@ function invoiceDetailToPayload(raw) {
     : Array.isArray(body.line_items)
       ? body.line_items
       : []
+  const cust = i.customer
+  const contract = i.contract
   return {
     invoice: {
       ...base,
@@ -495,7 +538,20 @@ function invoiceDetailToPayload(raw) {
       currency: i.currency_code ?? i.currency ?? null,
       business_entity_id: i.business_entity_id ?? null,
       notes: i.notes ?? null,
-      custom_data: i.custom_data ?? null,
+      custom_data: i.custom_data ?? i.custom_attributes ?? null,
+      customer_name:
+        (cust && typeof cust === 'object' ? cust.name : null) ?? null,
+      contract_id:
+        i.contract_id ??
+        (contract && typeof contract === 'object' ? contract.id : null) ??
+        null,
+      contract_name:
+        (contract && typeof contract === 'object' ? contract.name : null) ??
+        null,
+      invoice_pdf: i.invoice_pdf ?? null,
+      approved_at: i.approved_at ?? null,
+      paid_at: i.paid_at ?? null,
+      sent_at: i.sent_at ?? null,
     },
     line_items: lines.length ? lines.map(normalizeLineItem) : undefined,
   }
@@ -506,6 +562,8 @@ function contractDetailToPayload(raw) {
   const c = body.contract ?? body
   const base = normalizeContract(c)
   const phases = Array.isArray(c.phases) ? c.phases : []
+  const cust = c.customer
+  const tags = Array.isArray(c.tags) ? c.tags : []
   return {
     contract: {
       ...base,
@@ -514,6 +572,11 @@ function contractDetailToPayload(raw) {
       renewal_policy: c.renewal_policy ?? null,
       anchor_date: c.anchor_date ?? null,
       plan_id: c.plan_id ?? null,
+      customer_name:
+        (cust && typeof cust === 'object' ? cust.customer_name ?? cust.name : null) ?? null,
+      contract_type: c.contract_type ?? null,
+      tags: tags.length ? tags : null,
+      contract_link: c.contract_link ?? null,
     },
     phases: phases.map(normalizePhase),
   }
@@ -544,12 +607,18 @@ function creditNoteDetailToPayload(raw) {
   const body = unwrapTemplate(raw)
   const c = body.credit_note ?? body.creditNote ?? body
   const base = normalizeCreditNote(c)
+  const cust = c.customer
+  const inv = c.invoice
   return {
     credit_note: {
       ...base,
       line_items_url: c.line_items_url ?? null,
       credits_returned: numOrNull(c.credits_returned),
       custom_data: c.custom_data ?? null,
+      customer_name:
+        (cust && typeof cust === 'object' ? cust.name : null) ?? null,
+      invoice_number:
+        (inv && typeof inv === 'object' ? inv.invoice_number ?? inv.name : null) ?? null,
     },
   }
 }
@@ -883,10 +952,12 @@ function normalizeAddress(a) {
     label: a.label ?? a.name ?? a.address_type ?? null,
     line1: a.line1 ?? a.address_line_1 ?? null,
     line2: a.line2 ?? a.address_line_2 ?? null,
+    line3: a.line3 ?? null,
     city: a.city ?? null,
     state: a.state ?? null,
     zip_code: a.zipCode ?? a.zip_code ?? a.postal_code ?? null,
     country: a.country ?? a.country_code ?? null,
+    validation_status: a.validation_status ?? null,
     is_primary:
       typeof a.is_primary === 'boolean'
         ? a.is_primary
@@ -922,7 +993,7 @@ function normalizePaymentMethod(m) {
       is_default: null,
       created_at: null,
     }
-  const card = m.card || {}
+  const card = m.card || m.details || {}
   return {
     id: String(m.id || ''),
     type: m.type ?? m.payment_method_type ?? null,
@@ -937,6 +1008,8 @@ function normalizePaymentMethod(m) {
           ? m.default
           : null,
     created_at: m.created_at ?? null,
+    connector_name: m.connector_name ?? null,
+    status: m.status ?? null,
   }
 }
 

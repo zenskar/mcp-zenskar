@@ -31,6 +31,9 @@ export const invoiceDetailFixture: InvoiceDetailPayload = {
       service_start_date: '2026-04-01',
       service_end_date: '2026-04-30',
       is_billed: true,
+      line_item_type: null,
+      is_adjustment: null,
+      adjustment_type: null,
     },
     {
       name: 'API requests',
@@ -42,6 +45,9 @@ export const invoiceDetailFixture: InvoiceDetailPayload = {
       service_start_date: '2026-04-01',
       service_end_date: '2026-04-30',
       is_billed: true,
+      line_item_type: null,
+      is_adjustment: null,
+      adjustment_type: null,
     },
   ],
 }

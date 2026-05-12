@@ -65,19 +65,29 @@ export function CreditNoteDetail({
 
       <div className="border-border grid grid-cols-1 gap-3 rounded-md border p-3 sm:grid-cols-2">
         <Field label="Customer">
-          {cn.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(cn.customer_id, 14)}
-            </span>
+          {cn.customer_name ? (
+            <div>
+              <div className="text-sm">{cn.customer_name}</div>
+              {cn.customer_id ? (
+                <div className="text-muted-foreground font-mono text-[10px]">{shortId(cn.customer_id, 12)}</div>
+              ) : null}
+            </div>
+          ) : cn.customer_id ? (
+            <span className="text-secondary font-mono text-xs">{shortId(cn.customer_id, 14)}</span>
           ) : (
             <Dim>—</Dim>
           )}
         </Field>
         <Field label="Invoice">
-          {cn.invoice_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(cn.invoice_id, 14)}
-            </span>
+          {cn.invoice_number ? (
+            <div>
+              <div className="text-sm font-mono">{cn.invoice_number}</div>
+              {cn.invoice_id ? (
+                <div className="text-muted-foreground font-mono text-[10px]">{shortId(cn.invoice_id, 12)}</div>
+              ) : null}
+            </div>
+          ) : cn.invoice_id ? (
+            <span className="text-secondary font-mono text-xs">{shortId(cn.invoice_id, 14)}</span>
           ) : (
             <Dim>—</Dim>
           )}

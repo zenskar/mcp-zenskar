@@ -94,6 +94,9 @@ export const lineItemsFixture: InvoiceLineItemsPayload = {
       service_start_date: '2026-05-01',
       service_end_date: '2026-05-31',
       is_billed: true,
+      line_item_type: null,
+      is_adjustment: null,
+      adjustment_type: null,
     },
     {
       name: 'LEY',
@@ -105,6 +108,9 @@ export const lineItemsFixture: InvoiceLineItemsPayload = {
       service_start_date: '2026-05-01',
       service_end_date: '2026-05-31',
       is_billed: true,
+      line_item_type: null,
+      is_adjustment: null,
+      adjustment_type: null,
     },
     {
       name: 'Premium Support',
@@ -116,6 +122,9 @@ export const lineItemsFixture: InvoiceLineItemsPayload = {
       service_start_date: '2026-05-01',
       service_end_date: '2026-05-31',
       is_billed: true,
+      line_item_type: null,
+      is_adjustment: null,
+      adjustment_type: null,
     },
   ],
 }

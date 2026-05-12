@@ -38,6 +38,7 @@ export function InvoiceLineItems({
           <thead className="bg-muted text-muted-foreground text-xs tracking-wide uppercase">
             <tr>
               <Th>#</Th>
+              <Th>Type</Th>
               <Th>Item</Th>
               <Th>Pricing Model</Th>
               <Th align="right">Qty</Th>
@@ -51,7 +52,7 @@ export function InvoiceLineItems({
             {lines.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No line items on this invoice.
@@ -62,6 +63,16 @@ export function InvoiceLineItems({
                 <tr key={i} className="border-border border-t">
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
+                  </td>
+                  <td className="text-muted-foreground px-3 py-2 text-xs">
+                    <div className="flex items-center gap-1">
+                      {l.line_item_type ? l.line_item_type.replace(/_/g, ' ') : <Dim>—</Dim>}
+                      {l.is_adjustment ? (
+                        <span className="bg-warning/15 text-warning ring-warning/30 rounded-full px-1.5 py-0.5 text-[10px] ring-1">
+                          {l.adjustment_type || 'adj'}
+                        </span>
+                      ) : null}
+                    </div>
                   </td>
                   <td className="px-3 py-2">
                     <div className="font-medium">{l.name || <Dim>—</Dim>}</div>

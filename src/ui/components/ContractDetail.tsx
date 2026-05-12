@@ -24,6 +24,16 @@ export function ContractDetail({
           </div>
         </div>
         <div className="flex gap-2">
+          {c.contract_link ? (
+            <a
+              href={c.contract_link}
+              target="_blank"
+              rel="noreferrer"
+              className="border-border bg-accent text-accent-foreground hover:bg-primary hover:text-primary-foreground rounded border px-3 py-1 text-xs transition-colors"
+            >
+              Open
+            </a>
+          ) : null}
           <ActionButton
             onClick={() =>
               fireTool('getContractAmendments', { contractId: c.id })
@@ -46,10 +56,15 @@ export function ContractDetail({
 
       <div className="border-border grid grid-cols-1 gap-3 rounded-md border p-3 sm:grid-cols-2">
         <Field label="Customer">
-          {c.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(c.customer_id, 14)}
-            </span>
+          {c.customer_name ? (
+            <div>
+              <div className="text-sm">{c.customer_name}</div>
+              {c.customer_id ? (
+                <div className="text-muted-foreground font-mono text-[10px]">{shortId(c.customer_id, 12)}</div>
+              ) : null}
+            </div>
+          ) : c.customer_id ? (
+            <span className="text-secondary font-mono text-xs">{shortId(c.customer_id, 14)}</span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -61,6 +76,7 @@ export function ContractDetail({
             <Dim>—</Dim>
           )}
         </Field>
+        <Field label="Type">{c.contract_type || <Dim>—</Dim>}</Field>
         <Field label="Term">
           {c.start_date && c.end_date ? (
             <span className="text-sm">
@@ -85,6 +101,16 @@ export function ContractDetail({
       {c.description ? (
         <Section title="Description">
           <div className="text-sm">{c.description}</div>
+        </Section>
+      ) : null}
+
+      {c.tags && c.tags.length > 0 ? (
+        <Section title="Tags">
+          <div className="flex flex-wrap gap-2">
+            {c.tags.map((tag, i) => (
+              <span key={i} className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">{tag}</span>
+            ))}
+          </div>
         </Section>
       ) : null}
 

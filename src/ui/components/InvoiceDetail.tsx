@@ -37,6 +37,9 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
           </div>
         </div>
         <div className="flex gap-2">
+          {i.invoice_pdf ? (
+            <ActionLink href={i.invoice_pdf}>PDF</ActionLink>
+          ) : null}
           {i.payment_url ? (
             <ActionLink href={i.payment_url}>Pay link</ActionLink>
           ) : null}
@@ -78,10 +81,15 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
 
       <div className="border-border grid grid-cols-1 gap-3 rounded-md border p-3 sm:grid-cols-2">
         <Field label="Customer">
-          {i.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(i.customer_id, 14)}
-            </span>
+          {i.customer_name ? (
+            <div>
+              <div className="text-sm">{i.customer_name}</div>
+              {i.customer_id ? (
+                <div className="text-muted-foreground font-mono text-[10px]">{shortId(i.customer_id, 12)}</div>
+              ) : null}
+            </div>
+          ) : i.customer_id ? (
+            <span className="text-secondary font-mono text-xs">{shortId(i.customer_id, 14)}</span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -91,6 +99,20 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <span className="font-mono text-xs">
               {shortId(i.business_entity_id, 14)}
             </span>
+          ) : (
+            <Dim>—</Dim>
+          )}
+        </Field>
+        <Field label="Contract">
+          {i.contract_name ? (
+            <div>
+              <div className="text-sm">{i.contract_name}</div>
+              {i.contract_id ? (
+                <div className="text-muted-foreground font-mono text-[10px]">{shortId(i.contract_id, 12)}</div>
+              ) : null}
+            </div>
+          ) : i.contract_id ? (
+            <span className="font-mono text-xs">{shortId(i.contract_id, 14)}</span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -110,6 +132,31 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
       {i.notes ? (
         <Section title="Notes">
           <div className="text-sm">{i.notes}</div>
+        </Section>
+      ) : null}
+
+      {(i.approved_at || i.sent_at || i.paid_at) ? (
+        <Section title="Timeline">
+          <div className="flex flex-wrap gap-4 text-sm">
+            {i.sent_at ? (
+              <div>
+                <span className="text-muted-foreground text-xs">Sent </span>
+                <span className="tabular-nums">{fmtDate(i.sent_at)}</span>
+              </div>
+            ) : null}
+            {i.approved_at ? (
+              <div>
+                <span className="text-muted-foreground text-xs">Approved </span>
+                <span className="tabular-nums">{fmtDate(i.approved_at)}</span>
+              </div>
+            ) : null}
+            {i.paid_at ? (
+              <div>
+                <span className="text-muted-foreground text-xs">Paid </span>
+                <span className="tabular-nums">{fmtDate(i.paid_at)}</span>
+              </div>
+            ) : null}
+          </div>
         </Section>
       ) : null}
 

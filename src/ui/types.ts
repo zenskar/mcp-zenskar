@@ -63,6 +63,9 @@ export interface LineItem {
   service_start_date: string | null
   service_end_date: string | null
   is_billed: boolean | null
+  line_item_type: string | null
+  is_adjustment: boolean | null
+  adjustment_type: string | null
 }
 
 export interface InvoiceLineItemsPayload {
@@ -170,14 +173,40 @@ export interface ContractTablePayload {
 
 // ===== Detail cards =====
 
+export interface CustomerContact {
+  name: string | null
+  email: string | null
+  send_invoice: boolean | null
+  send_contract: boolean | null
+}
+
+export interface CustomerPaymentMethodSummary {
+  type: string | null
+  brand: string | null
+  last4: string | null
+  connector_name: string | null
+}
+
+export interface TaxInfo {
+  country_code: string | null
+  tax_code: string | null
+  tax_id: string | null
+}
+
 export interface CustomerDetailPayload {
   customer: CustomerRow & {
     phone?: string | null
     business_entity_id?: string | null
+    business_entity_name?: string | null
     address?: Record<string, string | null> | null
+    ship_to_address?: Record<string, string | null> | null
     communications_enabled?: boolean | null
     auto_charge_enabled?: boolean | null
     custom_data?: Record<string, unknown> | null
+    tax_info?: TaxInfo[] | null
+    contacts?: CustomerContact[] | null
+    default_payment_method?: CustomerPaymentMethodSummary | null
+    updated_at?: string | null
   }
 }
 
@@ -188,6 +217,13 @@ export interface InvoiceDetailPayload {
     business_entity_id?: string | null
     notes?: string | null
     custom_data?: Record<string, unknown> | null
+    customer_name?: string | null
+    contract_id?: string | null
+    contract_name?: string | null
+    invoice_pdf?: string | null
+    approved_at?: string | null
+    paid_at?: string | null
+    sent_at?: string | null
   }
   line_items?: LineItem[]
 }
@@ -208,6 +244,10 @@ export interface ContractDetailPayload {
     renewal_policy?: string | null
     anchor_date?: string | null
     plan_id?: string | null
+    customer_name?: string | null
+    contract_type?: string | null
+    tags?: string[] | null
+    contract_link?: string | null
   }
   phases: ContractPhase[]
 }
@@ -217,6 +257,8 @@ export interface CreditNoteDetailPayload {
     line_items_url?: string | null
     credits_returned?: number | null
     custom_data?: Record<string, unknown> | null
+    customer_name?: string | null
+    invoice_number?: string | null
   }
 }
 
@@ -337,11 +379,13 @@ export interface AddressRow {
   label: string | null
   line1: string | null
   line2: string | null
+  line3: string | null
   city: string | null
   state: string | null
   zip_code: string | null
   country: string | null
   is_primary: boolean | null
+  validation_status: string | null
 }
 export interface AddressListPayload {
   customer_id?: string
@@ -358,6 +402,8 @@ export interface PaymentMethodRow {
   exp_year: number | null
   is_default: boolean | null
   created_at: string | null
+  connector_name: string | null
+  status: string | null
 }
 export interface PaymentMethodListPayload {
   customer_id?: string

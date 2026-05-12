@@ -52,6 +52,9 @@ function PaymentMethodCard({ method: m }: { method: PaymentMethodRow }) {
           {m.brand ? (
             <span className="text-muted-foreground">{m.brand}</span>
           ) : null}
+          {m.connector_name ? (
+            <span className="text-muted-foreground text-xs">via {m.connector_name}</span>
+          ) : null}
         </div>
         {m.is_default ? (
           <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
@@ -63,6 +66,15 @@ function PaymentMethodCard({ method: m }: { method: PaymentMethodRow }) {
         {m.last4 ? `•••• ${m.last4}` : <Dim>—</Dim>}
       </div>
       <div className="text-muted-foreground flex gap-3 text-xs">
+        {m.status ? (
+          <span className={`rounded-full px-2 py-0.5 text-xs ring-1 ${
+            m.status === 'valid'
+              ? 'bg-secondary/15 text-secondary ring-secondary/30'
+              : 'bg-destructive/15 text-destructive ring-destructive/30'
+          }`}>
+            {m.status}
+          </span>
+        ) : null}
         {isCard && m.exp_month && m.exp_year ? (
           <span>
             exp {String(m.exp_month).padStart(2, '0')}/

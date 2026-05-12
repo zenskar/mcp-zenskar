@@ -52,6 +52,7 @@ function AddressCard({ addr }: { addr: AddressRow }) {
       <div className="text-sm">
         {addr.line1 ? <div>{addr.line1}</div> : null}
         {addr.line2 ? <div>{addr.line2}</div> : null}
+        {addr.line3 ? <div>{addr.line3}</div> : null}
         <div>
           {[addr.city, addr.state, addr.zip_code]
             .filter(Boolean)
@@ -61,6 +62,15 @@ function AddressCard({ addr }: { addr: AddressRow }) {
           <div className="text-muted-foreground mt-0.5 text-xs uppercase">
             {addr.country}
           </div>
+        ) : null}
+        {addr.validation_status ? (
+          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ring-1 ${
+            addr.validation_status === 'valid'
+              ? 'bg-secondary/15 text-secondary ring-secondary/30'
+              : 'bg-muted text-muted-foreground ring-border'
+          }`}>
+            {addr.validation_status}
+          </span>
         ) : null}
       </div>
     </article>
