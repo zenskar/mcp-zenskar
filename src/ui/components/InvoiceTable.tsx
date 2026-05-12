@@ -183,7 +183,6 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
           </tbody>
         </table>
       </div>
-
     </div>
   )
 }

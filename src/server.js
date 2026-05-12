@@ -1370,11 +1370,11 @@ function consumeApprovalToken(token, toolName) {
 // Periodic sweep so expired tokens (and the args they snapshot) don't linger
 // in memory past their TTL even when no new approval is issued.
 setInterval(() => {
-  const now = Date.now();
+  const now = Date.now()
   for (const [t, entry] of approvalTokens) {
-    if (entry.expiresAt < now) approvalTokens.delete(t);
+    if (entry.expiresAt < now) approvalTokens.delete(t)
   }
-}, APPROVAL_TOKEN_CLEANUP_MS).unref();
+}, APPROVAL_TOKEN_CLEANUP_MS).unref()
 
 // Pure resolver: decides which arg source wins for an approved re-invoke.
 // Returns { args, source } where args is the object to apply (always non-null
@@ -1390,23 +1390,26 @@ setInterval(() => {
 // against the tool schema before the API call is executed.
 function resolveApprovedArgs(approval, tokenEntry) {
   const nonEmptyObj = (obj) =>
-    obj && typeof obj === 'object' && !Array.isArray(obj) && Object.keys(obj).length > 0;
+    obj &&
+    typeof obj === 'object' &&
+    !Array.isArray(obj) &&
+    Object.keys(obj).length > 0
 
   if (nonEmptyObj(approval.modifiedArguments)) {
-    return { args: approval.modifiedArguments, source: 'modifiedArguments' };
+    return { args: approval.modifiedArguments, source: 'modifiedArguments' }
   }
-  return { args: tokenEntry.args, source: 'tokenSnapshot' };
+  return { args: tokenEntry.args, source: 'tokenSnapshot' }
 }
 
 // Replace `args` contents with `resolvedArgs` while preserving __userContext.
 // Kept separate from the resolver so the decision logic stays pure/testable.
 function applyResolvedArgs(args, resolvedArgs) {
-  const savedUserContext = args.__userContext;
-  Object.keys(args).forEach(key => {
-    if (key !== '__userContext') delete args[key];
-  });
-  Object.assign(args, resolvedArgs);
-  args.__userContext = savedUserContext;
+  const savedUserContext = args.__userContext
+  Object.keys(args).forEach((key) => {
+    if (key !== '__userContext') delete args[key]
+  })
+  Object.assign(args, resolvedArgs)
+  args.__userContext = savedUserContext
 }
 
 // Decides whether `tool` still needs approval given the current `args`.

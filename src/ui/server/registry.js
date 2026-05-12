@@ -765,16 +765,19 @@ function normalizeContact(c) {
   const customerId =
     typeof customerRef === 'string'
       ? customerRef
-      : (customerRef && typeof customerRef === 'object' ? customerRef.id : null) ??
+      : ((customerRef && typeof customerRef === 'object'
+          ? customerRef.id
+          : null) ??
         c.customer_id ??
-        null
+        null)
   return {
     id: String(c.id || c.contact_id || ''),
     name: c.name ?? (composedName || null),
     email: c.email ?? c.primary_email ?? null,
     customer_id: customerId ?? null,
     send_invoice: typeof c.send_invoice === 'boolean' ? c.send_invoice : null,
-    send_contract: typeof c.send_contract === 'boolean' ? c.send_contract : null,
+    send_contract:
+      typeof c.send_contract === 'boolean' ? c.send_contract : null,
   }
 }
 

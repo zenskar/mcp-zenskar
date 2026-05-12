@@ -49,9 +49,7 @@ export function PaymentTable({ payload }: { payload: PaymentTablePayload }) {
             </span>
           ) : null}
         </h2>
-        <span className="text-muted-foreground text-xs">
-          headers sort
-        </span>
+        <span className="text-muted-foreground text-xs">headers sort</span>
       </header>
 
       <div className="border-border overflow-auto rounded-md border">
@@ -163,7 +161,6 @@ export function PaymentTable({ payload }: { payload: PaymentTablePayload }) {
           </tbody>
         </table>
       </div>
-
     </div>
   )
 }
