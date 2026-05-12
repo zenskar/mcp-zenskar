@@ -15,6 +15,7 @@ import { CustomerDetail } from '../components/CustomerDetail'
 import { CustomerTable } from '../components/CustomerTable'
 import { EntityTable } from '../components/EntityTable'
 import { InvoiceDetail } from '../components/InvoiceDetail'
+import { InvoicePreview } from '../components/InvoicePreview'
 import { InvoiceLineItems } from '../components/InvoiceLineItems'
 import { InvoiceTable } from '../components/InvoiceTable'
 import { JobTable } from '../components/JobTable'
@@ -35,6 +36,7 @@ import { customerDetailFixture } from '../fixtures/customerDetail'
 import { customerFixture } from '../fixtures/customers'
 import { entityFixture } from '../fixtures/entities'
 import { invoiceDetailFixture } from '../fixtures/invoiceDetail'
+import { invoicePreviewFixture } from '../fixtures/invoicePreview'
 import { invoiceFixture, lineItemsFixture } from '../fixtures/invoices'
 import { jobFixture } from '../fixtures/jobs'
 import { journalEntryFixture } from '../fixtures/journalEntries'
@@ -72,6 +74,7 @@ const SHAPES = {
     <PaymentMethodList payload={paymentMethodFixture} />
   ),
   'entity-table': () => <EntityTable payload={entityFixture} />,
+  'invoice-preview': () => <InvoicePreview payload={invoicePreviewFixture} />,
 } as const
 
 type ShapeKey = keyof typeof SHAPES

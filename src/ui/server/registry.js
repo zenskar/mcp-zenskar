@@ -128,6 +128,12 @@ const TOOL_TO_SHAPE = {
     toPayload: entitiesToPayload,
     threshold: 0,
   },
+  getInvoicePreviewHtml: {
+    shape: 'invoice-preview',
+    noun: 'invoice preview',
+    toPayload: invoicePreviewToPayload,
+    threshold: 0,
+  },
 }
 
 // Single-bundle architecture: all 20 shapes ship as one ui://zenskar/app.html
@@ -519,11 +525,6 @@ function invoiceDetailToPayload(raw) {
   const body = unwrapTemplate(raw)
   const i = body.invoice ?? body
   const base = normalizeInvoice(i)
-  const lines = Array.isArray(i.line_items)
-    ? i.line_items
-    : Array.isArray(body.line_items)
-      ? body.line_items
-      : []
   const cust = i.customer
   const contract = i.contract
   return {
@@ -553,7 +554,6 @@ function invoiceDetailToPayload(raw) {
       paid_at: i.paid_at ?? null,
       sent_at: i.sent_at ?? null,
     },
-    line_items: lines.length ? lines.map(normalizeLineItem) : undefined,
   }
 }
 
@@ -1077,6 +1077,14 @@ function pickMoney(v) {
 }
 function numOrNull(v) {
   return Number.isFinite(v) ? v : null
+}
+
+function invoicePreviewToPayload(raw, args) {
+  const body = unwrapTemplate(raw)
+  return {
+    html: body.html ?? (typeof body === 'string' ? body : ''),
+    invoice_id: args && args.invoiceId ? String(args.invoiceId) : undefined,
+  }
 }
 
 export function lookup(toolName) {

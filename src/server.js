@@ -1058,6 +1058,17 @@ async function executeAPICall(tool, args) {
       nestAddress('address_', 'address')
     }
 
+    // Auto-populate orgId for communications API tools
+    if (tool.name === 'getInvoicePreviewHtml') {
+      if (!cleanArgs.orgId) {
+        const orgId =
+          userContext?.organization || process.env.ZENSKAR_ORGANIZATION
+        if (orgId) {
+          cleanArgs.orgId = orgId
+        }
+      }
+    }
+
     // Smart defaults for helper tools
     if (tool.name === 'extractContractFromRaw') {
       // Auto-populate organization_id from user context or env var if not provided
@@ -1271,6 +1282,23 @@ async function executeAPICall(tool, args) {
       result = responseText
     }
 
+    if (tool.name === 'getInvoicePreviewHtml') {
+      // Communications API may return base64-encoded HTML (API gateway) or raw HTML (local dev).
+      if (typeof result === 'string') {
+        try {
+          const decoded = Buffer.from(result, 'base64').toString('utf8')
+          if (decoded.includes('<')) {
+            result = { html: decoded }
+          } else {
+            result = { html: result }
+          }
+        } catch {
+          result = { html: result }
+        }
+      } else {
+        result = { html: '' }
+      }
+    }
     if (tool.name === 'getBalanceSheet' || tool.name === 'getIncomeStatement') {
       const baseUrl =
         process.env.ZENSKAR_API_BASE_URL || 'https://api.zenskar.com'

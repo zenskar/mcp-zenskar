@@ -19,6 +19,7 @@ export type ShapeName =
   | 'address-list'
   | 'payment-method-list'
   | 'entity-table'
+  | 'invoice-preview'
   | 'transaction-table'
   | 'dunning'
   | 'forecast'
@@ -424,6 +425,11 @@ export interface EntityTablePayload {
   total: number
   cursor?: { next?: string | null; prev?: string | null }
   scope?: string
+}
+
+export interface InvoicePreviewPayload {
+  html: string
+  invoice_id?: string
 }
 
 declare global {

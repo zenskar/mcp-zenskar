@@ -4,7 +4,6 @@ import {
   Dim,
   fmtDate,
   fmtMoney,
-  fmtMoneyObj,
   shortId,
   StatusPill,
 } from './format'
@@ -145,62 +144,6 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
                 <span className="tabular-nums">{fmtDate(i.paid_at)}</span>
               </div>
             ) : null}
-          </div>
-        </Section>
-      ) : null}
-
-      {payload.line_items && payload.line_items.length > 0 ? (
-        <Section title={`Line Items (${payload.line_items.length})`}>
-          <div className="border-border overflow-auto rounded-md border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted text-muted-foreground text-xs tracking-wide uppercase">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold">Item</th>
-                  <th className="px-3 py-2 text-right font-semibold">Qty</th>
-                  <th className="px-3 py-2 text-right font-semibold">Price</th>
-                  <th className="px-3 py-2 text-right font-semibold">
-                    Subtotal
-                  </th>
-                  <th className="px-3 py-2 text-left font-semibold">Period</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payload.line_items.map((l, idx) => (
-                  <tr key={idx} className="border-border border-t">
-                    <td className="px-3 py-2">
-                      <div className="font-medium">
-                        {l.name || <Dim>—</Dim>}
-                      </div>
-                      {l.description ? (
-                        <div className="text-muted-foreground text-xs">
-                          {l.description}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {l.quantity?.display ||
-                        (l.quantity?.value ?? <Dim>—</Dim>)}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {l.price ? fmtMoneyObj(l.price) : <Dim>—</Dim>}
-                    </td>
-                    <td className="px-3 py-2 text-right tabular-nums">
-                      {fmtMoneyObj(l.subtotal)}
-                    </td>
-                    <td className="px-3 py-2 text-xs whitespace-nowrap">
-                      {l.service_start_date && l.service_end_date ? (
-                        <>
-                          {fmtDate(l.service_start_date)} →{' '}
-                          {fmtDate(l.service_end_date)}
-                        </>
-                      ) : (
-                        <Dim>—</Dim>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </Section>
       ) : null}

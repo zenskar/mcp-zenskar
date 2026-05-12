@@ -16,6 +16,7 @@ import { CustomerDetail } from '../components/CustomerDetail'
 import { CustomerTable } from '../components/CustomerTable'
 import { EntityTable } from '../components/EntityTable'
 import { InvoiceDetail } from '../components/InvoiceDetail'
+import { InvoicePreview } from '../components/InvoicePreview'
 import { InvoiceLineItems } from '../components/InvoiceLineItems'
 import { InvoiceTable } from '../components/InvoiceTable'
 import { JobTable } from '../components/JobTable'
@@ -136,6 +137,11 @@ const ROUTES: Record<string, Route> = {
     fallback: { entities: [] },
     marker: 'entity-table:mounted',
     render: (d) => <EntityTable payload={d} />,
+  },
+  getInvoicePreviewHtml: {
+    fallback: { html: '' },
+    marker: 'invoice-preview:mounted',
+    render: (d) => <InvoicePreview payload={d} />,
   },
 }
 

@@ -518,6 +518,30 @@
       }
     },
     {
+      "name": "getInvoicePreviewHtml",
+      "description": "Get the rendered HTML preview of an invoice. Returns the invoice as it would appear when sent to the customer. Use this to show the customer-facing invoice layout.",
+      "args": [
+        {
+          "name": "orgId",
+          "description": "Organization ID (auto-populated).",
+          "type": "string",
+          "required": false,
+          "position": "path"
+        },
+        {
+          "name": "invoiceId",
+          "description": "The ID of the invoice to preview.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/communications/{orgId}/invoice/{invoiceId}/html",
+        "method": "GET"
+      }
+    },
+    {
       "name": "getInvoiceContractJsonActuals",
       "description": "Get contract actuals in JSON format for a specific invoice.",
       "args": [
