@@ -75,10 +75,26 @@ function arrayLength(payload) {
     'rows',
     'items',
     'data',
+    'addresses',
+    'payment_methods',
+    'products',
+    'plans',
+    'entries',
+    'jobs',
+    'contacts',
+    'raw_metrics',
+    'aggregates',
+    'entities',
   ]) {
     if (Array.isArray(payload[k])) return payload[k].length
   }
   if (Number.isFinite(payload.total)) return payload.total
+  // Detail payloads have a singular object key (customer, invoice, etc.)
+  for (const k of ['customer', 'invoice', 'contract', 'credit_note']) {
+    if (payload[k] && typeof payload[k] === 'object') return 1
+  }
+  // Invoice preview or other non-array payloads with content
+  if (payload.html) return 1
   return 0
 }
 
