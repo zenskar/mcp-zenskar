@@ -25,11 +25,6 @@ export function AggregateTable({
       setSortDir(k === 'name' ? 'asc' : 'desc')
     }
   }
-  const open = (r: AggregateRow) => {
-    if (!r.id) return
-    openZenskarPath(`/meters/${r.id}/edit`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -71,13 +66,14 @@ export function AggregateTable({
               >
                 Created
               </Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No aggregates match.
@@ -87,8 +83,7 @@ export function AggregateTable({
               rows.map((r, i) => (
                 <tr
                   key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => open(r)}
+                  className="border-border hover:bg-muted/60 border-t"
                 >
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
@@ -101,6 +96,15 @@ export function AggregateTable({
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-secondary hover:text-secondary/80 text-xs underline"
+                      onClick={() => openZenskarPath(`/meters/${r.id}/edit`)}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))

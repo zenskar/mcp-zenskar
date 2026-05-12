@@ -24,11 +24,6 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
     }
   }
 
-  const openContract = (r: ContractRow) => {
-    if (!r.id) return
-    openZenskarPath(`/contractsv2/${r.id}/edit`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -45,7 +40,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open in Zenskar · headers sort
+          headers sort
         </span>
       </header>
 
@@ -82,13 +77,14 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
                 End
               </Th>
               <Th align="right">Days Left</Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No contracts match.
@@ -105,8 +101,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
                 return (
                   <tr
                     key={r.id || i}
-                    className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                    onClick={() => openContract(r)}
+                    className="border-border hover:bg-muted/60 border-t"
                   >
                     <td className="text-muted-foreground px-3 py-2 tabular-nums">
                       {i + 1}
@@ -139,6 +134,15 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
                       ) : (
                         `${daysLeft}d`
                       )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        className="text-secondary hover:text-secondary/80 text-xs underline"
+                        onClick={() => openZenskarPath(`/contractsv2/${r.id}/edit`)}
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 )

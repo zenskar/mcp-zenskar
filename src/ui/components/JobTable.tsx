@@ -21,10 +21,6 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
       setSortDir('desc')
     }
   }
-  const open = (r: JobRow) => {
-    if (!r.id) return
-    openZenskarPath(`/jobs/${r.id}/view`)
-  }
   const counts = payload.status_counts || {}
 
   return (
@@ -76,13 +72,14 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
               >
                 Created
               </Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No jobs match.
@@ -92,8 +89,7 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
               rows.map((r, i) => (
                 <tr
                   key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => open(r)}
+                  className="border-border hover:bg-muted/60 border-t"
                 >
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
@@ -115,6 +111,15 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
                   </td>
                   <td className="px-3 py-2 text-xs whitespace-nowrap">
                     {fmtDate(r.created_at)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-secondary hover:text-secondary/80 text-xs underline"
+                      onClick={() => openZenskarPath(`/jobs/${r.id}/view`)}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))

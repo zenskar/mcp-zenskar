@@ -37,11 +37,6 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
     }
   }
 
-  const openInvoice = (r: InvoiceRow) => {
-    if (!r.id) return
-    openZenskarPath(`/invoices/${r.id}/view`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -58,7 +53,7 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open in Zenskar · headers sort
+          headers sort
         </span>
       </header>
 
@@ -113,13 +108,14 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
               >
                 Created
               </Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={10}
+                  colSpan={11}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No invoices match.
@@ -135,8 +131,7 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
                 return (
                   <tr
                     key={r.id || i}
-                    className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                    onClick={() => openInvoice(r)}
+                    className="border-border hover:bg-muted/60 border-t"
                   >
                     <td className="text-muted-foreground px-3 py-2 tabular-nums">
                       {i + 1}
@@ -175,6 +170,15 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {fmtDate(r.created_at)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        className="text-secondary hover:text-secondary/80 text-xs underline"
+                        onClick={() => openZenskarPath(`/invoices/${r.id}/view`)}
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 )

@@ -23,11 +23,6 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
     }
   }
 
-  const openCustomer = (c: CustomerRow) => {
-    if (!c.id) return
-    openZenskarPath(`/customers/${c.id}/view`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -44,7 +39,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open in Zenskar · click headers to sort
+          click headers to sort
         </span>
       </header>
 
@@ -71,13 +66,14 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
               >
                 Created
               </Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No customers match.
@@ -87,8 +83,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
               rows.map((c, i) => (
                 <tr
                   key={c.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => openCustomer(c)}
+                  className="border-border hover:bg-muted/60 border-t"
                 >
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
@@ -104,6 +99,15 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(c.created_at)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-secondary hover:text-secondary/80 text-xs underline"
+                      onClick={() => openZenskarPath(`/customers/${c.id}/view`)}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))

@@ -25,11 +25,6 @@ export function RawMetricTable({
       setSortDir(k === 'name' ? 'asc' : 'desc')
     }
   }
-  const open = (r: RawMetricRow) => {
-    if (!r.id) return
-    openZenskarPath(`/meters/raw-metrics/${r.id}/view`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -46,7 +41,7 @@ export function RawMetricTable({
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row → details
+          click headers to sort
         </span>
       </header>
       <div className="border-border overflow-auto rounded-md border">
@@ -72,13 +67,14 @@ export function RawMetricTable({
               >
                 Created
               </Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No raw metrics match.
@@ -88,8 +84,7 @@ export function RawMetricTable({
               rows.map((r, i) => (
                 <tr
                   key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => open(r)}
+                  className="border-border hover:bg-muted/60 border-t"
                 >
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
@@ -111,6 +106,15 @@ export function RawMetricTable({
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-secondary hover:text-secondary/80 text-xs underline"
+                      onClick={() => openZenskarPath(`/meters/raw-metrics/${r.id}/view`)}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))

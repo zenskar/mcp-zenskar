@@ -21,11 +21,6 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
       setSortDir(k === 'name' ? 'asc' : 'desc')
     }
   }
-  const open = (r: ProductRow) => {
-    if (!r.id) return
-    openZenskarPath(`/products/${r.id}/edit`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -42,7 +37,7 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
           ) : null}
         </h2>
         <span className="text-muted-foreground text-xs">
-          click row to open in Zenskar · headers sort
+          headers sort
         </span>
       </header>
       <div className="border-border overflow-auto rounded-md border">
@@ -70,13 +65,14 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
               >
                 Created
               </Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No products match.
@@ -86,8 +82,7 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
               rows.map((r, i) => (
                 <tr
                   key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => open(r)}
+                  className="border-border hover:bg-muted/60 border-t"
                 >
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
@@ -115,6 +110,15 @@ export function ProductTable({ payload }: { payload: ProductTablePayload }) {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     {fmtDate(r.created_at)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-secondary hover:text-secondary/80 text-xs underline"
+                      onClick={() => openZenskarPath(`/products/${r.id}/edit`)}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))

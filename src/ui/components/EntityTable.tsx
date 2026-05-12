@@ -21,11 +21,6 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
       setSortDir('asc')
     }
   }
-  const open = (r: EntityRow) => {
-    if (!r.id) return
-    openZenskarPath(`/settings/tax-configuration/entity/${r.id}`)
-  }
-
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
@@ -53,13 +48,14 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
               <Th>Phone</Th>
               <Th>Country</Th>
               <Th>Default</Th>
+              <Th>View</Th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="text-muted-foreground py-8 text-center"
                 >
                   No entities.
@@ -69,8 +65,7 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
               rows.map((r, i) => (
                 <tr
                   key={r.id || i}
-                  className="border-border hover:bg-muted/60 cursor-pointer border-t"
-                  onClick={() => open(r)}
+                  className="border-border hover:bg-muted/60 border-t"
                 >
                   <td className="text-muted-foreground px-3 py-2 tabular-nums">
                     {i + 1}
@@ -95,6 +90,15 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
                     ) : (
                       'no'
                     )}
+                  </td>
+                  <td className="px-3 py-2">
+                    <button
+                      type="button"
+                      className="text-secondary hover:text-secondary/80 text-xs underline"
+                      onClick={() => openZenskarPath(`/settings/tax-configuration/entity/${r.id}`)}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               ))
