@@ -285,19 +285,21 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 
 ## Development
 
+This repo uses **pnpm** for dev/CI (Corepack auto-activates the pinned version via the `packageManager` field). End-users install via `npm`/`npx` as documented above — the published tarball is self-contained.
+
 ```bash
 # Clone the repository
 git clone https://github.com/zenskar/mcp-zenskar
 cd mcp-zenskar
 
-# Install dependencies
-npm install
+# Install pnpm if missing, then install dependencies
+./setup-pnpm.sh
 
 # Build the bundle (produces dist/server.mjs + dist/mcp-config.json)
-npm run build
+pnpm run build
 
 # Run the server
-npm start
+pnpm start
 ```
 
 ### Developing Locally Without Publishing
@@ -306,8 +308,8 @@ If you want Claude Desktop to use a local checkout instead of the npm package:
 
 ```bash
 # Install dependencies + build the bundle
-npm install
-npm run build
+pnpm install
+pnpm run build
 
 # Optional: install the local build globally (requires dist/ from the previous step)
 npm install -g .
@@ -326,7 +328,7 @@ Then either point Claude to the globally-installed binary (usually `$(npm bin -g
 }
 ```
 
-To iterate on `src/server.js` without rebuilding, run it directly — `npm install` already installs the bundler's devDependencies which include the runtime libs:
+To iterate on `src/server.js` without rebuilding, run it directly — `pnpm install` already installs the bundler's devDependencies which include the runtime libs:
 
 ```json
 {

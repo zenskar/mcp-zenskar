@@ -62,8 +62,8 @@ npx mcp-zenskar
 ```bash
 git clone <this-repo>
 cd mcp-zenskar
-npm install
-npm start
+./setup-pnpm.sh
+pnpm start
 ```
 
 ### Method 3: Environment Variables (Future Feature)

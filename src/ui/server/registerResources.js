@@ -16,7 +16,7 @@ function loadShapeHtml(shape) {
     const file = resolve(base, `${shape}.html`)
     if (existsSync(file)) return readFileSync(file, 'utf8')
   }
-  return `<!doctype html><html><body style="font-family:sans-serif;padding:16px;">UI bundle missing: ${shape}.html. Run <code>npm run build:ui</code>.</body></html>`
+  return `<!doctype html><html><body style="font-family:sans-serif;padding:16px;">UI bundle missing: ${shape}.html. Run <code>pnpm run build:ui</code>.</body></html>`
 }
 
 function collectUiOrigins() {
