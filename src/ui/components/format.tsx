@@ -64,20 +64,30 @@ const PILL_SOFT_SUCCESS =
   'bg-secondary/12 text-secondary ring-1 ring-secondary/20'
 
 export const STATUS_COLOR_MAP: Record<string, string> = {
+  // Shared success/positive
   paid: PILL_SUCCESS,
   approved: PILL_SUCCESS,
   active: PILL_SUCCESS,
-  open: PILL_WARNING,
-  pending: PILL_WARNING,
+  success: PILL_SUCCESS,
+  posted: PILL_SUCCESS,
+  // Invoice / credit note / contract — in flight
+  upcoming: PILL_WARNING,
+  partially_paid: PILL_WARNING,
+  in_progress: PILL_WARNING,
   paused: PILL_WARNING,
-  overdue: PILL_DANGER,
+  // Errors / disputes
   failed: PILL_DANGER,
+  disputed: PILL_DANGER,
+  // Inactive / draft / terminal-neutral
   draft: PILL_NEUTRAL,
   void: PILL_NEUTRAL,
   voided: PILL_NEUTRAL,
-  churned: PILL_NEUTRAL,
-  refunded: PILL_INFO,
+  expired: PILL_NEUTRAL,
+  archived: PILL_NEUTRAL,
+  // Info / soft states
+  issued: PILL_SOFT_SUCCESS,
   scheduled: PILL_SOFT_SUCCESS,
+  refunded: PILL_INFO,
 }
 
 const STATUS_PILL_FALLBACK = PILL_NEUTRAL

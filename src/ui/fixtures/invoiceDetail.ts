@@ -5,7 +5,7 @@ export const invoiceDetailFixture: InvoiceDetailPayload = {
     id: 'inv_001',
     invoice_number: 'INV-2026-0142',
     customer_id: 'c_001',
-    status: 'open',
+    status: 'approved',
     invoice_total: 1845.5,
     amount_due: 1845.5,
     paid_amount: 0,

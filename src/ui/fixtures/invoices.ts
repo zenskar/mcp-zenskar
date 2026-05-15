@@ -38,7 +38,7 @@ export const invoiceFixture: InvoiceTablePayload = {
       id: '11111111-2222-3333-4444-555555555555',
       invoice_number: 'INV-OVERDUE',
       customer_id: 'cust-globex-44',
-      status: 'open',
+      status: 'approved',
       invoice_total: 4800,
       amount_due: 4800,
       due_date: '2026-04-15',
