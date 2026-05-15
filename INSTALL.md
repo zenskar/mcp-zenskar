@@ -3,6 +3,7 @@
 ## Quick Setup for Claude Desktop
 
 ### Step 1: Install the Package
+
 ```bash
 npm install -g mcp-zenskar
 ```
@@ -28,7 +29,7 @@ npm install -g mcp-zenskar
 
 ### Step 3: Get Your Credentials
 
-1. **Organization ID**: 
+1. **Organization ID**:
    - Login to your Zenskar dashboard
    - Go to Settings → Organization
    - Copy your Organization ID
@@ -43,6 +44,7 @@ npm install -g mcp-zenskar
 Now you can ask Claude to interact with Zenskar. **Important**: You'll need to provide your credentials with each request.
 
 Example:
+
 ```
 Can you list my customers? Use organization ID "your-org-id" and authorization "Bearer your-token"
 ```
@@ -50,11 +52,13 @@ Can you list my customers? Use organization ID "your-org-id" and authorization "
 ## Alternative Setup Methods
 
 ### Method 1: Direct NPX Usage
+
 ```bash
 npx mcp-zenskar
 ```
 
 ### Method 2: Local Development
+
 ```bash
 git clone <this-repo>
 cd mcp-zenskar
@@ -63,7 +67,9 @@ npm start
 ```
 
 ### Method 3: Environment Variables (Future Feature)
+
 You can set environment variables and modify the server to use them:
+
 ```bash
 export ZENSKAR_ORGANIZATION="your-org-id"
 export ZENSKAR_AUTH_TOKEN="Bearer your-token"
@@ -99,6 +105,7 @@ export ZENSKAR_AUTH_TOKEN="Bearer your-token"
    - Contact your Zenskar admin to verify permissions
 
 ### Debug Mode
+
 To see detailed request logs, check the Claude Desktop logs or run the server manually with debug output.
 
 ## Available Operations

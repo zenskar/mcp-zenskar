@@ -43,11 +43,13 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 ### For Other AI Applications
 
 Install globally:
+
 ```bash
 npm install -g mcp-zenskar
 ```
 
 Or run directly:
+
 ```bash
 npx mcp-zenskar
 ```
@@ -84,167 +86,182 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 ## Available Tools
 
 ### Customers
-| Tool | Description |
-|---|---|
-| `listCustomers` | List customers with search, filtering, and pagination |
-| `getCustomerById` | Get a customer by ID |
-| `createCustomer` | Create a customer with address and tax info |
-| `updateCustomer` | Update customer details (partial update) |
-| `deleteCustomer` | Permanently delete a customer by ID (only allowed when they have no active contracts or unpaid invoices) |
+
+| Tool              | Description                                                                                              |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `listCustomers`   | List customers with search, filtering, and pagination                                                    |
+| `getCustomerById` | Get a customer by ID                                                                                     |
+| `createCustomer`  | Create a customer with address and tax info                                                              |
+| `updateCustomer`  | Update customer details (partial update)                                                                 |
+| `deleteCustomer`  | Permanently delete a customer by ID (only allowed when they have no active contracts or unpaid invoices) |
 
 ### Contacts
-| Tool | Description |
-|---|---|
-| `listContacts` | List contacts with pagination |
-| `getContactById` | Get a contact by ID |
-| `createContact` | Create a contact for a customer |
-| `updateContact` | Update a contact's details |
-| `deleteContact` | Delete a contact by ID |
+
+| Tool             | Description                     |
+| ---------------- | ------------------------------- |
+| `listContacts`   | List contacts with pagination   |
+| `getContactById` | Get a contact by ID             |
+| `createContact`  | Create a contact for a customer |
+| `updateContact`  | Update a contact's details      |
+| `deleteContact`  | Delete a contact by ID          |
 
 ### Contracts
-| Tool | Description |
-|---|---|
-| `listContracts` | List contracts with filtering by status, customer, dates |
-| `getContractById` | Get a contract with phases, pricings, and customer details |
-| `createContract` | Create a contract with phases and pricing |
-| `updateContract` | Update contract terms, status, pricing, or renewal policy |
-| `deleteContract` | Delete a draft contract |
-| `getContractAmendments` | Get amendment history for a contract |
-| `createContractPhase` | Add a phase to a contract (add-ons, expansions) |
-| `createContractPhasePricing` | Add pricing to a contract phase |
-| `expireContract` | Expire an active contract |
-| `pauseContract` | Pause an active contract from a given start date, with an unpause-extension policy (`extend` or `overlap`) and optional end date for auto-resume |
-| `editPauseContract` | Edit an existing pause phase — set or change the resume date, shift the start, or change the unpause policy |
-| `resumeContract` | Resume a paused contract |
-| `createContractPrompt` | Create a contract prompt |
-| `extractContractFromRaw` | Extract contract data from raw text using AI |
+
+| Tool                         | Description                                                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `listContracts`              | List contracts with filtering by status, customer, dates                                                                                         |
+| `getContractById`            | Get a contract with phases, pricings, and customer details                                                                                       |
+| `createContract`             | Create a contract with phases and pricing                                                                                                        |
+| `updateContract`             | Update contract terms, status, pricing, or renewal policy                                                                                        |
+| `deleteContract`             | Delete a draft contract                                                                                                                          |
+| `getContractAmendments`      | Get amendment history for a contract                                                                                                             |
+| `createContractPhase`        | Add a phase to a contract (add-ons, expansions)                                                                                                  |
+| `createContractPhasePricing` | Add pricing to a contract phase                                                                                                                  |
+| `expireContract`             | Expire an active contract                                                                                                                        |
+| `pauseContract`              | Pause an active contract from a given start date, with an unpause-extension policy (`extend` or `overlap`) and optional end date for auto-resume |
+| `editPauseContract`          | Edit an existing pause phase — set or change the resume date, shift the start, or change the unpause policy                                      |
+| `resumeContract`             | Resume a paused contract                                                                                                                         |
+| `createContractPrompt`       | Create a contract prompt                                                                                                                         |
+| `extractContractFromRaw`     | Extract contract data from raw text using AI                                                                                                     |
 
 ### Invoices
-| Tool | Description |
-|---|---|
-| `listInvoices` | List invoices with filtering by customer, status, dates |
-| `getInvoiceById` | Get an invoice by ID |
-| `getInvoiceByExternalId` | Get an invoice by external ID |
-| `getInvoiceGenerationStatus` | Check invoice generation status |
-| `downloadInvoice` | Download invoice in JSON format |
-| `getInvoiceContractJsonActuals` | Get contract actuals for an invoice |
-| `getInvoicePayments` | Get successful payments currently mapped to an invoice |
-| `getInvoicePaymentsById` | Get successful payments for a specific invoice ID |
+
+| Tool                               | Description                                                                |
+| ---------------------------------- | -------------------------------------------------------------------------- |
+| `listInvoices`                     | List invoices with filtering by customer, status, dates                    |
+| `getInvoiceById`                   | Get an invoice by ID                                                       |
+| `getInvoiceByExternalId`           | Get an invoice by external ID                                              |
+| `getInvoiceGenerationStatus`       | Check invoice generation status                                            |
+| `downloadInvoice`                  | Download invoice in JSON format                                            |
+| `getInvoiceContractJsonActuals`    | Get contract actuals for an invoice                                        |
+| `getInvoicePayments`               | Get successful payments currently mapped to an invoice                     |
+| `getInvoicePaymentsById`           | Get successful payments for a specific invoice ID                          |
 | `getInvoicePaymentsWithoutRefunds` | Get original payment records for an invoice, excluding refund payment rows |
-| `getInvoiceLineItems` | Get invoice line items and pricing details |
-| `getInvoiceSummary` | Get invoice summary |
-| `getAllInvoiceTags` | Get all available invoice tags |
-| `generateInvoicePaymentLink` | Generate a payment link for an invoice |
-| `payInvoice` | Initiate payment for an invoice |
-| `approveInvoice` | Approve an invoice for billing |
-| `voidInvoice` | Void an invoice |
-| `deleteInvoice` | Delete a draft invoice |
-| `generateInvoice` | Generate an invoice for a contract and date range |
-| `createInvoiceCreditNote` | Create a credit note against an invoice |
-| `createInvoiceCharge` | Auto-charge an invoice via payment gateway |
+| `getInvoiceLineItems`              | Get invoice line items and pricing details                                 |
+| `getInvoiceSummary`                | Get invoice summary                                                        |
+| `getAllInvoiceTags`                | Get all available invoice tags                                             |
+| `generateInvoicePaymentLink`       | Generate a payment link for an invoice                                     |
+| `payInvoice`                       | Initiate payment for an invoice                                            |
+| `approveInvoice`                   | Approve an invoice for billing                                             |
+| `voidInvoice`                      | Void an invoice                                                            |
+| `deleteInvoice`                    | Delete a draft invoice                                                     |
+| `generateInvoice`                  | Generate an invoice for a contract and date range                          |
+| `createInvoiceCreditNote`          | Create a credit note against an invoice                                    |
+| `createInvoiceCharge`              | Auto-charge an invoice via payment gateway                                 |
 
 ### Payments
-| Tool | Description |
-|---|---|
-| `listAllPayments` | List all payments with filtering and sorting, including refund records |
-| `getPaymentById` | Get a payment by ID |
-| `createPayment` | Record a payment against an invoice |
-| `updatePayment` | Update a payment's invoice allocations (`payment_parts`) |
-| `deleteManualPayment` | Delete a manual payment |
-| `editManualPayment` | Edit a manual payment's amount or method |
-| `refundPayment` | Refund a payment (full or partial) |
+
+| Tool                  | Description                                                            |
+| --------------------- | ---------------------------------------------------------------------- |
+| `listAllPayments`     | List all payments with filtering and sorting, including refund records |
+| `getPaymentById`      | Get a payment by ID                                                    |
+| `createPayment`       | Record a payment against an invoice                                    |
+| `updatePayment`       | Update a payment's invoice allocations (`payment_parts`)               |
+| `deleteManualPayment` | Delete a manual payment                                                |
+| `editManualPayment`   | Edit a manual payment's amount or method                               |
+| `refundPayment`       | Refund a payment (full or partial)                                     |
 
 ### Credit Notes
-| Tool | Description |
-|---|---|
-| `listCreditNotes` | List credit notes with pagination |
-| `getCreditNoteById` | Get a credit note by ID |
+
+| Tool                | Description                       |
+| ------------------- | --------------------------------- |
+| `listCreditNotes`   | List credit notes with pagination |
+| `getCreditNoteById` | Get a credit note by ID           |
 
 ### Products and Pricing
-| Tool | Description |
-|---|---|
-| `listProducts` | List products in the catalog |
-| `getProductById` | Get a product by ID |
-| `createProduct` | Create a product |
-| `updateProduct` | Update a product's details |
-| `getProductPricings` | Get pricing configs for a product |
+
+| Tool                   | Description                           |
+| ---------------------- | ------------------------------------- |
+| `listProducts`         | List products in the catalog          |
+| `getProductById`       | Get a product by ID                   |
+| `createProduct`        | Create a product                      |
+| `updateProduct`        | Update a product's details            |
+| `getProductPricings`   | Get pricing configs for a product     |
 | `createProductPricing` | Create a pricing config for a product |
 
 ### Plans (Templates)
-| Tool | Description |
-|---|---|
-| `listPlans` | List plan templates |
+
+| Tool          | Description                              |
+| ------------- | ---------------------------------------- |
+| `listPlans`   | List plan templates                      |
 | `getPlanById` | Get a plan by ID with phases and pricing |
-| `createPlan` | Create a plan template |
+| `createPlan`  | Create a plan template                   |
 
 ### Accounting
-| Tool | Description |
-|---|---|
-| `getChartOfAccounts` | Get the full chart of accounts |
-| `listAccounts` | List GL accounts with filtering |
-| `createAccount` | Create a GL account |
-| `listJournalEntries` | List journal entries with filtering |
-| `createJournalEntry` | Create a manual journal entry |
-| `getJournalEntry` | Get a journal entry by ID with all lines |
-| `listJournalLines` | List journal lines across all entries |
-| `getBalanceSheet` | Get the balance sheet report |
-| `getIncomeStatement` | Get the income statement (P&L) |
-| `getAccountBalance` | Get balance for a specific GL account |
-| `recogniseRevenue` | Trigger revenue recognition up to a date |
+
+| Tool                 | Description                              |
+| -------------------- | ---------------------------------------- |
+| `getChartOfAccounts` | Get the full chart of accounts           |
+| `listAccounts`       | List GL accounts with filtering          |
+| `createAccount`      | Create a GL account                      |
+| `listJournalEntries` | List journal entries with filtering      |
+| `createJournalEntry` | Create a manual journal entry            |
+| `getJournalEntry`    | Get a journal entry by ID with all lines |
+| `listJournalLines`   | List journal lines across all entries    |
+| `getBalanceSheet`    | Get the balance sheet report             |
+| `getIncomeStatement` | Get the income statement (P&L)           |
+| `getAccountBalance`  | Get balance for a specific GL account    |
+| `recogniseRevenue`   | Trigger revenue recognition up to a date |
 
 ### Custom Attributes and Tax
-| Tool | Description |
-|---|---|
-| `listCustomAttributes` | List custom attribute definitions |
+
+| Tool                    | Description                          |
+| ----------------------- | ------------------------------------ |
+| `listCustomAttributes`  | List custom attribute definitions    |
 | `createCustomAttribute` | Create a custom attribute definition |
-| `listTaxCategories` | List tax categories |
-| `createTaxCategory` | Create a tax category |
+| `listTaxCategories`     | List tax categories                  |
+| `createTaxCategory`     | Create a tax category                |
 
 ### Jobs
-| Tool | Description |
-|---|---|
-| `listJobs` | List async jobs (invoice gen, rev rec, etc.) |
-| `getJobById` | Get a job by ID to check status |
+
+| Tool         | Description                                  |
+| ------------ | -------------------------------------------- |
+| `listJobs`   | List async jobs (invoice gen, rev rec, etc.) |
+| `getJobById` | Get a job by ID to check status              |
 
 ### Business Entities
-| Tool | Description |
-|---|---|
-| `listBusinessEntities` | List business entities |
+
+| Tool                    | Description                 |
+| ----------------------- | --------------------------- |
+| `listBusinessEntities`  | List business entities      |
 | `getBusinessEntityById` | Get a business entity by ID |
-| `createBusinessEntity` | Create a business entity |
-| `updateBusinessEntity` | Update a business entity |
+| `createBusinessEntity`  | Create a business entity    |
+| `updateBusinessEntity`  | Update a business entity    |
 
 ### Customer Addresses and Payment Methods
-| Tool | Description |
-|---|---|
-| `listCustomerAddresses` | List addresses for a customer |
-| `createCustomerAddress` | Add an address to a customer |
-| `updateCustomerAddress` | Update a customer address |
-| `listPaymentMethods` | List payment methods for a customer |
-| `attachPaymentMethod` | Attach a payment method to a customer |
-| `deletePaymentMethod` | Delete a payment method from a customer |
+
+| Tool                    | Description                             |
+| ----------------------- | --------------------------------------- |
+| `listCustomerAddresses` | List addresses for a customer           |
+| `createCustomerAddress` | Add an address to a customer            |
+| `updateCustomerAddress` | Update a customer address               |
+| `listPaymentMethods`    | List payment methods for a customer     |
+| `attachPaymentMethod`   | Attach a payment method to a customer   |
+| `deletePaymentMethod`   | Delete a payment method from a customer |
 
 ### Metrics and Usage Events
-| Tool | Description |
-|---|---|
-| `listAggregates` | List Billable Metrics with filtering; backend/API may also call these aggregates |
-| `getAggregateSchemas` | Show the underlying schemas for Billable Metrics (Aggregates); mainly useful for debugging or integration work |
-| `getAggregateEstimates` | Get Billable Metric estimates; backend/API may also call these aggregates |
-| `getAggregateById` | Get a Billable Metric by ID; backend/API may also call it an aggregate |
-| `getAggregateLogs` | Get logs for a Billable Metric (Aggregate) |
-| `listRawMetrics` | List Usage Events with filtering; backend/API may also call these raw metrics |
-| `createRawMetric` | Create a Usage Event schema; backend/API calls this a raw metric |
-| `getRawMetricById` | Get a Usage Event by ID; backend/API may also call it a raw metric |
-| `getRawMetricLogs` | Get recent event rows for a Usage Event using the same preview-query path as the frontend |
-| `getRawMetricBySlug` | Get a Usage Event by API slug; backend/API may also call it a raw metric |
-| `ingestRawMetricEvent` | Ingest a usage event |
+
+| Tool                    | Description                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `listAggregates`        | List Billable Metrics with filtering; backend/API may also call these aggregates                               |
+| `getAggregateSchemas`   | Show the underlying schemas for Billable Metrics (Aggregates); mainly useful for debugging or integration work |
+| `getAggregateEstimates` | Get Billable Metric estimates; backend/API may also call these aggregates                                      |
+| `getAggregateById`      | Get a Billable Metric by ID; backend/API may also call it an aggregate                                         |
+| `getAggregateLogs`      | Get logs for a Billable Metric (Aggregate)                                                                     |
+| `listRawMetrics`        | List Usage Events with filtering; backend/API may also call these raw metrics                                  |
+| `createRawMetric`       | Create a Usage Event schema; backend/API calls this a raw metric                                               |
+| `getRawMetricById`      | Get a Usage Event by ID; backend/API may also call it a raw metric                                             |
+| `getRawMetricLogs`      | Get recent event rows for a Usage Event using the same preview-query path as the frontend                      |
+| `getRawMetricBySlug`    | Get a Usage Event by API slug; backend/API may also call it a raw metric                                       |
+| `ingestRawMetricEvent`  | Ingest a usage event                                                                                           |
 
 ### Other
-| Tool | Description |
-|---|---|
-| `createEntitlement` | Create an entitlement |
-| `getCustomerPortalConfiguration` | Get customer portal config |
-| `getCurrentDateTime` | Get current date/time in multiple formats |
+
+| Tool                             | Description                               |
+| -------------------------------- | ----------------------------------------- |
+| `createEntitlement`              | Create an entitlement                     |
+| `getCustomerPortalConfiguration` | Get customer portal config                |
+| `getCurrentDateTime`             | Get current date/time in multiple formats |
 
 ## Security
 
@@ -302,5 +319,6 @@ MIT
 ## Support
 
 For issues and support:
+
 - GitHub Issues: https://github.com/zenskar/mcp-zenskar/issues
 - Zenskar Documentation: https://docs.zenskar.com

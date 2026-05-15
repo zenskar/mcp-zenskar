@@ -1,5 +1,5 @@
-import { defineConfig } from 'tsdown';
-import { copyFileSync } from 'node:fs';
+import { defineConfig } from 'tsdown'
+import { copyFileSync } from 'node:fs'
 
 export default defineConfig({
   entry: ['src/server.js'],
@@ -14,7 +14,7 @@ export default defineConfig({
   outExtensions: () => ({ js: '.mjs' }),
   hooks: {
     'build:done': () => {
-      copyFileSync('src/mcp-config.json', 'dist/mcp-config.json');
+      copyFileSync('src/mcp-config.json', 'dist/mcp-config.json')
     },
   },
-});
+})
