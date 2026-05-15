@@ -17,7 +17,7 @@ export function InvoiceLineItems({
         ({lines.length})
       </span>
       {payload.invoice_id ? (
-        <span className="text-muted-foreground font-mono text-xs">
+        <span className="text-secondary font-mono text-xs">
           {' '}
           · {shortId(payload.invoice_id, 12)}
         </span>

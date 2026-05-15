@@ -73,7 +73,7 @@ export function ContractDetail({
         <Field label="Renewal Policy">{c.renewal_policy || <Dim>—</Dim>}</Field>
         <Field label="Plan">
           {c.plan_id ? (
-            <span className="font-mono text-xs">{shortId(c.plan_id, 14)}</span>
+            <span className="text-secondary font-mono text-xs">{shortId(c.plan_id, 14)}</span>
           ) : (
             <Dim>—</Dim>
           )}

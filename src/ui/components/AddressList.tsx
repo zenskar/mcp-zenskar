@@ -12,7 +12,7 @@ export function AddressList({ payload }: { payload: AddressListPayload }) {
             ({list.length})
           </span>
           {payload.customer_id ? (
-            <span className="text-muted-foreground font-mono text-xs">
+            <span className="text-secondary font-mono text-xs">
               {' '}
               · {shortId(payload.customer_id, 12)}
             </span>

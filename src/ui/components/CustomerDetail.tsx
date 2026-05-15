@@ -66,7 +66,7 @@ export function CustomerDetail({
               ) : null}
             </div>
           ) : c.business_entity_id ? (
-            <span className="font-mono text-xs">
+            <span className="text-secondary font-mono text-xs">
               {shortId(c.business_entity_id, 12)}
             </span>
           ) : (

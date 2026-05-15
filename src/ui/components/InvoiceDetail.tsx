@@ -89,7 +89,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
         </Field>
         <Field label="Business Entity">
           {i.business_entity_id ? (
-            <span className="font-mono text-xs">
+            <span className="text-secondary font-mono text-xs">
               {shortId(i.business_entity_id, 14)}
             </span>
           ) : (
@@ -107,7 +107,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
               ) : null}
             </div>
           ) : i.contract_id ? (
-            <span className="font-mono text-xs">
+            <span className="text-secondary font-mono text-xs">
               {shortId(i.contract_id, 14)}
             </span>
           ) : (
