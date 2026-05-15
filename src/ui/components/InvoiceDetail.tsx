@@ -31,7 +31,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
               </span>
             ) : null}
           </h2>
-          <div className="text-muted-foreground mt-0.5 font-mono text-xs">
+          <div className="text-secondary mt-0.5 font-mono text-xs">
             {i.id}
           </div>
         </div>

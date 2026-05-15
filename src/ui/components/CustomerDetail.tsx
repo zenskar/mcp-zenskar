@@ -39,7 +39,7 @@ export function CustomerDetail({
           <h2 className="m-0 flex items-center gap-2 text-lg font-semibold">
             {c.name || <Dim>—</Dim>}
           </h2>
-          <div className="text-muted-foreground mt-0.5 font-mono text-xs">
+          <div className="text-secondary mt-0.5 font-mono text-xs">
             {c.id}
           </div>
         </div>
