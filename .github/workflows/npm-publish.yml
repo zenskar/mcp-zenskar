@@ -1,5 +1,4 @@
 name: Publish to NPM
-
 on:
   release:
     types: [published]
@@ -9,43 +8,57 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js for NPM
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org/
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build bundle
-        run: npm run build
+      - run: npm ci
+      - run: npm run build
 
       - name: Extract version from package.json
         id: package-version
         run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
+      - name: Pack and probe install
+        run: |
+          npm pack
+          DIR=$(mktemp -d)
+          cd "$DIR"
+          npm init -y >/dev/null
+          npm install "$GITHUB_WORKSPACE"/mcp-zenskar-*.tgz
+          set +e
+          timeout 3 node --input-type=module -e "import('mcp-zenskar/dist/server.mjs')"
+          code=$?
+          case "$code" in 0|124) exit 0;; *) exit $code;; esac
+
       - name: Publish to NPM
-        run: npm publish --ignore-scripts
+        run: |
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            npm publish --ignore-scripts --tag next
+          else
+            npm publish --ignore-scripts
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create package summary
+      - name: Summary
         run: |
+          TAG="latest"
+          [[ "${{ github.event.release.prerelease }}" == "true" ]] && TAG="next"
+          VERSION=${{ steps.package-version.outputs.version }}
           echo "## 📦 Package Published Successfully!" >> $GITHUB_STEP_SUMMARY
           echo "- **Package**: mcp-zenskar" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: $TAG" >> $GITHUB_STEP_SUMMARY
           echo "- **Registry**: NPM (Public)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📋 Install Command" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "npm install mcp-zenskar@${{ steps.package-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "npx mcp-zenskar@$TAG" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🌐 NPM Package" >> $GITHUB_STEP_SUMMARY

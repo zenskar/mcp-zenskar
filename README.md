@@ -293,6 +293,9 @@ cd mcp-zenskar
 # Install dependencies
 npm install
 
+# Build the bundle (produces dist/server.mjs + dist/mcp-config.json)
+npm run build
+
 # Run the server
 npm start
 ```
@@ -302,23 +305,33 @@ npm start
 If you want Claude Desktop to use a local checkout instead of the npm package:
 
 ```bash
-# Install dependencies once
+# Install dependencies + build the bundle
 npm install
+npm run build
 
-# Optional: install the local build globally
+# Optional: install the local build globally (requires dist/ from the previous step)
 npm install -g .
 ```
 
-Then either point Claude to the globally-installed binary (usually `$(npm bin -g)/mcp-zenskar`) or call the repo copy directly:
+Then either point Claude to the globally-installed binary (usually `$(npm bin -g)/mcp-zenskar`) or call the built bundle directly:
 
 ```json
 {
   "command": "node",
-  "args": ["/absolute/path/to/mcp-zenskar/src/server.js"],
+  "args": ["/absolute/path/to/mcp-zenskar/dist/server.mjs"],
   "env": {
     "ZENSKAR_ORGANIZATION": "your-org-id",
     "ZENSKAR_AUTH_TOKEN": "your-token"
   }
+}
+```
+
+To iterate on `src/server.js` without rebuilding, run it directly — `npm install` already installs the bundler's devDependencies which include the runtime libs:
+
+```json
+{
+  "command": "node",
+  "args": ["/absolute/path/to/mcp-zenskar/src/server.js"]
 }
 ```
 

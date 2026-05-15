@@ -1058,7 +1058,6 @@ async function executeAPICall(tool, args) {
       nestAddress('address_', 'address')
     }
 
-    // Auto-populate orgId for communications API tools
     if (tool.name === 'getInvoicePreviewHtml') {
       if (!cleanArgs.orgId) {
         const orgId =

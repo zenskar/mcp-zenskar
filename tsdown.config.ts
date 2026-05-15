@@ -1,29 +1,21 @@
-import { copyFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-
 import { defineConfig } from 'tsdown'
-
-const root = import.meta.dirname
+import { copyFileSync } from 'node:fs'
 
 export default defineConfig({
-  entry: { server: 'src/server.js' },
+  entry: ['src/server.js'],
   outDir: 'dist',
   format: 'esm',
+  target: 'node20',
   platform: 'node',
-  target: 'node24',
-  shims: false,
   clean: false,
-  noExternal: [/.*/],
-  treeshake: true,
-  sourcemap: false,
   minify: true,
-  dts: false,
+  deps: {
+    alwaysBundle: [/.*/],
+  },
+  outExtensions: () => ({ js: '.mjs' }),
   hooks: {
     'build:done': () => {
-      copyFileSync(
-        resolve(root, 'src/mcp-config.json'),
-        resolve(root, 'dist/mcp-config.json')
-      )
+      copyFileSync('src/mcp-config.json', 'dist/mcp-config.json')
     },
   },
 })
