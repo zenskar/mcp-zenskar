@@ -1,0 +1,27 @@
+name: Promote next → latest
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to promote (e.g., 1.2.0)'
+        required: true
+        type: string
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+
+      - name: Promote to latest
+        run: npm dist-tag add mcp-zenskar@${{ inputs.version }} latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Promoted mcp-zenskar@${{ inputs.version }} → latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`npx mcp-zenskar\` now serves ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
