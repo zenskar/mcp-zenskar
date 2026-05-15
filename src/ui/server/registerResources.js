@@ -5,14 +5,18 @@ import { fileURLToPath } from 'node:url'
 import { resourceUriFor, SHAPES } from './registry.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const DIST_UI = resolve(__dirname, '..', '..', '..', 'dist', 'ui')
+// Dev: src/ui/server -> ../../../dist/ui. Bundled prod: dist/server -> ./ui.
+const DIST_UI_CANDIDATES = [
+  resolve(__dirname, '..', '..', '..', 'dist', 'ui'),
+  resolve(__dirname, 'ui'),
+]
 
 function loadShapeHtml(shape) {
-  const file = resolve(DIST_UI, `${shape}.html`)
-  if (!existsSync(file)) {
-    return `<!doctype html><html><body style="font-family:sans-serif;padding:16px;">UI bundle missing: ${shape}.html. Run <code>pnpm run build:ui</code>.</body></html>`
+  for (const base of DIST_UI_CANDIDATES) {
+    const file = resolve(base, `${shape}.html`)
+    if (existsSync(file)) return readFileSync(file, 'utf8')
   }
-  return readFileSync(file, 'utf8')
+  return `<!doctype html><html><body style="font-family:sans-serif;padding:16px;">UI bundle missing: ${shape}.html. Run <code>npm run build:ui</code>.</body></html>`
 }
 
 function collectUiOrigins() {

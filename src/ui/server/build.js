@@ -16,8 +16,8 @@ mkdirSync(DIST_UI, { recursive: true })
 for (const shape of SHAPES) {
   console.log(`\n== building ${shape} ==`)
   const res = spawnSync(
-    'pnpm',
-    ['exec', 'vite', 'build', '--config', 'vite.config.ts'],
+    'npx',
+    ['--no-install', 'vite', 'build', '--config', 'vite.config.ts'],
     {
       cwd: ROOT,
       env: { ...process.env, UI_SHAPE: shape },
