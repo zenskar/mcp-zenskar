@@ -1,6 +1,6 @@
 import type { JSX, ReactNode } from 'react'
 
-const LABEL_CLS = 'text-muted-foreground text-[10px] tracking-wide uppercase'
+const LABEL_CLS = 'text-muted-foreground text-[11px] tracking-wide uppercase'
 
 export function Stat({
   label,
@@ -13,8 +13,8 @@ export function Stat({
 }): JSX.Element {
   const valueCls =
     tone === 'warn'
-      ? 'text-base font-semibold tabular-nums text-destructive'
-      : 'text-base font-semibold tabular-nums'
+      ? 'text-xl font-semibold tabular-nums text-destructive'
+      : 'text-xl font-semibold tabular-nums'
   return (
     <div>
       <div className={LABEL_CLS}>{label}</div>

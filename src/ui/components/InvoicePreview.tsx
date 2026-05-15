@@ -36,7 +36,7 @@ export function InvoicePreview({
     <div className="space-y-2">
       {payload.invoice_id ? (
         <header className="flex items-baseline gap-2">
-          <h2 className="m-0 text-base font-semibold">Invoice Preview</h2>
+          <h2 className="m-0 text-lg font-semibold">Invoice Preview</h2>
           <span className="text-muted-foreground font-mono text-xs">
             {shortId(payload.invoice_id, 12)}
           </span>

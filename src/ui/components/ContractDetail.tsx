@@ -43,7 +43,7 @@ export function ContractDetail({
             <div>
               <div className="text-sm">{c.customer_name}</div>
               {c.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">{shortId(c.customer_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[11px]">{shortId(c.customer_id, 12)}</div>
               ) : null}
             </div>
           ) : c.customer_id ? (

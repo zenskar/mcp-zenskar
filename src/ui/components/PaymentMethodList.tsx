@@ -10,9 +10,9 @@ export function PaymentMethodList({
   return (
     <div className="space-y-3">
       <header className="flex items-baseline justify-between gap-3">
-        <h2 className="m-0 text-base font-semibold">
+        <h2 className="m-0 text-lg font-semibold">
           Payment Methods{' '}
-          <span className="text-muted-foreground font-normal">
+          <span className="text-muted-foreground text-sm font-normal">
             ({list.length})
           </span>
           {payload.customer_id ? (

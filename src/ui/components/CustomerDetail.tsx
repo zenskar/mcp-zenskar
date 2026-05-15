@@ -60,7 +60,7 @@ export function CustomerDetail({
             <div>
               <div>{c.business_entity_name}</div>
               {c.business_entity_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">
+                <div className="text-muted-foreground font-mono text-[11px]">
                   {shortId(c.business_entity_id, 12)}
                 </div>
               ) : null}

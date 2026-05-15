@@ -233,6 +233,12 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+  h1,
+  h2,
+  h3 {
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+  }
 }
 
 html,

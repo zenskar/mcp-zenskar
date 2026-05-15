@@ -49,7 +49,7 @@ export function CreditNoteDetail({
             <div>
               <div className="text-sm">{cn.customer_name}</div>
               {cn.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">
+                <div className="text-muted-foreground font-mono text-[11px]">
                   {shortId(cn.customer_id, 12)}
                 </div>
               ) : null}
@@ -67,7 +67,7 @@ export function CreditNoteDetail({
             <div>
               <div className="font-mono text-sm">{cn.invoice_number}</div>
               {cn.invoice_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">
+                <div className="text-muted-foreground font-mono text-[11px]">
                   {shortId(cn.invoice_id, 12)}
                 </div>
               ) : null}

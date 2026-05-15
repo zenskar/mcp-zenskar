@@ -74,7 +74,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <div>
               <div className="text-sm">{i.customer_name}</div>
               {i.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">
+                <div className="text-muted-foreground font-mono text-[11px]">
                   {shortId(i.customer_id, 12)}
                 </div>
               ) : null}
@@ -101,7 +101,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <div>
               <div className="text-sm">{i.contract_name}</div>
               {i.contract_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">
+                <div className="text-muted-foreground font-mono text-[11px]">
                   {shortId(i.contract_id, 12)}
                 </div>
               ) : null}
@@ -128,7 +128,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
 
       {i.notes ? (
         <Section title="Notes">
-          <div className="text-sm">{i.notes}</div>
+          <div className="max-w-prose text-sm">{i.notes}</div>
         </Section>
       ) : null}
 
