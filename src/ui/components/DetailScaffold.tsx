@@ -13,8 +13,8 @@ export function Stat({
 }): JSX.Element {
   const valueCls =
     tone === 'warn'
-      ? 'text-xl font-semibold tabular-nums text-destructive'
-      : 'text-xl font-semibold tabular-nums'
+      ? 'text-2xl font-bold tabular-nums text-destructive'
+      : 'text-2xl font-bold tabular-nums'
   return (
     <div>
       <div className={LABEL_CLS}>{label}</div>

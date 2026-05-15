@@ -75,7 +75,7 @@ export function DataTable<R>({
 
       <div className="border-border overflow-auto rounded-md border">
         <table className="w-full text-sm">
-          <thead className="bg-muted text-muted-foreground text-xs tracking-wide uppercase">
+          <thead className="bg-muted text-muted-foreground border-b-2 border-border text-xs tracking-wide uppercase">
             <tr>
               {showIndex ? <Th>#</Th> : null}
               {columns.map((c) => (

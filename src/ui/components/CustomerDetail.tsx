@@ -168,12 +168,12 @@ export function CustomerDetail({
                 </div>
                 <div className="flex gap-2">
                   {ct.send_invoice ? (
-                    <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
+                    <span className="bg-secondary/20 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
                       invoice
                     </span>
                   ) : null}
                   {ct.send_contract ? (
-                    <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
+                    <span className="bg-secondary/20 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
                       contract
                     </span>
                   ) : null}
@@ -213,7 +213,7 @@ function Grid({ children }: { children: React.ReactNode }) {
 function Toggle({ label, on }: { label: string; on: boolean | null }) {
   if (on === null) return null
   const cls = on
-    ? 'bg-secondary/15 text-secondary ring-1 ring-secondary/30'
+    ? 'bg-secondary/20 text-secondary ring-1 ring-secondary/30'
     : 'bg-muted text-muted-foreground ring-1 ring-border'
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs ${cls}`}>

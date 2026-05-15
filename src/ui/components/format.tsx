@@ -54,14 +54,14 @@ export function shortId(
   return id.length <= len ? id : id.slice(0, len) + '…'
 }
 
-const PILL_SUCCESS = 'bg-secondary/15 text-secondary ring-1 ring-secondary/30'
-const PILL_WARNING = 'bg-primary/15 text-primary ring-1 ring-primary/30'
+const PILL_SUCCESS = 'bg-secondary/20 text-secondary ring-1 ring-secondary/30'
+const PILL_WARNING = 'bg-primary/20 text-primary ring-1 ring-primary/30'
 const PILL_DANGER =
-  'bg-destructive/15 text-destructive ring-1 ring-destructive/30'
+  'bg-destructive/20 text-destructive ring-1 ring-destructive/30'
 const PILL_NEUTRAL = 'bg-muted text-muted-foreground ring-1 ring-border'
 const PILL_INFO = 'bg-accent text-accent-foreground ring-1 ring-border'
 const PILL_SOFT_SUCCESS =
-  'bg-secondary/8 text-secondary ring-1 ring-secondary/20'
+  'bg-secondary/12 text-secondary ring-1 ring-secondary/20'
 
 export const STATUS_COLOR_MAP: Record<string, string> = {
   paid: PILL_SUCCESS,

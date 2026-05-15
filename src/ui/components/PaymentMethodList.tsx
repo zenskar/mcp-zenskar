@@ -57,7 +57,7 @@ function PaymentMethodCard({ method: m }: { method: PaymentMethodRow }) {
           ) : null}
         </div>
         {m.is_default ? (
-          <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
+          <span className="bg-secondary/20 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
             default
           </span>
         ) : null}
@@ -69,8 +69,8 @@ function PaymentMethodCard({ method: m }: { method: PaymentMethodRow }) {
         {m.status ? (
           <span className={`rounded-full px-2 py-0.5 text-xs ring-1 ${
             m.status === 'valid'
-              ? 'bg-secondary/15 text-secondary ring-secondary/30'
-              : 'bg-destructive/15 text-destructive ring-destructive/30'
+              ? 'bg-secondary/20 text-secondary ring-secondary/30'
+              : 'bg-destructive/20 text-destructive ring-destructive/30'
           }`}>
             {m.status}
           </span>

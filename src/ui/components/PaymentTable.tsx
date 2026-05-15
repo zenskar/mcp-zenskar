@@ -12,11 +12,11 @@ import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
 type SortKey = 'amount' | 'payment_date' | 'created_at' | 'type'
 
 const TYPE_COLOR: Record<string, string> = {
-  payment: 'bg-secondary/15 text-secondary ring-1 ring-secondary/30',
+  payment: 'bg-secondary/20 text-secondary ring-1 ring-secondary/30',
   refund: 'bg-accent text-accent-foreground ring-1 ring-border',
   payment_reversal:
-    'bg-destructive/15 text-destructive ring-1 ring-destructive/30',
-  authorization: 'bg-primary/15 text-primary ring-1 ring-primary/30',
+    'bg-destructive/20 text-destructive ring-1 ring-destructive/30',
+  authorization: 'bg-primary/20 text-primary ring-1 ring-primary/30',
   tax_withheld: 'bg-muted text-muted-foreground ring-1 ring-border',
 }
 const TYPE_FALLBACK = 'bg-muted text-muted-foreground ring-1 ring-border'

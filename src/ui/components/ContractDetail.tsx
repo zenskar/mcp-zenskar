@@ -145,7 +145,7 @@ function PhaseRow({
           <span className="text-muted-foreground mr-2">#{index + 1}</span>
           {phase.name || <Dim>Untitled phase</Dim>}
           {isCurrent ? (
-            <span className="bg-secondary/15 text-secondary ring-secondary/30 ml-2 rounded-full px-2 py-0.5 text-xs ring-1">
+            <span className="bg-secondary/20 text-secondary ring-secondary/30 ml-2 rounded-full px-2 py-0.5 text-xs ring-1">
               current
             </span>
           ) : null}

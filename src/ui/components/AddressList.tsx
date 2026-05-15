@@ -44,7 +44,7 @@ function AddressCard({ addr }: { addr: AddressRow }) {
           {addr.label || <Dim>Untitled</Dim>}
         </div>
         {addr.is_primary ? (
-          <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
+          <span className="bg-secondary/20 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
             primary
           </span>
         ) : null}
@@ -66,7 +66,7 @@ function AddressCard({ addr }: { addr: AddressRow }) {
         {addr.validation_status ? (
           <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ring-1 ${
             addr.validation_status === 'valid'
-              ? 'bg-secondary/15 text-secondary ring-secondary/30'
+              ? 'bg-secondary/20 text-secondary ring-secondary/30'
               : 'bg-muted text-muted-foreground ring-border'
           }`}>
             {addr.validation_status}

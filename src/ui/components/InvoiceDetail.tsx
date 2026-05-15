@@ -26,7 +26,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <span className="font-mono">{i.invoice_number || i.id}</span>
             {i.status ? <StatusPill status={i.status} /> : null}
             {isOverdue ? (
-              <span className="bg-destructive/15 text-destructive ring-destructive/30 rounded-full px-2 py-0.5 text-xs ring-1">
+              <span className="bg-destructive/20 text-destructive ring-destructive/30 rounded-full px-2 py-0.5 text-xs ring-1">
                 {overdueDays}d overdue
               </span>
             ) : null}
