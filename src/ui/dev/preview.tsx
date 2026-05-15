@@ -1,6 +1,6 @@
 import '../client/theme.css'
 
-import { StrictMode, useState } from 'react'
+import { StrictMode, useEffect, useState } from 'react'
 
 import { createRoot } from 'react-dom/client'
 
@@ -78,36 +78,90 @@ const SHAPES = {
 } as const
 
 type ShapeKey = keyof typeof SHAPES
+type ThemeMode = 'light' | 'dark' | 'system'
 
-function MockHostHeader() {
+const THEME_STORAGE_KEY = 'mcp-zenskar-dev-theme'
+
+function readThemeFromStorage(): ThemeMode {
+  if (typeof localStorage === 'undefined') return 'system'
+  const v = localStorage.getItem(THEME_STORAGE_KEY)
+  return v === 'light' || v === 'dark' || v === 'system' ? v : 'system'
+}
+
+function applyTheme(mode: ThemeMode) {
+  const root = document.documentElement
+  root.classList.remove('dark', 'light')
+  if (mode === 'dark') root.classList.add('dark')
+  else if (mode === 'light') root.classList.add('light')
+}
+
+function useTheme(): [ThemeMode, (m: ThemeMode) => void] {
+  const [mode, setMode] = useState<ThemeMode>(readThemeFromStorage)
+  useEffect(() => {
+    applyTheme(mode)
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, mode)
+    } catch {
+      // ignore storage failures
+    }
+  }, [mode])
+  return [mode, setMode]
+}
+
+function ThemeToggle({
+  mode,
+  setMode,
+}: {
+  mode: ThemeMode
+  setMode: (m: ThemeMode) => void
+}) {
+  const opts: ThemeMode[] = ['light', 'system', 'dark']
+  return (
+    <div className="bg-muted text-muted-foreground inline-flex items-center gap-0.5 rounded-md p-0.5 text-xs">
+      {opts.map((o) => (
+        <button
+          key={o}
+          type="button"
+          onClick={() => setMode(o)}
+          className={
+            mode === o
+              ? 'bg-background text-foreground rounded px-2 py-0.5 font-medium'
+              : 'hover:text-foreground rounded px-2 py-0.5'
+          }
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function MockHostHeader({
+  themeMode,
+  setThemeMode,
+}: {
+  themeMode: ThemeMode
+  setThemeMode: (m: ThemeMode) => void
+}) {
   const [width, setWidth] = useState<number>(720)
   return (
     <div
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        background: '#0f172a',
-        color: '#e2e8f0',
-        padding: '8px 16px',
-        fontSize: 12,
-        display: 'flex',
-        gap: 16,
-        alignItems: 'center',
-      }}
+      className="bg-card text-card-foreground border-border sticky top-0 z-10 flex items-center gap-4 border-b px-4 py-2 text-xs"
+      style={{ fontFamily: 'var(--font-sans)' }}
     >
       <strong>mock host</strong>
-      <span>width:</span>
+      <span className="text-muted-foreground">width:</span>
       <input
         type="range"
         min={320}
         max={1200}
         value={width}
-        onChange={(e) => setWidth(Number(e.target.value))}
+        onChange={(e) => setWidth(Number((e.target as HTMLInputElement).value))}
       />
-      <span style={{ width: 48, textAlign: 'right' }}>{width}px</span>
+      <span className="w-12 text-right tabular-nums">{width}px</span>
       <ShapeSelect />
-      <span style={{ marginLeft: 'auto', opacity: 0.7 }}>
+      <ThemeToggle mode={themeMode} setMode={setThemeMode} />
+      <span className="text-muted-foreground ml-auto">
         postMessage echoes in console
       </span>
       <iframe
@@ -127,16 +181,10 @@ function ShapeSelect() {
     <select
       defaultValue={current}
       onChange={(e) => {
-        params.set('shape', e.target.value)
+        params.set('shape', (e.target as HTMLSelectElement).value)
         location.search = params.toString()
       }}
-      style={{
-        background: '#1e293b',
-        color: '#e2e8f0',
-        border: '1px solid #334155',
-        padding: '2px 6px',
-        borderRadius: 4,
-      }}
+      className="bg-background text-foreground border-border rounded border px-2 py-0.5"
     >
       {Object.keys(SHAPES).map((k) => (
         <option key={k} value={k}>
@@ -148,16 +196,17 @@ function ShapeSelect() {
 }
 
 function App() {
+  const [themeMode, setThemeMode] = useTheme()
   const params = new URLSearchParams(location.search)
   const shape = (params.get('shape') as ShapeKey) || 'customer-table'
   const Render = SHAPES[shape] || SHAPES['customer-table']
   return (
-    <>
-      <MockHostHeader />
-      <main style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div className="bg-background text-foreground min-h-screen">
+      <MockHostHeader themeMode={themeMode} setThemeMode={setThemeMode} />
+      <main className="mx-auto max-w-[1100px] p-4">
         <Render />
       </main>
-    </>
+    </div>
   )
 }
 

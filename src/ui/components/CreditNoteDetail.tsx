@@ -1,4 +1,5 @@
 import type { CreditNoteDetailPayload } from '../types'
+import { Field, Section, Stat } from './DetailScaffold'
 import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
 
 export function CreditNoteDetail({
@@ -48,11 +49,15 @@ export function CreditNoteDetail({
             <div>
               <div className="text-sm">{cn.customer_name}</div>
               {cn.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">{shortId(cn.customer_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[10px]">
+                  {shortId(cn.customer_id, 12)}
+                </div>
               ) : null}
             </div>
           ) : cn.customer_id ? (
-            <span className="text-secondary font-mono text-xs">{shortId(cn.customer_id, 14)}</span>
+            <span className="text-secondary font-mono text-xs">
+              {shortId(cn.customer_id, 14)}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -60,13 +65,17 @@ export function CreditNoteDetail({
         <Field label="Invoice">
           {cn.invoice_number ? (
             <div>
-              <div className="text-sm font-mono">{cn.invoice_number}</div>
+              <div className="font-mono text-sm">{cn.invoice_number}</div>
               {cn.invoice_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">{shortId(cn.invoice_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[10px]">
+                  {shortId(cn.invoice_id, 12)}
+                </div>
               ) : null}
             </div>
           ) : cn.invoice_id ? (
-            <span className="text-secondary font-mono text-xs">{shortId(cn.invoice_id, 14)}</span>
+            <span className="text-secondary font-mono text-xs">
+              {shortId(cn.invoice_id, 14)}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -104,50 +113,5 @@ export function CreditNoteDetail({
         </Section>
       ) : null}
     </div>
-  )
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className="text-sm">{children}</div>
-    </div>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className="text-base font-semibold tabular-nums">{value}</div>
-    </div>
-  )
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="space-y-1">
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {title}
-      </div>
-      {children}
-    </section>
   )
 }

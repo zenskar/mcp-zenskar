@@ -1,4 +1,5 @@
 import type { CustomerDetailPayload } from '../types'
+import { Field, Section } from './DetailScaffold'
 import { Dim, fmtDate, shortId } from './format'
 
 export function CustomerDetail({
@@ -20,7 +21,14 @@ export function CustomerDetail({
     .join(', ')
 
   const ship = c.ship_to_address || {}
-  const shipLine = [ship.line1, ship.line2, ship.city, ship.state, ship.zipCode || ship.zip_code, ship.country]
+  const shipLine = [
+    ship.line1,
+    ship.line2,
+    ship.city,
+    ship.state,
+    ship.zipCode || ship.zip_code,
+    ship.country,
+  ]
     .filter(Boolean)
     .join(', ')
 
@@ -52,11 +60,15 @@ export function CustomerDetail({
             <div>
               <div>{c.business_entity_name}</div>
               {c.business_entity_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">{shortId(c.business_entity_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[10px]">
+                  {shortId(c.business_entity_id, 12)}
+                </div>
               ) : null}
             </div>
           ) : c.business_entity_id ? (
-            <span className="font-mono text-xs">{shortId(c.business_entity_id, 12)}</span>
+            <span className="font-mono text-xs">
+              {shortId(c.business_entity_id, 12)}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -99,10 +111,14 @@ export function CustomerDetail({
               <span>{c.default_payment_method.brand}</span>
             ) : null}
             {c.default_payment_method.last4 ? (
-              <span className="font-mono">•••• {c.default_payment_method.last4}</span>
+              <span className="font-mono">
+                •••• {c.default_payment_method.last4}
+              </span>
             ) : null}
             {c.default_payment_method.connector_name ? (
-              <span className="text-muted-foreground text-xs">via {c.default_payment_method.connector_name}</span>
+              <span className="text-muted-foreground text-xs">
+                via {c.default_payment_method.connector_name}
+              </span>
             ) : null}
           </div>
         </Section>
@@ -113,9 +129,19 @@ export function CustomerDetail({
           <div className="space-y-1">
             {c.tax_info.map((t, i) => (
               <div key={i} className="flex gap-3 text-sm">
-                {t.tax_code ? <span className="bg-muted rounded px-2 py-0.5 text-xs">{t.tax_code}</span> : null}
-                {t.tax_id ? <span className="font-mono text-xs">{t.tax_id}</span> : null}
-                {t.country_code ? <span className="text-muted-foreground text-xs">{t.country_code}</span> : null}
+                {t.tax_code ? (
+                  <span className="bg-muted rounded px-2 py-0.5 text-xs">
+                    {t.tax_code}
+                  </span>
+                ) : null}
+                {t.tax_id ? (
+                  <span className="font-mono text-xs">{t.tax_id}</span>
+                ) : null}
+                {t.country_code ? (
+                  <span className="text-muted-foreground text-xs">
+                    {t.country_code}
+                  </span>
+                ) : null}
               </div>
             ))}
           </div>
@@ -126,17 +152,30 @@ export function CustomerDetail({
         <Section title={`Contacts (${c.contacts.length})`}>
           <div className="space-y-2">
             {c.contacts.map((ct, i) => (
-              <div key={i} className="border-border flex items-center justify-between rounded border px-3 py-2">
+              <div
+                key={i}
+                className="border-border flex items-center justify-between rounded border px-3 py-2"
+              >
                 <div>
-                  <div className="text-sm font-medium">{ct.name || <Dim>—</Dim>}</div>
-                  {ct.email ? <div className="text-muted-foreground text-xs">{ct.email}</div> : null}
+                  <div className="text-sm font-medium">
+                    {ct.name || <Dim>—</Dim>}
+                  </div>
+                  {ct.email ? (
+                    <div className="text-muted-foreground text-xs">
+                      {ct.email}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex gap-2">
                   {ct.send_invoice ? (
-                    <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">invoice</span>
+                    <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
+                      invoice
+                    </span>
                   ) : null}
                   {ct.send_contract ? (
-                    <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">contract</span>
+                    <span className="bg-secondary/15 text-secondary ring-secondary/30 rounded-full px-2 py-0.5 text-xs ring-1">
+                      contract
+                    </span>
                   ) : null}
                 </div>
               </div>
@@ -163,54 +202,11 @@ export function CustomerDetail({
   )
 }
 
-
-function Grid({
-  children,
-  cols = 2,
-}: {
-  children: React.ReactNode
-  cols?: number
-}) {
+function Grid({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={`grid grid-cols-1 sm:grid-cols-${cols} border-border gap-3 rounded-md border p-3`}
-    >
+    <div className="border-border grid grid-cols-1 gap-3 rounded-md border p-3 sm:grid-cols-2">
       {children}
     </div>
-  )
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className="text-sm">{children}</div>
-    </div>
-  )
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="space-y-1">
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {title}
-      </div>
-      {children}
-    </section>
   )
 }
 

@@ -1,4 +1,5 @@
 import type { InvoiceDetailPayload } from '../types'
+import { Field, Section, Stat } from './DetailScaffold'
 import {
   daysBetween,
   Dim,
@@ -73,11 +74,15 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <div>
               <div className="text-sm">{i.customer_name}</div>
               {i.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">{shortId(i.customer_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[10px]">
+                  {shortId(i.customer_id, 12)}
+                </div>
               ) : null}
             </div>
           ) : i.customer_id ? (
-            <span className="text-secondary font-mono text-xs">{shortId(i.customer_id, 14)}</span>
+            <span className="text-secondary font-mono text-xs">
+              {shortId(i.customer_id, 14)}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -96,11 +101,15 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <div>
               <div className="text-sm">{i.contract_name}</div>
               {i.contract_id ? (
-                <div className="text-muted-foreground font-mono text-[10px]">{shortId(i.contract_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[10px]">
+                  {shortId(i.contract_id, 12)}
+                </div>
               ) : null}
             </div>
           ) : i.contract_id ? (
-            <span className="font-mono text-xs">{shortId(i.contract_id, 14)}</span>
+            <span className="font-mono text-xs">
+              {shortId(i.contract_id, 14)}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -123,7 +132,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
         </Section>
       ) : null}
 
-      {(i.approved_at || i.sent_at || i.paid_at) ? (
+      {i.approved_at || i.sent_at || i.paid_at ? (
         <Section title="Timeline">
           <div className="flex flex-wrap gap-4 text-sm">
             {i.sent_at ? (
@@ -182,61 +191,5 @@ function ActionLink({
     >
       {children}
     </a>
-  )
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className="text-sm">{children}</div>
-    </div>
-  )
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: React.ReactNode
-  tone?: 'warn'
-}) {
-  const cls = tone === 'warn' ? 'text-destructive' : ''
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className={`text-base font-semibold tabular-nums ${cls}`}>
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="space-y-1">
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {title}
-      </div>
-      {children}
-    </section>
   )
 }

@@ -1,179 +1,85 @@
 import { useMemo, useState } from 'react'
 
-import { openZenskarPath } from '../client/postMessage'
 import type { CustomerRow, CustomerTablePayload } from '../types'
+import {
+  type ColumnDef,
+  DataTable,
+  type SortDir,
+  ViewButton,
+  sortByKey,
+} from './DataTable'
+import { Dim, fmtDate } from './format'
 
 type SortKey = 'name' | 'created_at'
-type SortDir = 'asc' | 'desc'
 
 export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
   const rows = useMemo(
-    () => sortRows(payload.customers, sortKey, sortDir),
+    () =>
+      sortByKey(
+        payload.customers,
+        (r) => (sortKey === 'name' ? r.name : (r.created_at ?? null)),
+        sortDir
+      ),
     [payload.customers, sortKey, sortDir]
   )
 
-  const toggleSort = (k: SortKey) => {
+  const onSort = (k: string) => {
     if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else {
-      setSortKey(k)
+      setSortKey(k as SortKey)
       setSortDir(k === 'name' ? 'asc' : 'desc')
     }
   }
 
+  const columns: ColumnDef<CustomerRow>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      className: 'font-medium',
+      render: (c) => c.name || <Dim>—</Dim>,
+    },
+    {
+      key: 'external_id',
+      header: 'External ID',
+      className: 'font-mono text-xs',
+      render: (c) => c.external_id || <Dim>—</Dim>,
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      className: 'text-secondary',
+      render: (c) => c.email || <Dim>—</Dim>,
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      sortable: true,
+      className: 'whitespace-nowrap',
+      render: (c) => fmtDate(c.created_at),
+    },
+    {
+      key: 'view',
+      header: 'View',
+      render: (c) => <ViewButton href={`/customers/${c.id}/view`} />,
+    },
+  ]
+
   return (
-    <div className="space-y-3">
-      <header className="flex items-baseline justify-between gap-3">
-        <h2 className="m-0 text-base font-semibold">
-          Customers{' '}
-          <span className="text-muted-foreground font-normal">
-            ({payload.total.toLocaleString()})
-          </span>
-          {payload.scope ? (
-            <span className="text-muted-foreground text-sm font-normal">
-              {' '}
-              · {payload.scope}
-            </span>
-          ) : null}
-        </h2>
-        <span className="text-muted-foreground text-xs">
-          click headers to sort
-        </span>
-      </header>
-
-      <div className="border-border overflow-auto rounded-md border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted text-muted-foreground text-xs tracking-wide uppercase">
-            <tr>
-              <Th>#</Th>
-              <Th
-                sortable
-                active={sortKey === 'name'}
-                dir={sortDir}
-                onClick={() => toggleSort('name')}
-              >
-                Name
-              </Th>
-              <Th>External ID</Th>
-              <Th>Email</Th>
-              <Th
-                sortable
-                active={sortKey === 'created_at'}
-                dir={sortDir}
-                onClick={() => toggleSort('created_at')}
-              >
-                Created
-              </Th>
-              <Th>View</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="text-muted-foreground py-8 text-center"
-                >
-                  No customers match.
-                </td>
-              </tr>
-            ) : (
-              rows.map((c, i) => (
-                <tr
-                  key={c.id || i}
-                  className="border-border hover:bg-muted/60 border-t"
-                >
-                  <td className="text-muted-foreground px-3 py-2 tabular-nums">
-                    {i + 1}
-                  </td>
-                  <td className="px-3 py-2 font-medium">
-                    {c.name || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 font-mono text-xs">
-                    {c.external_id || <Dim>—</Dim>}
-                  </td>
-                  <td className="text-secondary px-3 py-2">
-                    {c.email || <Dim>—</Dim>}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    {fmtDate(c.created_at)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      className="text-secondary hover:text-secondary/80 text-xs underline"
-                      onClick={() => openZenskarPath(`/customers/${c.id}/view`)}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      title="Customers"
+      count={payload.total}
+      scope={payload.scope}
+      columns={columns}
+      rows={rows}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={onSort}
+      emptyMessage="No customers match."
+      rowKey={(c, i) => c.id || i}
+    />
   )
-}
-
-function Th({
-  children,
-  sortable,
-  active,
-  dir,
-  onClick,
-}: {
-  children: React.ReactNode
-  sortable?: boolean
-  active?: boolean
-  dir?: SortDir
-  onClick?: () => void
-}) {
-  const cls = `px-3 py-2 text-left font-semibold ${sortable ? 'cursor-pointer select-none hover:text-foreground' : ''} ${active ? 'text-foreground' : ''}`
-  return (
-    <th className={cls} onClick={onClick}>
-      {children}
-      {sortable && active ? (dir === 'asc' ? ' ↑' : ' ↓') : null}
-    </th>
-  )
-}
-
-function Dim({ children }: { children: React.ReactNode }) {
-  return <span className="text-muted-foreground">{children}</span>
-}
-
-function fmtDate(s: string | null | undefined) {
-  if (!s) return <Dim>—</Dim>
-  const d = new Date(s)
-  if (Number.isNaN(d.getTime())) return <Dim>—</Dim>
-  return d.toISOString().slice(0, 10)
-}
-
-function sortRows(
-  rows: CustomerRow[],
-  key: SortKey,
-  dir: SortDir
-): CustomerRow[] {
-  const mult = dir === 'asc' ? 1 : -1
-  const get = (r: CustomerRow): string | null => {
-    switch (key) {
-      case 'name':
-        return r.name
-      case 'created_at':
-        return r.created_at ?? null
-    }
-  }
-  return [...rows].sort((a, b) => {
-    const av = get(a)
-    const bv = get(b)
-    if (av == null && bv == null) return 0
-    if (av == null) return 1
-    if (bv == null) return -1
-    if (av < bv) return -1 * mult
-    if (av > bv) return 1 * mult
-    return 0
-  })
 }

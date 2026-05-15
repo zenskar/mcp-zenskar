@@ -1,4 +1,5 @@
 import type { ContractDetailPayload, ContractPhase } from '../types'
+import { Field, Section } from './DetailScaffold'
 import { Dim, fmtDate, shortId, StatusPill } from './format'
 
 export function ContractDetail({
@@ -169,36 +170,3 @@ function PhaseRow({
   )
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div>
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {label}
-      </div>
-      <div className="text-sm">{children}</div>
-    </div>
-  )
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="space-y-1">
-      <div className="text-muted-foreground text-[10px] tracking-wide uppercase">
-        {title}
-      </div>
-      {children}
-    </section>
-  )
-}
