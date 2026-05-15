@@ -85,9 +85,15 @@ const STATUS_PILL_FALLBACK = PILL_NEUTRAL
 export function StatusPill({ status }: { status: string | null | undefined }) {
   if (!status) return <Dim>—</Dim>
   const cls = STATUS_COLOR_MAP[status.toLowerCase()] || STATUS_PILL_FALLBACK
+  const label = formatStatus(status)
   return (
     <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${cls}`}>
-      {status}
+      {label}
     </span>
   )
+}
+
+function formatStatus(s: string): string {
+  const spaced = s.replace(/_/g, ' ')
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
