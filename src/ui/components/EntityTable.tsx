@@ -80,7 +80,7 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
       sortKey={sortKey}
       sortDir={sortDir}
       onSort={onSort}
-      emptyMessage="No entities."
+      emptyMessage="No business entities to show."
       rightHint={null}
       rowKey={(r, i) => r.id || i}
     />

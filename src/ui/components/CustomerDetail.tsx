@@ -211,12 +211,7 @@ function Grid({ children }: { children: React.ReactNode }) {
 }
 
 function Toggle({ label, on }: { label: string; on: boolean | null }) {
-  if (on === null)
-    return (
-      <span className="text-muted-foreground text-xs">
-        {label}: <Dim>?</Dim>
-      </span>
-    )
+  if (on === null) return null
   const cls = on
     ? 'bg-secondary/15 text-secondary ring-1 ring-secondary/30'
     : 'bg-muted text-muted-foreground ring-1 ring-border'

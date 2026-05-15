@@ -40,7 +40,7 @@ export function DataTable<R>({
   sortKey,
   sortDir,
   onSort,
-  emptyMessage = 'No rows.',
+  emptyMessage = 'Nothing to show.',
   showIndex = true,
   rowKey,
   rowClassName,

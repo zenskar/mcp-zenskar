@@ -40,7 +40,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <ActionLink href={i.invoice_pdf}>PDF</ActionLink>
           ) : null}
           {i.payment_url ? (
-            <ActionLink href={i.payment_url}>Pay link</ActionLink>
+            <ActionLink href={i.payment_url}>Payment link</ActionLink>
           ) : null}
         </div>
       </header>

@@ -27,7 +27,7 @@ export function InvoicePreview({
   if (!payload.html) {
     return (
       <div className="text-muted-foreground border-border rounded-md border py-8 text-center">
-        Invoice preview unavailable.
+        No preview generated for this invoice yet.
       </div>
     )
   }
