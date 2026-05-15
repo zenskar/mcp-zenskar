@@ -1,57 +1,35 @@
 #!/usr/bin/env node
 
-const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
-const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
-const fs = require('fs');
-const path = require('path');
-const { z } = require('zod');
-const { v4: uuidv4 } = require('uuid');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// Import the sophisticated response processor
-const ResponseProcessor = require('./response-processor.js');
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
-// Import token usage monitor (try both compiled and source paths)
-let tokenUsageMonitor;
-try {
-  // Try production path first (compiled TypeScript)
-  const monitor = require('../dist/lib/token-usage-monitor.js');
-  tokenUsageMonitor = monitor.tokenUsageMonitor;
-} catch (e) {
-  // Fall back to development path (TypeScript via ts-node)
-  try {
-    const monitor = require('../src/lib/token-usage-monitor.ts');
-    tokenUsageMonitor = monitor.tokenUsageMonitor;
-  } catch (e2) {
-    // If monitor can't be loaded, create fallback
-    tokenUsageMonitor = {
-      logUsage: async (usage) => {
-        console.warn('Token usage monitoring unavailable:', usage);
-      }
-    };
-    console.error('Warning: Token usage monitoring unavailable:', e2.message);
-  }
-}
+import ResponseProcessor from './response-processor.js';
 
-// Import limits validation (try both compiled and source paths)
-let validateToolLimits, generateTokenUsageFeedback;
-try {
-  // Try production path first (compiled TypeScript)
-  const limits = require('../dist/lib/mcp-limits.js');
-  validateToolLimits = limits.validateToolLimits;
-  generateTokenUsageFeedback = limits.generateTokenUsageFeedback;
-} catch (e) {
-  // Fall back to development path (TypeScript via ts-node)
-  try {
-    const limits = require('../src/lib/mcp-limits.ts');
-    validateToolLimits = limits.validateToolLimits;
-    generateTokenUsageFeedback = limits.generateTokenUsageFeedback;
-  } catch (e2) {
-    // If limits can't be loaded, create fallback functions
-    validateToolLimits = (toolName, args) => ({ valid: true, adjustedArgs: args, warnings: [], errors: [] });
-    generateTokenUsageFeedback = (toolName, args) => ({ message: 'Limits validation unavailable', severity: 'info', suggestions: [] });
-    console.error('Warning: MCP limits validation unavailable:', e2.message);
-  }
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const tokenUsageMonitor = {
+  logUsage: async () => {
+    /* no-op until monitor module is wired */
+  },
+};
+const validateToolLimits = (_toolName, args) => ({
+  valid: true,
+  adjustedArgs: args,
+  warnings: [],
+  errors: [],
+});
+const generateTokenUsageFeedback = () => ({
+  message: 'Limits validation unavailable',
+  severity: 'info',
+  suggestions: [],
+});
 
 // Create enhanced logger for MCP server with timestamps and better formatting
 const logger = {

@@ -25,4 +25,4 @@ class ResponseProcessor {
   }
 }
 
-module.exports = ResponseProcessor;
+export default ResponseProcessor;
