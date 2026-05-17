@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -1309,9 +1310,30 @@ async function executeAPICall(tool, args) {
 // the host must echo it back on the second invocation. Prevents prompt-injection
 // scenarios where an LLM fabricates `approval.approved=true` to bypass the dialog.
 // Tokens are single-use and expire after 5 minutes.
+//
+// Two modes:
+//
+// 1. Stateful (default, used by single-process hosts like Claude Desktop):
+//    Token = uuid. Server keeps {toolName, args, expiresAt} in a Map keyed by
+//    token. consumeApprovalToken deletes the entry on first lookup → single-use.
+//
+// 2. Stateless HMAC (enabled by APPROVAL_HMAC_SECRET env var, used by
+//    multi-replica hosts like ai-server behind a load balancer): Token =
+//    `v1.<payloadB64>.<sig>` where payload contains {toolName, args,
+//    issuedAt, expiresAt, nonce}. consumeApprovalToken recomputes the HMAC
+//    with the shared secret → verifies cross-process without shared state.
+//    Same-process double-clicks are still blocked via a per-process
+//    consumed-tokens Map keyed by token → expiresAt. Cross-process double
+//    execute (same token verified on two replicas simultaneously) is NOT
+//    blocked at this layer — hosts that need that guarantee must enforce
+//    single-use at the call site (e.g. atomic UPDATE on an approval row).
 const APPROVAL_TOKEN_TTL_MS = 5 * 60 * 1000
 const APPROVAL_TOKEN_CLEANUP_MS = 60 * 1000
-const approvalTokens = new Map() // token -> {toolName, issuedAt, expiresAt, args}
+const APPROVAL_HMAC_SECRET = process.env.APPROVAL_HMAC_SECRET
+const STATELESS_APPROVAL_MODE = !!APPROVAL_HMAC_SECRET
+const APPROVAL_TOKEN_VERSION = 'v1'
+const approvalTokens = new Map() // stateful: token -> {toolName, issuedAt, expiresAt, args}
+const consumedStatelessTokens = new Map() // stateless: token -> expiresAt
 
 // Deep clone via structuredClone when available, JSON fallback otherwise.
 // Approval args may include nested objects (addresses, pricing_data) that
@@ -1328,9 +1350,22 @@ function deepCloneArgs(value) {
   return JSON.parse(JSON.stringify(value))
 }
 
+function buildApprovalSnapshot(args) {
+  const snapshot = args ? deepCloneArgs(args) : {}
+  delete snapshot.__userContext
+  return snapshot
+}
+
+function signApprovalPayload(payloadB64) {
+  return crypto
+    .createHmac('sha256', APPROVAL_HMAC_SECRET)
+    .update(payloadB64)
+    .digest('base64url')
+}
+
 function issueApprovalToken(toolName, args) {
-  const token = uuidv4()
   const issuedAt = Date.now()
+  const expiresAt = issuedAt + APPROVAL_TOKEN_TTL_MS
   // Snapshot args at issue time so the second invocation can restore them
   // even when the host does not echo them at the top level (e.g. Claude
   // Desktop's approval dialog only echoes __userContext.approval).
@@ -1338,19 +1373,56 @@ function issueApprovalToken(toolName, args) {
   // only runs when checkNeedsApproval returned true, which means there was no
   // valid approval block. We still strip __userContext defensively in case a
   // host replays a stale approval block alongside fresh top-level args.
-  const snapshot = args ? deepCloneArgs(args) : {}
-  delete snapshot.__userContext
-  approvalTokens.set(token, {
-    toolName,
-    issuedAt,
-    expiresAt: issuedAt + APPROVAL_TOKEN_TTL_MS,
-    args: snapshot,
-  })
+  const snapshot = buildApprovalSnapshot(args)
+
+  if (STATELESS_APPROVAL_MODE) {
+    const payload = {
+      toolName,
+      args: snapshot,
+      issuedAt,
+      expiresAt,
+      nonce: crypto.randomBytes(12).toString('base64url'),
+    }
+    const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
+    const sig = signApprovalPayload(payloadB64)
+    return `${APPROVAL_TOKEN_VERSION}.${payloadB64}.${sig}`
+  }
+
+  const token = uuidv4()
+  approvalTokens.set(token, { toolName, issuedAt, expiresAt, args: snapshot })
   return token
 }
 
 function consumeApprovalToken(token, toolName) {
   if (!token || typeof token !== 'string') return null
+
+  if (STATELESS_APPROVAL_MODE) {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const [version, payloadB64, sig] = parts
+    if (version !== APPROVAL_TOKEN_VERSION) return null
+
+    const expectedSig = signApprovalPayload(payloadB64)
+    const sigBuf = Buffer.from(sig, 'base64url')
+    const expBuf = Buffer.from(expectedSig, 'base64url')
+    if (sigBuf.length !== expBuf.length) return null
+    if (!crypto.timingSafeEqual(sigBuf, expBuf)) return null
+
+    let entry
+    try {
+      entry = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'))
+    } catch (_) {
+      return null
+    }
+    if (entry.toolName !== toolName) return null
+    if (typeof entry.expiresAt !== 'number' || entry.expiresAt < Date.now()) return null
+    // Per-process replay guard. Cross-process replay is documented as
+    // unblocked at this layer.
+    if (consumedStatelessTokens.has(token)) return null
+    consumedStatelessTokens.set(token, entry.expiresAt)
+    return entry
+  }
+
   const entry = approvalTokens.get(token)
   if (!entry) return null
   // Single-use: delete on first lookup regardless of toolName/expiry. A wrong
@@ -1363,11 +1435,16 @@ function consumeApprovalToken(token, toolName) {
 }
 
 // Periodic sweep so expired tokens (and the args they snapshot) don't linger
-// in memory past their TTL even when no new approval is issued.
+// in memory past their TTL even when no new approval is issued. Sweeps both
+// the stateful Map and the stateless replay-guard Map; only one is populated
+// per process depending on STATELESS_APPROVAL_MODE.
 setInterval(() => {
   const now = Date.now()
   for (const [t, entry] of approvalTokens) {
     if (entry.expiresAt < now) approvalTokens.delete(t)
+  }
+  for (const [t, expiresAt] of consumedStatelessTokens) {
+    if (expiresAt < now) consumedStatelessTokens.delete(t)
   }
 }, APPROVAL_TOKEN_CLEANUP_MS).unref()
 
