@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 — 2026-05-17
+
+Added optional stateless approval-token mode for multi-replica hosts.
+
+Set `APPROVAL_HMAC_SECRET` to switch to HMAC-signed self-verifying tokens (`v1.<payloadB64>.<sig>`). Any process holding the same secret can issue and verify approval tokens — required when the MCP server is spawned by a host that runs behind a load balancer, where the original token-issuing subprocess may not be the one re-invoked on approval.
+
+Default behavior (env unset) is unchanged: in-process Map, single-use enforced by deletion on first lookup. Suitable for single-process hosts like Claude Desktop.
+
+Stateless-mode caveat: cross-process replay (same token verified on two replicas simultaneously) is not blocked at this layer. Hosts that need that guarantee must enforce single-use at the call site (e.g. atomic UPDATE on an approval row).
+
 ## v1.1.0 — 2026-03-06
 
 Added 61 new tools (42 → 103 total) covering contracts, invoices, credit notes, payments, accounting, products, plans, quotes, contacts, business entities, and more.
