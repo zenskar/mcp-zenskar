@@ -703,7 +703,7 @@
     },
     {
       "name": "listAggregates",
-      "description": "List Billable Metrics (also called aggregates in backend/API terminology) in paginated form, with filtering by ID, name, and data source.",
+      "description": "List Billable Metrics in paginated form, with filtering by ID, name, and data source.",
       "args": [
         {
           "name": "cursor",
@@ -777,12 +777,12 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Billable Metrics (Aggregates)\n\nHere is the list of billable metrics. Backend/API terminology may also call these aggregates:\n\n"
+        "prependBody": "## Billable Metrics\n\nHere is the list of billable metrics:\n\n"
       }
     },
     {
       "name": "getAggregateSchemas",
-      "description": "Show the underlying storage/schema definitions for Billable Metrics (also called aggregates). Mainly useful for advanced debugging, SQL/schema inspection, and integration work rather than day-to-day business operations.",
+      "description": "Show the underlying storage/schema definitions for Billable Metrics. Mainly useful for advanced debugging, SQL/schema inspection, and integration work rather than day-to-day business operations.",
       "args": [],
       "requestTemplate": {
         "url": "/aggregates/tables/schema",
@@ -794,7 +794,7 @@
     },
     {
       "name": "getAggregateEstimates",
-      "description": "Get Billable Metric estimates based on the specified criteria. Backend/API terminology may also call a billable metric an aggregate.",
+      "description": "Get Billable Metric estimates based on the specified criteria.",
       "args": [
         {
           "name": "aggregate_id",
@@ -843,7 +843,7 @@
     },
     {
       "name": "getAggregateById",
-      "description": "Get the details of a Billable Metric by its ID. Backend/API terminology may also call this an aggregate.",
+      "description": "Get the details of a Billable Metric by its ID.",
       "args": [
         {
           "name": "aggregateId",
@@ -918,8 +918,191 @@
       }
     },
     {
+      "name": "createAggregate",
+      "description": "Create a new Billable Metric. Requires a name, data schema, aggregation queries, visual query builder config, and a data source. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Create Billable Metric",
+        "description": "This will create a new billable metric (aggregate) in your system.",
+        "warningText": "This action will create a new billable metric definition that may be used in pricing and billing configurations.",
+        "confirmText": "Create Billable Metric",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "name",
+          "datasource"
+        ]
+      },
+      "args": [
+        {
+          "name": "name",
+          "description": "Name of the billable metric (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "dataschema",
+          "description": "Data schema of the aggregate (JSON string, required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "aggregation_query",
+          "description": "Aggregate query — SQL/Jinja template for computing the metric (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "cust_agg_query",
+          "description": "Customer aggregate query — SQL/Jinja template for customer-level computation (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "visual_query_builder",
+          "description": "Visual query builder configuration object (required).",
+          "type": "object",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "datasource",
+          "description": "Data source UUID (required).",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/aggregates",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Billable Metric Created\n\nNew billable metric (aggregate) has been successfully created:\n\n"
+      }
+    },
+    {
+      "name": "updateAggregate",
+      "description": "Update an existing Billable Metric. All body fields are optional — only send fields you want to change. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Update Billable Metric",
+        "description": "This will update the specified billable metric (aggregate). Please review the changes carefully.",
+        "warningText": "This action will modify the billable metric definition which may affect active pricing and billing configurations.",
+        "confirmText": "Update Billable Metric",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "aggregateId",
+          "name",
+          "aggregation_query",
+          "datasource"
+        ]
+      },
+      "args": [
+        {
+          "name": "aggregateId",
+          "description": "The unique identifier (UUID) of the billable metric (aggregate) to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Updated name of the billable metric.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "dataschema",
+          "description": "Updated data schema (JSON string).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "aggregation_query",
+          "description": "Updated aggregate query (SQL/Jinja template).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "cust_agg_query",
+          "description": "Updated customer aggregate query (SQL/Jinja template).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "visual_query_builder",
+          "description": "Updated visual query builder configuration.",
+          "type": "object",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "datasource",
+          "description": "Updated data source UUID.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/aggregates/{aggregateId}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Billable Metric Updated\n\nThe billable metric (aggregate) has been successfully updated:\n\n"
+      }
+    },
+    {
+      "name": "deleteAggregate",
+      "description": "Permanently delete a Billable Metric. DESTRUCTIVE: cannot be undone. ONLY call when the user explicitly says 'delete' or 'remove' for THIS billable metric. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Billable Metric",
+        "description": "This will permanently delete the billable metric (aggregate).",
+        "warningText": "DESTRUCTIVE — this cannot be undone. This may affect active pricing configurations and billing that reference this metric.",
+        "confirmText": "Delete Billable Metric",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "aggregateId"
+        ]
+      },
+      "args": [
+        {
+          "name": "aggregateId",
+          "description": "The unique identifier (UUID) of the billable metric (aggregate) to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/aggregates/{aggregateId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Billable Metric Deleted\n\n"
+      }
+    },
+    {
       "name": "listRawMetrics",
-      "description": "List Usage Events. In backend/API terminology these are also called raw metrics. Supports filtering by ID, name, and API slug.",
+      "description": "List Usage Events. Supports filtering by ID, name, and API slug.",
       "args": [
         {
           "name": "cursor",
@@ -993,16 +1176,16 @@
         "method": "GET"
       },
       "responseTemplate": {
-        "prependBody": "## Usage Events\n\nHere is the list of usage events. Backend/API terminology may also call these raw metrics:\n\n"
+        "prependBody": "## Usage Events\n\nHere is the list of usage events:\n\n"
       }
     },
     {
       "name": "createRawMetric",
-      "description": "Create a new Usage Event schema. In backend/API terminology this resource is called a raw metric. This defines the schema used for ingesting usage events. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "description": "Create a new Usage Event schema. This defines the schema used for ingesting usage events. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Create Usage Event Schema",
-        "description": "This will create a new Usage Event schema (called a raw metric in backend/API terminology) and provision its event schema. Please review the payload carefully.",
+        "description": "This will create a new Usage Event schema and provision its event schema. Please review the payload carefully.",
         "warningText": "Ensure the dataschema and slug values are correct before continuing.",
         "confirmText": "Create Usage Event Schema",
         "cancelText": "Cancel",
@@ -1025,7 +1208,7 @@
         },
         {
           "name": "dataschema",
-          "description": "Data schema of the Usage Event resource (called a raw metric in backend/API terminology). Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'timestamp' and 'customer_id' fields are mandatory schema fields for usage ingestion. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool); use 'Bool' instead of 'Boolean'.",
+          "description": "Data schema of the Usage Event resource. Structure: {\"data\": {custom_fields}, \"timestamp\": \"DateTime64\", \"customer_id\": \"String\"}. The 'timestamp' and 'customer_id' fields are mandatory schema fields for usage ingestion. The 'data' map must include only valid ClickHouse types (String, Int64, Float64, Date32, DateTime64, UUID, Bool); use 'Bool' instead of 'Boolean'.",
           "type": "object",
           "required": true,
           "position": "body",
@@ -1066,7 +1249,7 @@
     },
     {
       "name": "getRawMetricById",
-      "description": "Get Usage Event details by ID. Backend/API terminology may also call this a raw metric.",
+      "description": "Get Usage Event details by ID.",
       "args": [
         {
           "name": "rawMetricId",
@@ -1086,7 +1269,7 @@
     },
     {
       "name": "getRawMetricLogs",
-      "description": "Get recent Usage Event rows for a resource by ID. Returns the most recent event rows; backend does NOT support filters, pagination, ordering, or aggregation on this endpoint. For filtered/aggregated queries use the aggregate endpoints. Backend/API terminology may also call this a raw metric.",
+      "description": "Get recent Usage Event rows for a resource by ID. Returns the most recent event rows; backend does NOT support filters, pagination, ordering, or aggregation on this endpoint. For filtered/aggregated queries use the aggregate endpoints.",
       "args": [
         {
           "name": "rawMetricId",
@@ -1106,7 +1289,7 @@
     },
     {
       "name": "getRawMetricBySlug",
-      "description": "Get Usage Event details by API slug. Backend/API terminology may also call this a raw metric.",
+      "description": "Get Usage Event details by API slug.",
       "args": [
         {
           "name": "rawMetricSlug",
@@ -1874,6 +2057,242 @@
       }
     },
     {
+      "name": "listEntitlements",
+      "description": "List entitlements in paginated form, with filtering by ID, name, type, product, and active status.",
+      "args": [
+        {
+          "name": "cursor",
+          "description": "The cursor for pagination.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "limit",
+          "description": "Maximum number of records to return per page (defaults to 50).",
+          "type": "integer",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "order",
+          "description": "Order of results (e.g., '-created_at').",
+          "type": "string",
+          "required": false,
+          "default": "-created_at",
+          "position": "query"
+        },
+        {
+          "name": "sort_key",
+          "description": "Key to sort the results by.",
+          "type": "string",
+          "required": false,
+          "default": "created_at",
+          "position": "query"
+        },
+        {
+          "name": "sort_type",
+          "description": "Sort order type ('ASC' or 'DESC').",
+          "type": "string",
+          "required": false,
+          "default": "DESC",
+          "position": "query"
+        },
+        {
+          "name": "search",
+          "description": "Text search across entitlement fields.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "id",
+          "description": "Filter by entitlement ID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "name__ilike",
+          "description": "Case-insensitive partial match for entitlement name.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "entitlement_type",
+          "description": "Filter by entitlement type.",
+          "type": "string",
+          "required": false,
+          "position": "query",
+          "enum": [
+            "Feature",
+            "Quantity",
+            "Credits"
+          ]
+        },
+        {
+          "name": "is_active",
+          "description": "Filter by active status.",
+          "type": "boolean",
+          "required": false,
+          "position": "query"
+        },
+        {
+          "name": "product_id",
+          "description": "Filter by associated product ID.",
+          "type": "string",
+          "required": false,
+          "position": "query"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/entitlements",
+        "method": "GET"
+      },
+      "responseTemplate": {
+        "prependBody": "## Entitlements\n\nHere is the list of entitlements:\n\n"
+      }
+    },
+    {
+      "name": "getEntitlementById",
+      "description": "Get the details of an entitlement by its ID.",
+      "args": [
+        {
+          "name": "entitlementId",
+          "description": "The unique identifier (UUID) of the entitlement.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/entitlements/{entitlementId}",
+        "method": "GET"
+      },
+      "responseTemplate": {
+        "prependBody": "## Entitlement Details\n\nHere are the details for the specified entitlement:\n\n"
+      }
+    },
+    {
+      "name": "updateEntitlement",
+      "description": "Update an existing entitlement's details. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Update Entitlement",
+        "description": "This will update the specified entitlement. Please review the changes carefully.",
+        "warningText": "This action will modify the entitlement record which may affect billing and access control.",
+        "confirmText": "Update Entitlement",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "entitlementId",
+          "name",
+          "entitlement_type",
+          "product_id"
+        ]
+      },
+      "args": [
+        {
+          "name": "entitlementId",
+          "description": "The unique identifier (UUID) of the entitlement to update.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "name",
+          "description": "Updated entitlement name.",
+          "type": "string",
+          "required": true,
+          "position": "body"
+        },
+        {
+          "name": "description",
+          "description": "Updated entitlement description.",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "entitlement_type",
+          "description": "Updated type of entitlement.",
+          "type": "string",
+          "required": false,
+          "position": "body",
+          "enum": [
+            "Feature",
+            "Quantity",
+            "Credits"
+          ]
+        },
+        {
+          "name": "units",
+          "description": "Updated units for the entitlement (e.g., 'units', 'GB', 'users').",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "is_active",
+          "description": "Whether the entitlement is active.",
+          "type": "boolean",
+          "required": false,
+          "position": "body"
+        },
+        {
+          "name": "product_id",
+          "description": "Updated associated product ID (UUID format).",
+          "type": "string",
+          "required": false,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/entitlements/{entitlementId}",
+        "method": "PATCH",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Entitlement Updated\n\nThe entitlement has been successfully updated:\n\n"
+      }
+    },
+    {
+      "name": "deleteEntitlement",
+      "description": "Permanently delete an entitlement. DESTRUCTIVE: cannot be undone. ONLY call when the user explicitly says 'delete' or 'remove' for THIS entitlement. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Delete Entitlement",
+        "description": "This will permanently delete the entitlement.",
+        "warningText": "DESTRUCTIVE — this cannot be undone. This may affect billing and access control for customers using this entitlement.",
+        "confirmText": "Delete Entitlement",
+        "cancelText": "Cancel",
+        "sensitiveFields": [
+          "entitlementId"
+        ]
+      },
+      "args": [
+        {
+          "name": "entitlementId",
+          "description": "The unique identifier (UUID) of the entitlement to delete.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/entitlements/{entitlementId}",
+        "method": "DELETE",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Entitlement Deleted\n\n"
+      }
+    },
+    {
       "name": "approveInvoice",
       "description": "Approve an invoice; sets status to approved. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
@@ -2432,11 +2851,11 @@
     },
     {
       "name": "ingestRawMetricEvent",
-      "description": "Ingest a Usage Event for the specified resource slug. Backend/API terminology may also call the target resource a raw metric. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "description": "Ingest a Usage Event for the specified resource slug. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Ingest Usage Event",
-        "description": "This will ingest a Usage Event for the selected Usage Event schema (called a raw metric in backend/API terminology). Review the payload carefully.",
+        "description": "This will ingest a Usage Event for the selected Usage Event schema. Review the payload carefully.",
         "warningText": "Ensure the data payload matches the Usage Event schema (raw metric schema) before proceeding.",
         "confirmText": "Ingest Usage Event",
         "cancelText": "Cancel",
