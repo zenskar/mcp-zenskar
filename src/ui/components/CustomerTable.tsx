@@ -8,7 +8,7 @@ import {
   ViewButton,
   sortByKey,
 } from './DataTable'
-import { Dim, fmtDate } from './format'
+import { Dim, fmtDateTime } from './format'
 
 type SortKey = 'name' | 'created_at'
 
@@ -59,7 +59,7 @@ export function CustomerTable({ payload }: { payload: CustomerTablePayload }) {
       header: 'Created',
       sortable: true,
       className: 'whitespace-nowrap',
-      render: (c) => fmtDate(c.created_at),
+      render: (c) => fmtDateTime(c.created_at),
     },
     {
       key: 'view',

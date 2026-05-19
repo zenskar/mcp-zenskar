@@ -7,7 +7,7 @@ import {
   type SortDir,
   sortByKey,
 } from './DataTable'
-import { Dim, fmtDate, fmtMoney, StatusPill } from './format'
+import { Dim, fmtDateTime, fmtMoney, StatusPill } from './format'
 
 type SortKey = 'posted_at' | 'event' | 'total_debit' | 'total_credit'
 
@@ -67,7 +67,7 @@ export function JournalTable({ payload }: { payload: JournalTablePayload }) {
       header: 'Posted',
       sortable: true,
       className: 'whitespace-nowrap',
-      render: (r) => fmtDate(r.posted_at),
+      render: (r) => fmtDateTime(r.posted_at),
     },
     {
       key: 'event',

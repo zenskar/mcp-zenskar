@@ -12,6 +12,7 @@ import {
   Dim,
   daysBetween,
   fmtDate,
+  fmtDateTime,
   fmtMoney,
   shortId,
   StatusPill,
@@ -142,7 +143,7 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
       header: 'Created',
       sortable: true,
       className: 'whitespace-nowrap',
-      render: (r) => fmtDate(r.created_at),
+      render: (r) => fmtDateTime(r.created_at),
     },
     {
       key: 'view',

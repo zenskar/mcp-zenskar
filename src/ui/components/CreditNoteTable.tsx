@@ -7,7 +7,7 @@ import {
   type SortDir,
   sortByKey,
 } from './DataTable'
-import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
+import { Dim, fmtDateTime, fmtMoney, shortId, StatusPill } from './format'
 
 type SortKey = 'amount' | 'created_at' | 'status'
 
@@ -91,7 +91,7 @@ export function CreditNoteTable({
       header: 'Created',
       sortable: true,
       className: 'whitespace-nowrap',
-      render: (r) => fmtDate(r.created_at),
+      render: (r) => fmtDateTime(r.created_at),
     },
   ]
 

@@ -4,6 +4,7 @@ import {
   daysBetween,
   Dim,
   fmtDate,
+  fmtDateTime,
   fmtMoney,
   shortId,
   StatusPill,
@@ -121,7 +122,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <Dim>—</Dim>
           )}
         </Field>
-        <Field label="Created">{fmtDate(i.created_at)}</Field>
+        <Field label="Created">{fmtDateTime(i.created_at)}</Field>
         <Field label="Due Date">{fmtDate(i.due_date)}</Field>
         <Field label="Currency">{cur}</Field>
       </div>
@@ -138,19 +139,19 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             {i.sent_at ? (
               <div>
                 <span className="text-muted-foreground text-xs">Sent </span>
-                <span className="tabular-nums">{fmtDate(i.sent_at)}</span>
+                <span className="tabular-nums">{fmtDateTime(i.sent_at)}</span>
               </div>
             ) : null}
             {i.approved_at ? (
               <div>
                 <span className="text-muted-foreground text-xs">Approved </span>
-                <span className="tabular-nums">{fmtDate(i.approved_at)}</span>
+                <span className="tabular-nums">{fmtDateTime(i.approved_at)}</span>
               </div>
             ) : null}
             {i.paid_at ? (
               <div>
                 <span className="text-muted-foreground text-xs">Paid </span>
-                <span className="tabular-nums">{fmtDate(i.paid_at)}</span>
+                <span className="tabular-nums">{fmtDateTime(i.paid_at)}</span>
               </div>
             ) : null}
           </div>

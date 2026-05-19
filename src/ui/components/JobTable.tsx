@@ -8,7 +8,7 @@ import {
   ViewButton,
   sortByKey,
 } from './DataTable'
-import { Dim, fmtDate, StatusPill } from './format'
+import { Dim, fmtDateTime, StatusPill } from './format'
 
 type SortKey = 'name' | 'created_at' | 'status'
 
@@ -91,7 +91,7 @@ export function JobTable({ payload }: { payload: JobTablePayload }) {
       header: 'Created',
       sortable: true,
       className: 'text-xs whitespace-nowrap',
-      render: (r) => fmtDate(r.created_at),
+      render: (r) => fmtDateTime(r.created_at),
     },
     {
       key: 'view',

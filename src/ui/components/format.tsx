@@ -6,36 +6,75 @@ export function Dim({ children }: { children: React.ReactNode }) {
   return <span className="text-muted-foreground">{children}</span>
 }
 
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+
+function parseUTC(s: string | null | undefined): Date | null {
+  if (!s) return null
+  // Date-only strings ("YYYY-MM-DD") must be parsed as UTC midnight, not local.
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s + 'T00:00:00Z' : s
+  const d = new Date(dateOnly)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function pad2(n: number): string {
+  return n < 10 ? '0' + n : String(n)
+}
+
 export function fmtDate(s: string | null | undefined): string | JSX.Element {
-  if (!s) return <Dim>—</Dim>
-  const d = new Date(s)
-  if (Number.isNaN(d.getTime())) return <Dim>—</Dim>
-  return d.toISOString().slice(0, 10)
+  const d = parseUTC(s)
+  if (!d) return <Dim>—</Dim>
+  return `${MONTHS[d.getUTCMonth()]} ${pad2(d.getUTCDate())}, ${d.getUTCFullYear()}`
+}
+
+export function fmtDateTime(
+  s: string | null | undefined
+): string | JSX.Element {
+  const d = parseUTC(s)
+  if (!d) return <Dim>—</Dim>
+  const hours24 = d.getUTCHours()
+  const meridiem = hours24 >= 12 ? 'PM' : 'AM'
+  const hours12 = hours24 % 12 || 12
+  return `${MONTHS[d.getUTCMonth()]} ${pad2(d.getUTCDate())}, ${d.getUTCFullYear()} ${pad2(hours12)}:${pad2(d.getUTCMinutes())} ${meridiem}`
 }
 
 export function daysBetween(
   from: string | null | undefined,
   to: Date = new Date()
 ): number | null {
-  if (!from) return null
-  const d = new Date(from)
-  if (Number.isNaN(d.getTime())) return null
+  const d = parseUTC(from)
+  if (!d) return null
   return Math.floor((to.getTime() - d.getTime()) / 86400000)
 }
 
+// Zenskar API returns monetary amounts in minor units (cents). Convert at the
+// render boundary so callers can pass raw API values directly.
 export function fmtMoney(
   amount: number | null | undefined,
   currency: string = 'USD'
 ): string | JSX.Element {
   if (amount == null || !Number.isFinite(amount)) return <Dim>—</Dim>
+  const dollars = amount / 100
   try {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency,
       maximumFractionDigits: 2,
-    }).format(amount)
+    }).format(dollars)
   } catch {
-    return `${currency} ${amount.toLocaleString()}`
+    return `${currency} ${dollars.toLocaleString()}`
   }
 }
 
