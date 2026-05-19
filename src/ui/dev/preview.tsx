@@ -13,6 +13,7 @@ import { CreditNoteDetail } from '../components/CreditNoteDetail'
 import { CreditNoteTable } from '../components/CreditNoteTable'
 import { CustomerDetail } from '../components/CustomerDetail'
 import { CustomerTable } from '../components/CustomerTable'
+import { EntitlementTable } from '../components/EntitlementTable'
 import { EntityTable } from '../components/EntityTable'
 import { InvoiceDetail } from '../components/InvoiceDetail'
 import { InvoicePreview } from '../components/InvoicePreview'
@@ -34,6 +35,7 @@ import { creditNoteDetailFixture } from '../fixtures/creditNoteDetail'
 import { creditNoteFixture } from '../fixtures/creditNotes'
 import { customerDetailFixture } from '../fixtures/customerDetail'
 import { customerFixture } from '../fixtures/customers'
+import { entitlementFixture } from '../fixtures/entitlements'
 import { entityFixture } from '../fixtures/entities'
 import { invoiceDetailFixture } from '../fixtures/invoiceDetail'
 import { invoicePreviewFixture } from '../fixtures/invoicePreview'
@@ -74,6 +76,7 @@ const SHAPES = {
     <PaymentMethodList payload={paymentMethodFixture} />
   ),
   'entity-table': () => <EntityTable payload={entityFixture} />,
+  'entitlement-table': () => <EntitlementTable payload={entitlementFixture} />,
   'invoice-preview': () => <InvoicePreview payload={invoicePreviewFixture} />,
 } as const
 

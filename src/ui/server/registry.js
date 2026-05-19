@@ -128,6 +128,12 @@ const TOOL_TO_SHAPE = {
     toPayload: entitiesToPayload,
     threshold: 0,
   },
+  listEntitlements: {
+    shape: 'entitlement-table',
+    noun: 'entitlement',
+    toPayload: entitlementsToPayload,
+    threshold: 0,
+  },
   getInvoicePreviewHtml: {
     shape: 'invoice-preview',
     noun: 'invoice preview',
@@ -136,7 +142,7 @@ const TOOL_TO_SHAPE = {
   },
 }
 
-// Single-bundle architecture: all 20 shapes ship as one ui://zenskar/app.html
+// Single-bundle architecture: all 21 shapes ship as one ui://zenskar/app.html
 // resource. The bundled `app.tsx` reads the active tool name from the host
 // context and dispatches to the matching component at runtime.
 export const SHAPES = Object.freeze(['app'])
@@ -1050,6 +1056,45 @@ function normalizeEntity(e) {
     phone_number: e.phone_number ?? null,
     country: (e.address && e.address.country) ?? e.country ?? null,
     is_default: typeof e.is_default === 'boolean' ? e.is_default : null,
+  }
+}
+
+function entitlementsToPayload(raw, args) {
+  const body = unwrapTemplate(raw)
+  const rows = pickArray(body, ['entitlements', 'data', 'results'])
+  const total =
+    pickNumber(body, ['total', 'count', 'total_count']) ?? rows.length
+  const cursor = pickObject(body, ['cursor', 'pagination']) || {}
+  const next = cursor.next ?? cursor.next_cursor ?? body.next ?? null
+  const prev = cursor.prev ?? cursor.prev_cursor ?? body.previous ?? null
+  const scope = (args && (args.search || args.name__ilike)) || undefined
+  return {
+    entitlements: rows.map(normalizeEntitlement),
+    total,
+    cursor: { next, prev },
+    scope,
+  }
+}
+function normalizeEntitlement(e) {
+  if (!e || typeof e !== 'object')
+    return {
+      id: '',
+      name: null,
+      entitlement_type: null,
+      units: null,
+      is_active: null,
+      product_name: null,
+      created_at: null,
+    }
+  return {
+    id: String(e.id || e.entitlement_id || ''),
+    name: e.name ?? null,
+    entitlement_type: e.entitlement_type ?? null,
+    units: e.units ?? null,
+    is_active: typeof e.is_active === 'boolean' ? e.is_active : null,
+    product_name:
+      (e.product && (e.product.name ?? e.product.product_name)) ?? null,
+    created_at: e.created_at ?? null,
   }
 }
 

@@ -14,6 +14,7 @@ import { CreditNoteDetail } from '../components/CreditNoteDetail'
 import { CreditNoteTable } from '../components/CreditNoteTable'
 import { CustomerDetail } from '../components/CustomerDetail'
 import { CustomerTable } from '../components/CustomerTable'
+import { EntitlementTable } from '../components/EntitlementTable'
 import { EntityTable } from '../components/EntityTable'
 import { InvoiceDetail } from '../components/InvoiceDetail'
 import { InvoicePreview } from '../components/InvoicePreview'
@@ -137,6 +138,11 @@ const ROUTES: Record<string, Route> = {
     fallback: { entities: [] },
     marker: 'entity-table:mounted',
     render: (d) => <EntityTable payload={d} />,
+  },
+  listEntitlements: {
+    fallback: { entitlements: [], total: 0 },
+    marker: 'entitlement-table:mounted',
+    render: (d) => <EntitlementTable payload={d} />,
   },
   getInvoicePreviewHtml: {
     fallback: { html: '' },

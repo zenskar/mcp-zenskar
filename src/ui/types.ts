@@ -412,6 +412,22 @@ export interface PaymentMethodListPayload {
   total: number
 }
 
+export interface EntitlementRow {
+  id: string
+  name: string | null
+  entitlement_type: string | null
+  units: string | null
+  is_active: boolean | null
+  product_name: string | null
+  created_at: string | null
+}
+export interface EntitlementTablePayload {
+  entitlements: EntitlementRow[]
+  total: number
+  cursor?: { next?: string | null; prev?: string | null }
+  scope?: string
+}
+
 export interface EntityRow {
   id: string
   name: string | null
