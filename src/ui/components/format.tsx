@@ -23,9 +23,17 @@ const MONTHS = [
 
 function parseUTC(s: string | null | undefined): Date | null {
   if (!s) return null
-  // Date-only strings ("YYYY-MM-DD") must be parsed as UTC midnight, not local.
-  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s + 'T00:00:00Z' : s
-  const d = new Date(dateOnly)
+  // Zenskar API returns timestamps without timezone suffix (e.g.
+  // "2026-05-19T14:12:07.147536" or "2026-05-12 10:12:12.982899"). JS Date
+  // parses those as local time, which drifts by the host offset. Normalize
+  // separators and append Z so everything is interpreted as UTC.
+  let normalized = s.replace(' ', 'T')
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    normalized += 'T00:00:00Z'
+  } else if (!/[zZ]|[+-]\d{2}:?\d{2}$/.test(normalized)) {
+    normalized += 'Z'
+  }
+  const d = new Date(normalized)
   return Number.isNaN(d.getTime()) ? null : d
 }
 
