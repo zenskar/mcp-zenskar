@@ -32,9 +32,9 @@ node --version
 npm --version
 ```
 
-If both commands print a version number (Node.js 18 or newer is recommended), you're set — skip to [Installation](#installation).
+This project requires **Node.js 20.10 or newer**. If both commands print a version that meets this, you're set — skip to [Installation](#installation).
 
-If you see `command not found` or a version older than 18, install Node.js.
+If you see `command not found` or a version older than 20.10, install Node.js.
 
 ### Install Node.js
 
