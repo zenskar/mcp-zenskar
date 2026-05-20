@@ -1,6 +1,6 @@
 # Zenskar MCP Server
 
-MCP server for the Zenskar API. 103 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, and more.
+MCP server for the Zenskar API. 113 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, entitlements, billable metrics, and more.
 
 ## What it does
 
@@ -12,10 +12,42 @@ MCP server for the Zenskar API. 103 tools covering customers, contracts, invoice
 - Accounting: chart of accounts, journal entries and lines, balance sheet, income statement, account balances
 - Products: CRUD, pricing configurations
 - Plans: list, create, add products, preview estimates
+- Entitlements: list, get, create, update, delete
+- Billable metrics (aggregates): list, get, create, update, delete, schemas, estimates, logs
 - Business entities: list, get, create, update
 - Jobs: monitor async operations
 - Custom attributes and tax categories
 - Multi-tenant, supports Bearer token and API key auth
+
+## Prerequisites
+
+Before continuing, you need two things:
+
+1. **Node.js 20.10 or newer** on your machine
+2. **Zenskar credentials** — your Organization ID and an API Key
+
+### Node.js
+
+Check whether it's already installed. Open a terminal and run:
+
+```bash
+node --version
+npm --version
+```
+
+This project requires **Node.js 20.10 or newer**. If both commands print a version that meets this, jump to [Zenskar credentials](#zenskar-credentials).
+
+If you see `command not found` or a version older than 20.10, download and install the **LTS** build from https://nodejs.org/en/download. `npm` (and `npx`) ship with Node.js — no separate install needed. After installing, open a **new** terminal window and re-run `node --version` to confirm.
+
+### Zenskar credentials
+
+You need two values from your Zenskar dashboard. Grab both before moving to Installation.
+
+**Organization ID** — open https://app.zenskar.com/settings (General tab) and copy your Organization ID.
+
+**API Key** — open https://app.zenskar.com/settings?tab=api-keys, click **Create new API key**, give it a name, and copy the key.
+
+> Store the API key somewhere safe — the dashboard only shows the full key once. If you lose it, you'll have to create a new one.
 
 ## Installation
 
@@ -31,7 +63,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
       "args": ["mcp-zenskar"],
       "env": {
         "ZENSKAR_ORGANIZATION": "your-org-id",
-        "ZENSKAR_AUTH_TOKEN": "your-bearer-token"
+        "ZENSKAR_API_KEY": "your-api-key"
       }
     }
   }
@@ -56,17 +88,18 @@ npx mcp-zenskar
 
 ## Authentication
 
-This MCP server requires two authentication parameters for every request:
+Every request needs:
 
-1. **Organization ID**: Your Zenskar organization identifier
-2. **Authorization Token**: Your API Bearer token or API key
+1. **Organization ID** — set via `ZENSKAR_ORGANIZATION`
+2. **API Key** — set via `ZENSKAR_API_KEY`
 
-### Getting Your Credentials
+See [Zenskar credentials](#zenskar-credentials) above for how to get both.
 
-1. **Organization ID**: Available in your Zenskar dashboard settings
-2. **API Token**: Generate from Zenskar dashboard → Settings → API Keys
+At runtime the server reads these env vars (or accepts them from the MCP client via tool invocation).
 
-At runtime the server looks for these values in the tool invocation first, then falls back to the `ZENSKAR_ORGANIZATION` and `ZENSKAR_AUTH_TOKEN` environment variables. Tokens that look like JWTs are sent as `Authorization: Bearer ...`; everything else is sent as an `x-api-key` header automatically.
+### Advanced: bearer tokens
+
+Same session token from your browser devtools is also accepted via `ZENSKAR_AUTH_TOKEN` (sent as `Authorization: Bearer ...`). Short-lived — API key is preferred for any non-throwaway use. Kept for backward compatibility, so existing configs that use `ZENSKAR_AUTH_TOKEN` continue to work unchanged.
 
 ## Usage
 
@@ -248,6 +281,9 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getAggregateEstimates` | Get Billable Metric estimates; backend/API may also call these aggregates                                      |
 | `getAggregateById`      | Get a Billable Metric by ID; backend/API may also call it an aggregate                                         |
 | `getAggregateLogs`      | Get logs for a Billable Metric (Aggregate)                                                                     |
+| `createAggregate`       | Create a Billable Metric (Aggregate)                                                                           |
+| `updateAggregate`       | Update a Billable Metric (Aggregate)                                                                           |
+| `deleteAggregate`       | Delete a Billable Metric (Aggregate)                                                                           |
 | `listRawMetrics`        | List Usage Events with filtering; backend/API may also call these raw metrics                                  |
 | `createRawMetric`       | Create a Usage Event schema; backend/API calls this a raw metric                                               |
 | `getRawMetricById`      | Get a Usage Event by ID; backend/API may also call it a raw metric                                             |
@@ -255,11 +291,20 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getRawMetricBySlug`    | Get a Usage Event by API slug; backend/API may also call it a raw metric                                       |
 | `ingestRawMetricEvent`  | Ingest a usage event                                                                                           |
 
+### Entitlements
+
+| Tool                 | Description                      |
+| -------------------- | -------------------------------- |
+| `listEntitlements`   | List entitlements with filtering |
+| `getEntitlementById` | Get an entitlement by ID         |
+| `createEntitlement`  | Create an entitlement            |
+| `updateEntitlement`  | Update an entitlement            |
+| `deleteEntitlement`  | Delete an entitlement            |
+
 ### Other
 
 | Tool                             | Description                               |
 | -------------------------------- | ----------------------------------------- |
-| `createEntitlement`              | Create an entitlement                     |
 | `getCustomerPortalConfiguration` | Get customer portal config                |
 | `getCurrentDateTime`             | Get current date/time in multiple formats |
 
@@ -271,19 +316,21 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 
 ## Development
 
+This repo uses [pnpm](https://pnpm.io) for package management. If you don't have it, install it once with `npm install -g pnpm` (or `corepack enable && corepack prepare pnpm@latest --activate`).
+
 ```bash
 # Clone the repository
 git clone https://github.com/zenskar/mcp-zenskar
 cd mcp-zenskar
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build the bundle (produces dist/server.mjs + dist/mcp-config.json)
-npm run build
+pnpm run build
 
 # Run the server
-npm start
+pnpm start
 ```
 
 ### Developing Locally Without Publishing
@@ -292,8 +339,8 @@ If you want Claude Desktop to use a local checkout instead of the npm package:
 
 ```bash
 # Install dependencies + build the bundle
-npm install
-npm run build
+pnpm install
+pnpm run build
 
 # Optional: install the local build globally (requires dist/ from the previous step)
 npm install -g .

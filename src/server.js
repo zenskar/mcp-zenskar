@@ -1383,7 +1383,9 @@ function issueApprovalToken(toolName, args) {
       expiresAt,
       nonce: crypto.randomBytes(12).toString('base64url'),
     }
-    const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
+    const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf8').toString(
+      'base64url'
+    )
     const sig = signApprovalPayload(payloadB64)
     return `${APPROVAL_TOKEN_VERSION}.${payloadB64}.${sig}`
   }
@@ -1415,7 +1417,8 @@ function consumeApprovalToken(token, toolName) {
       return null
     }
     if (entry.toolName !== toolName) return null
-    if (typeof entry.expiresAt !== 'number' || entry.expiresAt < Date.now()) return null
+    if (typeof entry.expiresAt !== 'number' || entry.expiresAt < Date.now())
+      return null
     // Per-process replay guard. Cross-process replay is documented as
     // unblocked at this layer.
     if (consumedStatelessTokens.has(token)) return null

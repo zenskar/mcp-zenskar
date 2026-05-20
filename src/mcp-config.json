@@ -903,10 +903,7 @@
         "warningText": "This action will create a new billable metric definition that may be used in pricing and billing configurations.",
         "confirmText": "Create Billable Metric",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "name",
-          "datasource"
-        ]
+        "sensitiveFields": ["name", "datasource"]
       },
       "args": [
         {
@@ -1052,9 +1049,7 @@
         "warningText": "DESTRUCTIVE — this cannot be undone. This may affect active pricing configurations and billing that reference this metric.",
         "confirmText": "Delete Billable Metric",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "aggregateId"
-        ]
+        "sensitiveFields": ["aggregateId"]
       },
       "args": [
         {
@@ -2101,11 +2096,7 @@
           "type": "string",
           "required": false,
           "position": "query",
-          "enum": [
-            "Feature",
-            "Quantity",
-            "Credits"
-          ]
+          "enum": ["Feature", "Quantity", "Credits"]
         },
         {
           "name": "is_active",
@@ -2195,11 +2186,7 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": [
-            "Feature",
-            "Quantity",
-            "Credits"
-          ]
+          "enum": ["Feature", "Quantity", "Credits"]
         },
         {
           "name": "units",
@@ -2244,9 +2231,7 @@
         "warningText": "DESTRUCTIVE — this cannot be undone. This may affect billing and access control for customers using this entitlement.",
         "confirmText": "Delete Entitlement",
         "cancelText": "Cancel",
-        "sensitiveFields": [
-          "entitlementId"
-        ]
+        "sensitiveFields": ["entitlementId"]
       },
       "args": [
         {
