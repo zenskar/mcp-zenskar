@@ -60,10 +60,12 @@ npx mcp-zenskar
 ### Method 2: Local Development
 
 ```bash
+# Make sure pnpm is installed on your machine (https://pnpm.io/installation)
 git clone <this-repo>
 cd mcp-zenskar
-npm install
-npm start
+pnpm install
+pnpm run prepublishOnly  # or `pnpm build` — both produce dist/
+pnpm start
 ```
 
 ### Method 3: Environment Variables (Future Feature)

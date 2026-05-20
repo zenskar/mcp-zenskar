@@ -1,0 +1,93 @@
+import type { CustomerTablePayload } from '../types'
+
+export const customerFixture: CustomerTablePayload = {
+  total: 12,
+  scope: 'recently created',
+  cursor: { next: 'eyJjdXJzb3IiOiJuZXh0In0=', prev: null },
+  customers: [
+    {
+      id: 'c_001',
+      name: 'ACME Corp',
+      external_id: 'ACME-100',
+      email: 'billing@acme.example',
+      created_at: '2024-11-02T08:00:00Z',
+    },
+    {
+      id: 'c_002',
+      name: 'Globex Inc',
+      external_id: 'GLOBEX-44',
+      email: 'finance@globex.example',
+      created_at: '2025-02-19T08:00:00Z',
+    },
+    {
+      id: 'c_003',
+      name: 'Initech',
+      external_id: 'INI-12',
+      email: 'ap@initech.example',
+      created_at: '2025-04-22T08:00:00Z',
+    },
+    {
+      id: 'c_004',
+      name: 'Hooli',
+      external_id: 'HOO-7',
+      email: null,
+      created_at: '2024-03-10T08:00:00Z',
+    },
+    {
+      id: 'c_005',
+      name: 'Aaron Smayling',
+      external_id: 'AS10045140',
+      email: 'aaron@example.com',
+      created_at: '2026-04-28T08:00:00Z',
+    },
+    {
+      id: 'c_006',
+      name: 'Astrea Jones',
+      external_id: 'AJ10960140',
+      email: 'astrea@example.com',
+      created_at: '2026-04-28T08:00:00Z',
+    },
+    {
+      id: 'c_007',
+      name: 'Test Ashmi',
+      external_id: null,
+      email: null,
+      created_at: '2026-05-05T08:00:00Z',
+    },
+    {
+      id: 'c_008',
+      name: 'meowconda',
+      external_id: null,
+      email: null,
+      created_at: '2026-05-05T11:00:00Z',
+    },
+    {
+      id: 'c_009',
+      name: 'XXXX LLC',
+      external_id: 'XXXX-LLC-TURVO-AMENDMENT-4',
+      email: null,
+      created_at: '2026-04-30T08:00:00Z',
+    },
+    {
+      id: 'c_010',
+      name: 'Soylent',
+      external_id: 'SOY-9',
+      email: 'billing@soylent.example',
+      created_at: '2024-08-13T08:00:00Z',
+    },
+    {
+      id: 'c_011',
+      name: 'Vehement Capital',
+      external_id: 'VC-22',
+      email: 'ops@vehement.example',
+      created_at: '2025-09-04T08:00:00Z',
+    },
+    {
+      id: 'c_012',
+      name: 'Cyberdyne Systems',
+      external_id: 'CYB-1',
+      email: 'ar@cyberdyne.example',
+      created_at: '2024-06-01T08:00:00Z',
+    },
+  ],
+}

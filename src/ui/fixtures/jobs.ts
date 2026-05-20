@@ -1,0 +1,63 @@
+import type { JobTablePayload } from '../types'
+
+export const jobFixture: JobTablePayload = {
+  total: 6,
+  cursor: { next: null, prev: null },
+  status_counts: { completed: 3, running: 1, failed: 1, queued: 1 },
+  jobs: [
+    {
+      id: 'job_001',
+      name: 'Invoice Generation',
+      description: 'System Generated',
+      job_type: 'automated',
+      resource: 'invoices',
+      status: 'completed',
+      created_at: '2026-05-05T08:00:00Z',
+    },
+    {
+      id: 'job_002',
+      name: 'Revenue Recognition',
+      description: 'Monthly close',
+      job_type: 'automated',
+      resource: 'revenue_postings',
+      status: 'completed',
+      created_at: '2026-05-04T22:00:00Z',
+    },
+    {
+      id: 'job_003',
+      name: 'Metric Aggregation',
+      description: null,
+      job_type: 'automated',
+      resource: 'aggregates',
+      status: 'running',
+      created_at: '2026-05-07T13:00:00Z',
+    },
+    {
+      id: 'job_004',
+      name: 'Invoice Email Dispatch',
+      description: 'SMTP_AUTH_FAILED: rejected sender',
+      job_type: 'automated',
+      resource: 'invoices',
+      status: 'failed',
+      created_at: '2026-05-06T09:00:00Z',
+    },
+    {
+      id: 'job_005',
+      name: 'CDC Export',
+      description: null,
+      job_type: 'automated',
+      resource: 'events',
+      status: 'completed',
+      created_at: '2026-05-07T03:00:00Z',
+    },
+    {
+      id: 'job_006',
+      name: 'Reminder Invoices',
+      description: 'System Generated',
+      job_type: 'automated',
+      resource: 'invoices',
+      status: 'queued',
+      created_at: '2026-05-07T13:30:00Z',
+    },
+  ],
+}

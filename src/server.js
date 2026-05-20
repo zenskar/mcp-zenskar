@@ -11,6 +11,12 @@ import { v4 as uuidv4 } from 'uuid'
 import { z } from 'zod'
 
 import ResponseProcessor from './response-processor.js'
+import { registerUIResources } from './ui/server/registerResources.js'
+import {
+  resourceUriFor,
+  lookup as uiRouteLookup,
+} from './ui/server/registry.js'
+import { wrapToolResponse } from './ui/server/wrap.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -1054,6 +1060,16 @@ async function executeAPICall(tool, args) {
       nestAddress('address_', 'address')
     }
 
+    if (tool.name === 'getInvoicePreviewHtml') {
+      if (!cleanArgs.orgId) {
+        const orgId =
+          userContext?.organization || process.env.ZENSKAR_ORGANIZATION
+        if (orgId) {
+          cleanArgs.orgId = orgId
+        }
+      }
+    }
+
     // Smart defaults for helper tools
     if (tool.name === 'extractContractFromRaw') {
       // Auto-populate organization_id from user context or env var if not provided
@@ -1267,6 +1283,23 @@ async function executeAPICall(tool, args) {
       result = responseText
     }
 
+    if (tool.name === 'getInvoicePreviewHtml') {
+      // Communications API may return base64-encoded HTML (API gateway) or raw HTML (local dev).
+      if (typeof result === 'string') {
+        try {
+          const decoded = Buffer.from(result, 'base64').toString('utf8')
+          if (decoded.includes('<')) {
+            result = { html: decoded }
+          } else {
+            result = { html: result }
+          }
+        } catch {
+          result = { html: result }
+        }
+      } else {
+        result = { html: '' }
+      }
+    }
     if (tool.name === 'getBalanceSheet' || tool.name === 'getIncomeStatement') {
       const baseUrl =
         process.env.ZENSKAR_API_BASE_URL || 'https://api.zenskar.com'
@@ -1732,12 +1765,28 @@ function getFieldType(apiType) {
   }
 }
 
+// Register UI resources once at boot — Claude/Goose/VS Code/ChatGPT
+// look these up via _meta on each tool registration below.
+registerUIResources(server)
+
 // Register tools from config with enhanced error handling
 if (mcpConfig.tools && mcpConfig.tools.length > 0) {
   mcpConfig.tools.forEach((tool) => {
     logger.info(`Registering tool: ${tool.name}`)
 
     const inputSchema = convertArgsToZodSchema(tool.args || [])
+    const route = uiRouteLookup(tool.name)
+    const uiMeta =
+      route.mode === 'ui'
+        ? (() => {
+            const uri = resourceUriFor(route.shape)
+            return {
+              'openai/outputTemplate': uri,
+              'ui/resourceUri': uri,
+              ui: { resourceUri: uri },
+            }
+          })()
+        : undefined
 
     server.registerTool(
       tool.name,
@@ -1745,6 +1794,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
         title: tool.name,
         description: tool.description,
         inputSchema: inputSchema,
+        ...(uiMeta ? { _meta: uiMeta } : {}),
       },
       async (args) => {
         const executionStart = Date.now()
@@ -2030,14 +2080,12 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             )
           }
 
-          return {
-            content: [
-              {
-                type: 'text',
-                text: responseText,
-              },
-            ],
-          }
+          return wrapToolResponse(
+            tool.name,
+            rawResult,
+            responseText,
+            adjustedArgs
+          )
         } catch (error) {
           const executionTime = Date.now() - executionStart
           logger.error(

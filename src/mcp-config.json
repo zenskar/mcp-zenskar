@@ -518,6 +518,30 @@
       }
     },
     {
+      "name": "getInvoicePreviewHtml",
+      "description": "Get the rendered HTML preview of an invoice. Returns the invoice as it would appear when sent to the customer. Use this to show the customer-facing invoice layout.",
+      "args": [
+        {
+          "name": "orgId",
+          "description": "Organization ID (auto-populated).",
+          "type": "string",
+          "required": false,
+          "position": "path"
+        },
+        {
+          "name": "invoiceId",
+          "description": "The ID of the invoice to preview.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/communications/{orgId}/invoice/{invoiceId}/html",
+        "method": "GET"
+      }
+    },
+    {
       "name": "getInvoiceContractJsonActuals",
       "description": "Get contract actuals in JSON format for a specific invoice.",
       "args": [
@@ -745,6 +769,22 @@
           "description": "Filter by creation date greater than or equal to (ISO 8601).",
           "type": "string",
           "required": false,
+          "position": "query"
+        },
+        {
+          "name": "parent_aggregate_id__isnull",
+          "description": "Whether to include only top-level aggregates (no parent). Defaults to true.",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "position": "query"
+        },
+        {
+          "name": "aggregate_type__isnull",
+          "description": "Whether to include only aggregates without an explicit type. Defaults to true.",
+          "type": "boolean",
+          "required": false,
+          "default": true,
           "position": "query"
         }
       ],
@@ -4310,6 +4350,22 @@
           "description": "Case-insensitive partial match for product name.",
           "type": "string",
           "required": false,
+          "position": "query"
+        },
+        {
+          "name": "type",
+          "description": "Filter by product object type. Defaults to 'product' (excludes plans, addons, etc.).",
+          "type": "string",
+          "required": false,
+          "default": "product",
+          "position": "query"
+        },
+        {
+          "name": "product_category__isnull",
+          "description": "Whether to include only products without a category. Defaults to true.",
+          "type": "boolean",
+          "required": false,
+          "default": true,
           "position": "query"
         }
       ],

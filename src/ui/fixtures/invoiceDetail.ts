@@ -1,0 +1,30 @@
+import type { InvoiceDetailPayload } from '../types'
+
+export const invoiceDetailFixture: InvoiceDetailPayload = {
+  invoice: {
+    id: 'inv_001',
+    invoice_number: 'INV-2026-0142',
+    customer_id: 'c_001',
+    status: 'approved',
+    invoice_total: 1845.5,
+    amount_due: 1845.5,
+    paid_amount: 0,
+    due_date: '2026-05-30',
+    invoice_period_begin: '2026-04-01',
+    invoice_period_end: '2026-04-30',
+    external_id: 'EXT-INV-XYZ',
+    created_at: '2026-05-01T09:00:00Z',
+    payment_url: 'https://app.zenskar.example/pay/inv_001',
+    currency: 'USD',
+    business_entity_id: 'be_001',
+    notes: 'Net 30 — wire transfer preferred.',
+    custom_data: { po_number: 'PO-44215' },
+    customer_name: 'ACME Corp',
+    contract_id: 'ctr_001',
+    contract_name: 'ACME Master Services Agreement',
+    invoice_pdf: 'https://api.zenskar.example/invoices/inv_001/pdf',
+    approved_at: '2026-05-01T10:30:00Z',
+    paid_at: null,
+    sent_at: '2026-05-01T11:00:00Z',
+  },
+}

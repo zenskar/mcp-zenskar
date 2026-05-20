@@ -1,0 +1,10 @@
+allowBuilds:
+  esbuild: true
+
+blockExoticSubdeps: true
+minimumReleaseAge: 2880
+shellEmulator: true
+sideEffectsCache: false
+strictDepBuilds: true
+
+trustPolicy: no-downgrade
