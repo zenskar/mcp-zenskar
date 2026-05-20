@@ -64,26 +64,6 @@ jobs:
           code=$?
           case "$code" in 0|124) exit 0;; *) exit $code;; esac
 
-      - name: Diagnose NPM_TOKEN (TEMP — remove after debug)
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::NPM_TOKEN secret is EMPTY or not exposed to this workflow"
-            exit 1
-          fi
-          echo "token present, length=${#NODE_AUTH_TOKEN}, prefix=${NODE_AUTH_TOKEN:0:4}..."
-          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
-          echo "--- npm whoami ---"
-          if npm whoami --registry=https://registry.npmjs.org/; then
-            echo "✅ token authenticates"
-            echo "--- npm access list packages ---"
-            npm access list packages --registry=https://registry.npmjs.org/ 2>&1 | grep -i 'mcp-zenskar' || echo "❌ token does NOT have access to mcp-zenskar"
-          else
-            echo "❌ token is invalid / expired"
-            exit 1
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish to NPM
         run: |
           echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
