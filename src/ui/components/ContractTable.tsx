@@ -89,9 +89,7 @@ export function ContractTable({ payload }: { payload: ContractTablePayload }) {
       header: 'Days Left',
       align: 'right',
       render: (r) => {
-        const daysLeft = r.end_date
-          ? -1 * (daysBetween(r.end_date) ?? 0)
-          : null
+        const daysLeft = r.end_date ? -1 * (daysBetween(r.end_date) ?? 0) : null
         if (daysLeft == null) return <Dim>—</Dim>
         const expired = daysLeft < 0
         const expiringSoon = !expired && daysLeft <= 30

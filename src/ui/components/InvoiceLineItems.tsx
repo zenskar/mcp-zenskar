@@ -42,7 +42,11 @@ export function InvoiceLineItems({
       className: 'text-muted-foreground text-xs',
       render: (l) => (
         <div className="flex items-center gap-1">
-          {l.line_item_type ? l.line_item_type.replace(/_/g, ' ') : <Dim>—</Dim>}
+          {l.line_item_type ? (
+            l.line_item_type.replace(/_/g, ' ')
+          ) : (
+            <Dim>—</Dim>
+          )}
           {l.is_adjustment ? (
             <span className="bg-warning/15 text-warning ring-warning/30 rounded-full px-1.5 py-0.5 text-[10px] ring-1">
               {l.adjustment_type || 'adj'}
@@ -73,8 +77,7 @@ export function InvoiceLineItems({
       key: 'qty',
       header: 'Qty',
       align: 'right',
-      render: (l) =>
-        l.quantity?.display || (l.quantity?.value ?? <Dim>—</Dim>),
+      render: (l) => l.quantity?.display || (l.quantity?.value ?? <Dim>—</Dim>),
     },
     {
       key: 'price',

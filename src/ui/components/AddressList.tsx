@@ -64,11 +64,13 @@ function AddressCard({ addr }: { addr: AddressRow }) {
           </div>
         ) : null}
         {addr.validation_status ? (
-          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ring-1 ${
-            addr.validation_status === 'valid'
-              ? 'bg-secondary/20 text-secondary ring-secondary/30'
-              : 'bg-muted text-muted-foreground ring-border'
-          }`}>
+          <span
+            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] ring-1 ${
+              addr.validation_status === 'valid'
+                ? 'bg-secondary/20 text-secondary ring-secondary/30'
+                : 'bg-muted text-muted-foreground ring-border'
+            }`}
+          >
             {addr.validation_status}
           </span>
         ) : null}

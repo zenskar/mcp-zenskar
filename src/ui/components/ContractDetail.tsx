@@ -19,9 +19,7 @@ export function ContractDetail({
             {c.name || <Dim>—</Dim>}
             {c.status ? <StatusPill status={c.status} /> : null}
           </h2>
-          <div className="text-secondary mt-0.5 font-mono text-xs">
-            {c.id}
-          </div>
+          <div className="text-secondary mt-0.5 font-mono text-xs">{c.id}</div>
         </div>
         <div className="flex gap-2">
           {c.contract_link ? (
@@ -43,11 +41,15 @@ export function ContractDetail({
             <div>
               <div className="text-sm">{c.customer_name}</div>
               {c.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[11px] break-all">{c.customer_id}</div>
+                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                  {c.customer_id}
+                </div>
               ) : null}
             </div>
           ) : c.customer_id ? (
-            <span className="text-secondary font-mono text-xs break-all">{c.customer_id}</span>
+            <span className="text-secondary font-mono text-xs break-all">
+              {c.customer_id}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -73,7 +75,9 @@ export function ContractDetail({
         <Field label="Renewal Policy">{c.renewal_policy || <Dim>—</Dim>}</Field>
         <Field label="Plan">
           {c.plan_id ? (
-            <span className="text-secondary font-mono text-xs break-all">{c.plan_id}</span>
+            <span className="text-secondary font-mono text-xs break-all">
+              {c.plan_id}
+            </span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -91,7 +95,12 @@ export function ContractDetail({
         <Section title="Tags">
           <div className="flex flex-wrap gap-2">
             {c.tags.map((tag, i) => (
-              <span key={i} className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">{tag}</span>
+              <span
+                key={i}
+                className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs"
+              >
+                {tag}
+              </span>
             ))}
           </div>
         </Section>
@@ -169,4 +178,3 @@ function PhaseRow({
     </div>
   )
 }
-

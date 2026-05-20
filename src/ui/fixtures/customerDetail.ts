@@ -30,12 +30,20 @@ export const customerDetailFixture: CustomerDetailPayload = {
       account_manager: 'jane@zenskar.example',
       tier: 'enterprise',
     },
-    tax_info: [
-      { country_code: 'USA', tax_code: 'TIN', tax_id: '545754' },
-    ],
+    tax_info: [{ country_code: 'USA', tax_code: 'TIN', tax_id: '545754' }],
     contacts: [
-      { name: 'Shreyansh Tripathy', email: 'shreyansh@zenskar.com', send_invoice: false, send_contract: false },
-      { name: 'Ishpreet Vashist', email: 'ishpreet@zenskar.com', send_invoice: true, send_contract: false },
+      {
+        name: 'Shreyansh Tripathy',
+        email: 'shreyansh@zenskar.com',
+        send_invoice: false,
+        send_contract: false,
+      },
+      {
+        name: 'Ishpreet Vashist',
+        email: 'ishpreet@zenskar.com',
+        send_invoice: true,
+        send_contract: false,
+      },
     ],
     default_payment_method: {
       type: 'card',

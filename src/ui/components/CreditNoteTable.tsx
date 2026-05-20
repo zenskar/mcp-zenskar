@@ -1,12 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import type { CreditNoteRow, CreditNoteTablePayload } from '../types'
-import {
-  type ColumnDef,
-  DataTable,
-  type SortDir,
-  sortByKey,
-} from './DataTable'
+import { type ColumnDef, DataTable, type SortDir, sortByKey } from './DataTable'
 import { Dim, fmtDateTime, fmtMoney, shortId, StatusPill } from './format'
 
 type SortKey = 'amount' | 'created_at' | 'status'

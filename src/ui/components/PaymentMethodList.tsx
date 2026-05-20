@@ -53,7 +53,9 @@ function PaymentMethodCard({ method: m }: { method: PaymentMethodRow }) {
             <span className="text-muted-foreground">{m.brand}</span>
           ) : null}
           {m.connector_name ? (
-            <span className="text-muted-foreground text-xs">via {m.connector_name}</span>
+            <span className="text-muted-foreground text-xs">
+              via {m.connector_name}
+            </span>
           ) : null}
         </div>
         {m.is_default ? (
@@ -67,11 +69,13 @@ function PaymentMethodCard({ method: m }: { method: PaymentMethodRow }) {
       </div>
       <div className="text-muted-foreground flex gap-3 text-xs">
         {m.status ? (
-          <span className={`rounded-full px-2 py-0.5 text-xs ring-1 ${
-            m.status === 'valid'
-              ? 'bg-secondary/20 text-secondary ring-secondary/30'
-              : 'bg-destructive/20 text-destructive ring-destructive/30'
-          }`}>
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ring-1 ${
+              m.status === 'valid'
+                ? 'bg-secondary/20 text-secondary ring-secondary/30'
+                : 'bg-destructive/20 text-destructive ring-destructive/30'
+            }`}
+          >
             {m.status}
           </span>
         ) : null}

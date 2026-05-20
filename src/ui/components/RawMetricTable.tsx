@@ -57,11 +57,13 @@ export function RawMetricTable({
       header: 'Upload Enabled',
       className: 'text-xs',
       render: (r) =>
-        r.usage_upload_enabled == null
-          ? <Dim>—</Dim>
-          : r.usage_upload_enabled
-            ? 'yes'
-            : 'no',
+        r.usage_upload_enabled == null ? (
+          <Dim>—</Dim>
+        ) : r.usage_upload_enabled ? (
+          'yes'
+        ) : (
+          'no'
+        ),
     },
     {
       key: 'created_at',

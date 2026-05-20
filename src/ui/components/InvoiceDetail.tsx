@@ -31,9 +31,7 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
               </span>
             ) : null}
           </h2>
-          <div className="text-secondary mt-0.5 font-mono text-xs">
-            {i.id}
-          </div>
+          <div className="text-secondary mt-0.5 font-mono text-xs">{i.id}</div>
         </div>
         <div className="flex gap-2">
           {i.invoice_pdf ? (
@@ -144,7 +142,9 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             {i.approved_at ? (
               <div>
                 <span className="text-muted-foreground text-xs">Approved </span>
-                <span className="tabular-nums">{fmtDateTime(i.approved_at)}</span>
+                <span className="tabular-nums">
+                  {fmtDateTime(i.approved_at)}
+                </span>
               </div>
             ) : null}
             {i.paid_at ? (

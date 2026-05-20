@@ -18,9 +18,7 @@ export function CreditNoteDetail({
             <span className="font-mono">{cn.credit_note_number || cn.id}</span>
             {cn.status ? <StatusPill status={cn.status} /> : null}
           </h2>
-          <div className="text-secondary mt-0.5 font-mono text-xs">
-            {cn.id}
-          </div>
+          <div className="text-secondary mt-0.5 font-mono text-xs">{cn.id}</div>
         </div>
       </header>
 

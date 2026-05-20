@@ -770,6 +770,22 @@
           "type": "string",
           "required": false,
           "position": "query"
+        },
+        {
+          "name": "parent_aggregate_id__isnull",
+          "description": "Whether to include only top-level aggregates (no parent). Defaults to true.",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "position": "query"
+        },
+        {
+          "name": "aggregate_type__isnull",
+          "description": "Whether to include only aggregates without an explicit type. Defaults to true.",
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "position": "query"
         }
       ],
       "requestTemplate": {
@@ -4334,6 +4350,22 @@
           "description": "Case-insensitive partial match for product name.",
           "type": "string",
           "required": false,
+          "position": "query"
+        },
+        {
+          "name": "type",
+          "description": "Filter by product object type. Defaults to 'product' (excludes plans, addons, etc.).",
+          "type": "string",
+          "required": false,
+          "default": "product",
+          "position": "query"
+        },
+        {
+          "name": "product_category__isnull",
+          "description": "Whether to include only products without a category. Defaults to true.",
+          "type": "boolean",
+          "required": false,
+          "default": true,
           "position": "query"
         }
       ],

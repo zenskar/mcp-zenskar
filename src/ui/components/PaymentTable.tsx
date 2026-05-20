@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 
 import type { PaymentRow, PaymentTablePayload } from '../types'
+import { type ColumnDef, DataTable, type SortDir, sortByKey } from './DataTable'
 import {
-  type ColumnDef,
-  DataTable,
-  type SortDir,
-  sortByKey,
-} from './DataTable'
-import { Dim, fmtDate, fmtDateTime, fmtMoney, shortId, StatusPill } from './format'
+  Dim,
+  fmtDate,
+  fmtDateTime,
+  fmtMoney,
+  shortId,
+  StatusPill,
+} from './format'
 
 type SortKey = 'amount' | 'payment_date' | 'created_at' | 'type'
 

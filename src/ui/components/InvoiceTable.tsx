@@ -112,7 +112,9 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
       render: (r) => {
         const overdue = overdueOf(r)
         return (
-          <span className={overdue != null ? 'text-destructive font-medium' : ''}>
+          <span
+            className={overdue != null ? 'text-destructive font-medium' : ''}
+          >
             {fmtMoney(r.amount_due, cur)}
           </span>
         )
@@ -132,10 +134,12 @@ export function InvoiceTable({ payload }: { payload: InvoiceTablePayload }) {
       render: (r) => {
         const overdue = overdueOf(r)
         if (overdue == null)
-          return <span className="text-muted-foreground"><Dim>—</Dim></span>
-        return (
-          <span className="text-destructive font-medium">{overdue}d</span>
-        )
+          return (
+            <span className="text-muted-foreground">
+              <Dim>—</Dim>
+            </span>
+          )
+        return <span className="text-destructive font-medium">{overdue}d</span>
       },
     },
     {

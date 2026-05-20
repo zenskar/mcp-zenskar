@@ -108,7 +108,9 @@ export function DataTable<R>({
               rows.map((row, i) => (
                 <tr
                   key={rowKey ? rowKey(row, i) : i}
-                  className={`border-border border-t ${hoverRows ? 'hover:bg-muted/60' : ''} ${rowClassName ? rowClassName(row, i) : ''}`.trim().replace(/\s+/g, ' ')}
+                  className={`border-border border-t ${hoverRows ? 'hover:bg-muted/60' : ''} ${rowClassName ? rowClassName(row, i) : ''}`
+                    .trim()
+                    .replace(/\s+/g, ' ')}
                 >
                   {showIndex ? (
                     <td className="text-muted-foreground px-3 py-2 tabular-nums">

@@ -288,7 +288,8 @@ function normalizeLineItem(l) {
     service_end_date: l.service_end_date ?? l.billing_period_end ?? null,
     is_billed: typeof l.is_billed === 'boolean' ? l.is_billed : null,
     line_item_type: l.line_item_type ?? null,
-    is_adjustment: typeof l.is_adjustment === 'boolean' ? l.is_adjustment : null,
+    is_adjustment:
+      typeof l.is_adjustment === 'boolean' ? l.is_adjustment : null,
     adjustment_type: l.adjustment_type ?? null,
   }
 }
@@ -579,7 +580,9 @@ function contractDetailToPayload(raw) {
       anchor_date: c.anchor_date ?? null,
       plan_id: c.plan_id ?? null,
       customer_name:
-        (cust && typeof cust === 'object' ? cust.customer_name ?? cust.name : null) ?? null,
+        (cust && typeof cust === 'object'
+          ? (cust.customer_name ?? cust.name)
+          : null) ?? null,
       contract_type: c.contract_type ?? null,
       tags: tags.length ? tags : null,
       contract_link: c.contract_link ?? null,
@@ -624,7 +627,9 @@ function creditNoteDetailToPayload(raw) {
       customer_name:
         (cust && typeof cust === 'object' ? cust.name : null) ?? null,
       invoice_number:
-        (inv && typeof inv === 'object' ? inv.invoice_number ?? inv.name : null) ?? null,
+        (inv && typeof inv === 'object'
+          ? (inv.invoice_number ?? inv.name)
+          : null) ?? null,
     },
   }
 }
