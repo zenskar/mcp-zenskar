@@ -21,30 +21,33 @@ MCP server for the Zenskar API. 113 tools covering customers, contracts, invoice
 
 ## Prerequisites
 
-This MCP server runs on Node.js, so you need it installed before continuing.
+Before continuing, you need two things:
 
-### Check whether Node.js is already installed
+1. **Node.js 20.10 or newer** on your machine
+2. **Zenskar credentials** — your Organization ID and an API Key
 
-Open a terminal and run:
+### Node.js
+
+Check whether it's already installed. Open a terminal and run:
 
 ```bash
 node --version
 npm --version
 ```
 
-This project requires **Node.js 20.10 or newer**. If both commands print a version that meets this, you're set — skip to [Installation](#installation).
+This project requires **Node.js 20.10 or newer**. If both commands print a version that meets this, jump to [Zenskar credentials](#zenskar-credentials).
 
-If you see `command not found` or a version older than 20.10, install Node.js.
+If you see `command not found` or a version older than 20.10, download and install the **LTS** build from https://nodejs.org/en/download. `npm` (and `npx`) ship with Node.js — no separate install needed. After installing, open a **new** terminal window and re-run `node --version` to confirm.
 
-### Install Node.js
+### Zenskar credentials
 
-Download and install the **LTS** build from the official site:
+You need two values from your Zenskar dashboard. Grab both before moving to Installation.
 
-- https://nodejs.org/en/download
+**Organization ID** — open https://app.zenskar.com/settings (General tab) and copy your Organization ID.
 
-`npm` (and `npx`) are bundled with Node.js — no separate install needed.
+**API Key** — open https://app.zenskar.com/settings?tab=api-keys, click **Create new API key**, give it a name, and copy the key.
 
-After installing, open a **new** terminal window and re-run `node --version` and `npm --version` to confirm.
+> Store the API key somewhere safe — the dashboard only shows the full key once. If you lose it, you'll have to create a new one.
 
 ## Installation
 
@@ -60,7 +63,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
       "args": ["mcp-zenskar"],
       "env": {
         "ZENSKAR_ORGANIZATION": "your-org-id",
-        "ZENSKAR_AUTH_TOKEN": "your-bearer-token"
+        "ZENSKAR_API_KEY": "your-api-key"
       }
     }
   }
@@ -85,17 +88,18 @@ npx mcp-zenskar
 
 ## Authentication
 
-This MCP server requires two authentication parameters for every request:
+Every request needs:
 
-1. **Organization ID**: Your Zenskar organization identifier
-2. **Authorization Token**: Your API Bearer token or API key
+1. **Organization ID** — set via `ZENSKAR_ORGANIZATION`
+2. **API Key** — set via `ZENSKAR_API_KEY`
 
-### Getting Your Credentials
+See [Zenskar credentials](#zenskar-credentials) above for how to get both.
 
-1. **Organization ID**: Available in your Zenskar dashboard settings
-2. **API Token**: Generate from Zenskar dashboard → Settings → API Keys
+At runtime the server reads these env vars (or accepts them from the MCP client via tool invocation).
 
-At runtime the server looks for these values in the tool invocation first, then falls back to the `ZENSKAR_ORGANIZATION` and `ZENSKAR_AUTH_TOKEN` environment variables. Tokens that look like JWTs are sent as `Authorization: Bearer ...`; everything else is sent as an `x-api-key` header automatically.
+### Advanced: bearer tokens
+
+Same session token from your browser devtools is also accepted via `ZENSKAR_AUTH_TOKEN` (sent as `Authorization: Bearer ...`). Short-lived — API key is preferred for any non-throwaway use. Kept for backward compatibility, so existing configs that use `ZENSKAR_AUTH_TOKEN` continue to work unchanged.
 
 ## Usage
 
