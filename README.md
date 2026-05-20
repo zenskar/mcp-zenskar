@@ -1,6 +1,6 @@
 # Zenskar MCP Server
 
-MCP server for the Zenskar API. 103 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, and more.
+MCP server for the Zenskar API. 113 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, entitlements, billable metrics, and more.
 
 ## What it does
 
@@ -12,6 +12,8 @@ MCP server for the Zenskar API. 103 tools covering customers, contracts, invoice
 - Accounting: chart of accounts, journal entries and lines, balance sheet, income statement, account balances
 - Products: CRUD, pricing configurations
 - Plans: list, create, add products, preview estimates
+- Entitlements: list, get, create, update, delete
+- Billable metrics (aggregates): list, get, create, update, delete, schemas, estimates, logs
 - Business entities: list, get, create, update
 - Jobs: monitor async operations
 - Custom attributes and tax categories
@@ -275,6 +277,9 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getAggregateEstimates` | Get Billable Metric estimates; backend/API may also call these aggregates                                      |
 | `getAggregateById`      | Get a Billable Metric by ID; backend/API may also call it an aggregate                                         |
 | `getAggregateLogs`      | Get logs for a Billable Metric (Aggregate)                                                                     |
+| `createAggregate`       | Create a Billable Metric (Aggregate)                                                                           |
+| `updateAggregate`       | Update a Billable Metric (Aggregate)                                                                           |
+| `deleteAggregate`       | Delete a Billable Metric (Aggregate)                                                                           |
 | `listRawMetrics`        | List Usage Events with filtering; backend/API may also call these raw metrics                                  |
 | `createRawMetric`       | Create a Usage Event schema; backend/API calls this a raw metric                                               |
 | `getRawMetricById`      | Get a Usage Event by ID; backend/API may also call it a raw metric                                             |
@@ -282,11 +287,20 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getRawMetricBySlug`    | Get a Usage Event by API slug; backend/API may also call it a raw metric                                       |
 | `ingestRawMetricEvent`  | Ingest a usage event                                                                                           |
 
+### Entitlements
+
+| Tool                  | Description                                |
+| --------------------- | ------------------------------------------ |
+| `listEntitlements`    | List entitlements with filtering           |
+| `getEntitlementById`  | Get an entitlement by ID                   |
+| `createEntitlement`   | Create an entitlement                      |
+| `updateEntitlement`   | Update an entitlement                      |
+| `deleteEntitlement`   | Delete an entitlement                      |
+
 ### Other
 
 | Tool                             | Description                               |
 | -------------------------------- | ----------------------------------------- |
-| `createEntitlement`              | Create an entitlement                     |
 | `getCustomerPortalConfiguration` | Get customer portal config                |
 | `getCurrentDateTime`             | Get current date/time in multiple formats |
 
