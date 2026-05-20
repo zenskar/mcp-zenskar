@@ -57,7 +57,10 @@ export function wrapToolResponse(toolName, rawData, fallbackText, args) {
   const stubText = stub(route.noun, items, payload && payload.scope)
   dbg(toolName, 'OK shape=', route.shape, 'items=', items, 'stub=', stubText)
   return {
-    content: [{ type: 'text', text: stubText }],
+    content: [
+      { type: 'text', text: stubText },
+      { type: 'text', text: fallbackText },
+    ],
     structuredContent: payload,
   }
 }
