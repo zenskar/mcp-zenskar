@@ -9,19 +9,51 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org/
-          cache: npm
+          fetch-depth: 1
 
-      - run: npm ci
-      - run: npm run build
+      - name: Install pnpm
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+        with:
+          version: 11.1.2
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          registry-url: https://registry.npmjs.org/
+          node-version: 24.14.1
+
+      - name: Restore dependencies cache
+        id: deps_cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-deps-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        if: steps.deps_cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Save dependencies cache
+        if: steps.deps_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-deps-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Extract version from package.json
+        id: package-version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Pack and probe install
         run: |
-          npm pack
+          pnpm pack
           DIR=$(mktemp -d)
           cd "$DIR"
           npm init -y >/dev/null
@@ -34,9 +66,9 @@ jobs:
       - name: Publish to NPM
         run: |
           if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
-            npm publish --ignore-scripts --tag next
+            pnpm publish --ignore-scripts --no-git-checks --tag next
           else
-            npm publish --ignore-scripts
+            pnpm publish --ignore-scripts --no-git-checks
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -45,6 +77,17 @@ jobs:
         run: |
           TAG="latest"
           [[ "${{ github.event.release.prerelease }}" == "true" ]] && TAG="next"
-          VERSION=$(node -p "require('./package.json').version")
-          echo "## Published mcp-zenskar@$VERSION → $TAG" >> $GITHUB_STEP_SUMMARY
-          echo "Install: \`npx mcp-zenskar@$TAG\`" >> $GITHUB_STEP_SUMMARY
+          VERSION=${{ steps.package-version.outputs.version }}
+          echo "## 📦 Package Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package**: mcp-zenskar" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: $TAG" >> $GITHUB_STEP_SUMMARY
+          echo "- **Registry**: NPM (Public)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Install Command" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npx mcp-zenskar@$TAG" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 NPM Package" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View on NPM](https://www.npmjs.com/package/mcp-zenskar)" >> $GITHUB_STEP_SUMMARY
