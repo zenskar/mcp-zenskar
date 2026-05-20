@@ -17,6 +17,33 @@ MCP server for the Zenskar API. 103 tools covering customers, contracts, invoice
 - Custom attributes and tax categories
 - Multi-tenant, supports Bearer token and API key auth
 
+## Prerequisites
+
+This server runs on **Node.js**, which must be installed before you configure the
+MCP server in Claude Desktop or any other client.
+
+**1. Check whether Node.js is already installed.** Open a terminal and run:
+
+```bash
+node --version
+```
+
+- If a version number prints (e.g. `v20.11.0`), Node.js is installed. Confirm it is
+  **20.10.0 or later** — the server requires this minimum.
+- If you see `command not found`, or a version below 20.10.0, install or update
+  Node.js in the next step.
+
+**2. Install Node.js (if needed).** Download and install the LTS build from the
+official site:
+
+→ https://nodejs.org/en/download
+
+After installing, close and reopen your terminal, then run `node --version` again
+to confirm.
+
+> Node.js includes `npm` and `npx`, which every install method below depends on.
+> No separate setup is required.
+
 ## Installation
 
 ### For Claude Desktop App
@@ -31,7 +58,7 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
       "args": ["mcp-zenskar"],
       "env": {
         "ZENSKAR_ORGANIZATION": "your-org-id",
-        "ZENSKAR_AUTH_TOKEN": "your-bearer-token"
+        "ZENSKAR_AUTH_TOKEN": "your-api-token"
       }
     }
   }
@@ -58,8 +85,8 @@ npx mcp-zenskar
 
 This MCP server requires two authentication parameters for every request:
 
-1. **Organization ID**: Your Zenskar organization identifier
-2. **Authorization Token**: Your API Bearer token or API key
+1. **Organization ID** (`ZENSKAR_ORGANIZATION`): Your Zenskar organization identifier
+2. **API Token** (`ZENSKAR_AUTH_TOKEN`): Your Zenskar API key
 
 ### Getting Your Credentials
 
@@ -307,7 +334,7 @@ Then either point Claude to the globally-installed binary (usually `$(npm bin -g
   "args": ["/absolute/path/to/mcp-zenskar/dist/server.mjs"],
   "env": {
     "ZENSKAR_ORGANIZATION": "your-org-id",
-    "ZENSKAR_AUTH_TOKEN": "your-token"
+    "ZENSKAR_AUTH_TOKEN": "your-api-token"
   }
 }
 ```
