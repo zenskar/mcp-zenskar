@@ -31,26 +31,12 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
       "args": ["mcp-zenskar"],
       "env": {
         "ZENSKAR_ORGANIZATION": "your-org-id",
-        "ZENSKAR_AUTH_TOKEN": "your-bearer-token",
-        "ZENSKAR_MCP_UI_ENABLED": "true"
+        "ZENSKAR_AUTH_TOKEN": "your-bearer-token"
       }
     }
   }
 }
 ```
-
-### MCP UI (mcp-ui / SEP-1865 MCP Apps)
-
-Selected tools return both a rich `ui://` resource (rendered by Claude.ai web/desktop, ChatGPT app, Postman) and a compact text fallback (used by Cursor, Cline, generic CLIs). UI is **opt-in** per-user via env.
-
-| Env var                         | Default | Purpose                                                                  |
-| ------------------------------- | ------- | ------------------------------------------------------------------------ |
-| `ZENSKAR_MCP_UI_ENABLED`        | `false` | Master switch. `true` enables rich UI for whitelisted tools.             |
-| `ZENSKAR_MCP_UI_DISABLED_TOOLS` | empty   | Comma-separated tool names to force text-only despite the master switch. |
-
-When disabled the server returns plain `content[].text` exactly as before — zero behavior change for users who don't opt in.
-
-UI-eligible tools (v2.0): `listCustomers` (more shapes shipping per follow-up PR).
 
 > You can omit one or both environment variables from the config, but the server will error until Claude supplies them in a tool call. Keeping them in the env block prevents repeated credential prompts.
 
@@ -285,21 +271,19 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 
 ## Development
 
-This repo uses **pnpm** for dev/CI (Corepack auto-activates the pinned version via the `packageManager` field). End-users install via `npm`/`npx` as documented above — the published tarball is self-contained.
-
 ```bash
 # Clone the repository
 git clone https://github.com/zenskar/mcp-zenskar
 cd mcp-zenskar
 
-# Install pnpm if missing, then install dependencies
-./setup-pnpm.sh
+# Install dependencies
+npm install
 
 # Build the bundle (produces dist/server.mjs + dist/mcp-config.json)
-pnpm run build
+npm run build
 
 # Run the server
-pnpm start
+npm start
 ```
 
 ### Developing Locally Without Publishing
@@ -308,8 +292,8 @@ If you want Claude Desktop to use a local checkout instead of the npm package:
 
 ```bash
 # Install dependencies + build the bundle
-pnpm install
-pnpm run build
+npm install
+npm run build
 
 # Optional: install the local build globally (requires dist/ from the previous step)
 npm install -g .
@@ -328,7 +312,7 @@ Then either point Claude to the globally-installed binary (usually `$(npm bin -g
 }
 ```
 
-To iterate on `src/server.js` without rebuilding, run it directly — `pnpm install` already installs the bundler's devDependencies which include the runtime libs:
+To iterate on `src/server.js` without rebuilding, run it directly — `npm install` already installs the bundler's devDependencies which include the runtime libs:
 
 ```json
 {
@@ -340,35 +324,6 @@ To iterate on `src/server.js` without rebuilding, run it directly — `pnpm inst
 ## Configuration
 
 The server uses `src/mcp-config.json` to define available tools and API endpoints. This file contains the complete mapping of MCP tools to Zenskar API operations. All tools are declarative — no code changes needed to add new tools.
-
-## UI development workflow
-
-Stack: Vite 8, React 19, Tailwind CSS v4, TypeScript. Bundles are pre-built to `dist/ui/<shape>.html` (single self-contained HTML, no external fetches → CSP-safe). Server inlines brand vars + `__DATA__` per call.
-
-```bash
-pnpm install        # one-time
-
-pnpm run dev:ui     # Vite preview at http://localhost:5173 — mock host with width slider, fixture data, postMessage echo to console
-pnpm run build:ui   # Vite lib build + postbuild flatten → dist/ui/<shape>.html
-pnpm run smoke      # Asserts wire-format invariants (stub ≤200 chars, brand inlined, no external CSS, etc.)
-pnpm test           # alias for smoke
-```
-
-Three-layer test loop:
-
-1. **Visual iteration** — `pnpm run dev:ui` renders shapes outside an iframe with mocked host CSS vars. Sub-second hot reload.
-2. **Wire format** — `npx @modelcontextprotocol/inspector node src/server.js` renders `ui://` in a real iframe with postMessage. Catches stub leaks, CSP violations.
-3. **Real host** — point Claude Desktop at local `node src/server.js` via `claude_desktop_config.json` and toggle `ZENSKAR_MCP_UI_ENABLED=true`.
-
-Adding a new shape:
-
-1. `src/ui/components/<Name>Table.tsx` (React + Tailwind, info-dense table)
-2. `src/ui/shapes/<name>.tsx` (entry: theme.css + Shell + component)
-3. `src/ui/shapes/<name>.html` (placeholders: `<!--__BRAND__-->`, `/*__DATA__*/null`)
-4. `src/ui/fixtures/<name>.ts` (sample data for dev preview)
-5. Add `<name>` to `SHAPES` array in `vite.config.ts`
-6. Add tool → shape mapping in `src/ui/server/registry.js`
-7. Re-run `pnpm run build:ui && pnpm run smoke`
 
 ## License
 
