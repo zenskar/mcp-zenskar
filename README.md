@@ -17,6 +17,33 @@ MCP server for the Zenskar API. 103 tools covering customers, contracts, invoice
 - Custom attributes and tax categories
 - Multi-tenant, supports Bearer token and API key auth
 
+## Prerequisites
+
+This MCP server runs on Node.js, so you need it installed before continuing.
+
+### Check whether Node.js is already installed
+
+Open a terminal and run:
+
+```bash
+node --version
+npm --version
+```
+
+If both commands print a version number (Node.js 18 or newer is recommended), you're set — skip to [Installation](#installation).
+
+If you see `command not found` or a version older than 18, install Node.js.
+
+### Install Node.js
+
+Download and install the **LTS** build from the official site:
+
+- https://nodejs.org/en/download
+
+`npm` (and `npx`) are bundled with Node.js — no separate install needed.
+
+After installing, open a **new** terminal window and re-run `node --version` and `npm --version` to confirm.
+
 ## Installation
 
 ### For Claude Desktop App
@@ -271,19 +298,21 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 
 ## Development
 
+This repo uses [pnpm](https://pnpm.io) for package management. If you don't have it, install it once with `npm install -g pnpm` (or `corepack enable && corepack prepare pnpm@latest --activate`).
+
 ```bash
 # Clone the repository
 git clone https://github.com/zenskar/mcp-zenskar
 cd mcp-zenskar
 
 # Install dependencies
-npm install
+pnpm install
 
 # Build the bundle (produces dist/server.mjs + dist/mcp-config.json)
-npm run build
+pnpm run build
 
 # Run the server
-npm start
+pnpm start
 ```
 
 ### Developing Locally Without Publishing
@@ -292,8 +321,8 @@ If you want Claude Desktop to use a local checkout instead of the npm package:
 
 ```bash
 # Install dependencies + build the bundle
-npm install
-npm run build
+pnpm install
+pnpm run build
 
 # Optional: install the local build globally (requires dist/ from the previous step)
 npm install -g .
