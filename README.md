@@ -289,13 +289,13 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 
 ### Entitlements
 
-| Tool                  | Description                                |
-| --------------------- | ------------------------------------------ |
-| `listEntitlements`    | List entitlements with filtering           |
-| `getEntitlementById`  | Get an entitlement by ID                   |
-| `createEntitlement`   | Create an entitlement                      |
-| `updateEntitlement`   | Update an entitlement                      |
-| `deleteEntitlement`   | Delete an entitlement                      |
+| Tool                 | Description                      |
+| -------------------- | -------------------------------- |
+| `listEntitlements`   | List entitlements with filtering |
+| `getEntitlementById` | Get an entitlement by ID         |
+| `createEntitlement`  | Create an entitlement            |
+| `updateEntitlement`  | Update an entitlement            |
+| `deleteEntitlement`  | Delete an entitlement            |
 
 ### Other
 
