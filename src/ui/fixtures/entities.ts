@@ -6,15 +6,15 @@ export const entityFixture: EntityTablePayload = {
   entities: [
     {
       id: 'be_001',
-      name: 'Zenskar Inc.',
-      email: 'billing@zenskar.com',
+      name: 'Acme Inc.',
+      email: 'billing@acme.example',
       phone_number: '+14155550100',
       country: 'United States',
       is_default: true,
     },
     {
       id: 'be_002',
-      name: 'Zenskar EU B.V.',
+      name: 'Acme EU B.V.',
       email: null,
       phone_number: null,
       country: 'Netherlands',
@@ -22,7 +22,7 @@ export const entityFixture: EntityTablePayload = {
     },
     {
       id: 'be_003',
-      name: 'Zenskar India Pvt Ltd',
+      name: 'Acme India Pvt Ltd',
       email: null,
       phone_number: '+911234567890',
       country: 'India',
@@ -30,7 +30,7 @@ export const entityFixture: EntityTablePayload = {
     },
     {
       id: 'be_004',
-      name: 'Zenskar Sandbox',
+      name: 'Acme Sandbox',
       email: null,
       phone_number: null,
       country: 'United States',

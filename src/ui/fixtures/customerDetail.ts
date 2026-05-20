@@ -2,14 +2,14 @@ import type { CustomerDetailPayload } from '../types'
 
 export const customerDetailFixture: CustomerDetailPayload = {
   customer: {
-    id: 'b6c6d543-63c8-49d9-96a9-005fb8511b26',
+    id: '00000000-0000-0000-0000-000000000000',
     name: 'ACME Corp',
     external_id: 'ACME-100',
     email: 'billing@acme.example',
     created_at: '2024-11-02T08:00:00Z',
     phone: '+1 415 555 0101',
-    business_entity_id: '2861f0d0-5553-4da7-bc01-a74b9ac749ea',
-    business_entity_name: 'Zenskar Inc.',
+    business_entity_id: '00000000-0000-0000-0000-000000000000',
+    business_entity_name: 'Acme Inc.',
     address: {
       line1: '500 Market St',
       city: 'San Francisco',
@@ -33,14 +33,14 @@ export const customerDetailFixture: CustomerDetailPayload = {
     tax_info: [{ country_code: 'USA', tax_code: 'TIN', tax_id: '545754' }],
     contacts: [
       {
-        name: 'Shreyansh Tripathy',
-        email: 'shreyansh@zenskar.com',
+        name: 'Sam Carter',
+        email: 'sam@acme.example',
         send_invoice: false,
         send_contract: false,
       },
       {
-        name: 'Ishpreet Vashist',
-        email: 'ishpreet@zenskar.com',
+        name: 'Priya Rao',
+        email: 'priya@acme.example',
         send_invoice: true,
         send_contract: false,
       },

@@ -18,7 +18,7 @@ export const contractDetailFixture: ContractDetailPayload = {
     customer_name: 'ACME Corp',
     contract_type: 'subscription',
     tags: ['enterprise', 'multi-year', 'NA'],
-    contract_link: 'https://app.zenskar.com/contracts/ctr_001',
+    contract_link: 'https://app.example.com/contracts/ctr_001',
   },
   phases: [
     {

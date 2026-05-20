@@ -7,9 +7,9 @@ export const invoiceFixture: InvoiceTablePayload = {
   default_currency: 'USD',
   invoices: [
     {
-      id: '5c7c6311-19d7-440a-9990-c849b1ec12ee',
+      id: '00000000-0000-0000-0000-000000000000',
       invoice_number: 'def4e-DRAFT',
-      customer_id: 'def4e67d-f02c-4548-abc8-c14c45bce3b5',
+      customer_id: '00000000-0000-0000-0000-000000000000',
       status: 'draft',
       invoice_total: 100,
       amount_due: 100,
@@ -21,9 +21,9 @@ export const invoiceFixture: InvoiceTablePayload = {
       payment_url: null,
     },
     {
-      id: '7ac4c15e-1070-4378-a291-9b3d38e4561b',
+      id: '00000000-0000-0000-0000-000000000000',
       invoice_number: 'INV-7AC4',
-      customer_id: 'b2c1d9e0-1a2b-3c4d-5e6f-7a8b9c0d1e2f',
+      customer_id: '00000000-0000-0000-0000-000000000000',
       status: 'approved',
       invoice_total: -500,
       amount_due: -500,
@@ -35,7 +35,7 @@ export const invoiceFixture: InvoiceTablePayload = {
       payment_url: null,
     },
     {
-      id: '11111111-2222-3333-4444-555555555555',
+      id: '00000000-0000-0000-0000-000000000000',
       invoice_number: 'INV-OVERDUE',
       customer_id: 'cust-globex-44',
       status: 'approved',
@@ -49,7 +49,7 @@ export const invoiceFixture: InvoiceTablePayload = {
       payment_url: null,
     },
     {
-      id: '22222222-3333-4444-5555-666666666666',
+      id: '00000000-0000-0000-0000-000000000000',
       invoice_number: 'INV-PAID',
       customer_id: 'cust-acme-100',
       status: 'paid',
@@ -63,7 +63,7 @@ export const invoiceFixture: InvoiceTablePayload = {
       payment_url: null,
     },
     {
-      id: '33333333-4444-5555-6666-777777777777',
+      id: '00000000-0000-0000-0000-000000000000',
       invoice_number: 'INV-VOID',
       customer_id: 'cust-hooli-7',
       status: 'void',
@@ -80,7 +80,7 @@ export const invoiceFixture: InvoiceTablePayload = {
 }
 
 export const lineItemsFixture: InvoiceLineItemsPayload = {
-  invoice_id: '7ac4c15e-1070-4378-a291-9b3d38e4561b',
+  invoice_id: '00000000-0000-0000-0000-000000000000',
   total: -500,
   currency: 'USD',
   lines: [

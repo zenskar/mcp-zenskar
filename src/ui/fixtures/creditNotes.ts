@@ -10,7 +10,7 @@ export const creditNoteFixture: CreditNoteTablePayload = {
       id: 'cn_001',
       credit_note_number: 'CN-2026-001',
       customer_id: 'c_001',
-      invoice_id: '22222222-3333-4444-5555-666666666666',
+      invoice_id: '00000000-0000-0000-0000-000000000000',
       status: 'issued',
       amount: 500,
       currency: 'USD',
