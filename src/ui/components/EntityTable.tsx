@@ -1,39 +1,12 @@
-import { useMemo, useState } from 'react'
-
 import type { EntityRow, EntityTablePayload } from '../types'
-import {
-  type ColumnDef,
-  DataTable,
-  type SortDir,
-  ViewButton,
-  sortByKey,
-} from './DataTable'
+import { type ColumnDef, DataTable, ViewButton } from './DataTable'
 import { Dim } from './format'
 
-type SortKey = 'name'
-
 export function EntityTable({ payload }: { payload: EntityTablePayload }) {
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
-
-  const rows = useMemo(
-    () => sortByKey(payload.entities, (r) => r.name, sortDir),
-    [payload.entities, sortKey, sortDir]
-  )
-
-  const onSort = (k: string) => {
-    if (k === sortKey) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    else {
-      setSortKey(k as SortKey)
-      setSortDir('asc')
-    }
-  }
-
   const columns: ColumnDef<EntityRow>[] = [
     {
       key: 'name',
       header: 'Name',
-      sortable: true,
       className: 'font-medium',
       render: (r) => r.name || <Dim>—</Dim>,
     },
@@ -76,10 +49,7 @@ export function EntityTable({ payload }: { payload: EntityTablePayload }) {
       title="Business Entities"
       count={payload.total}
       columns={columns}
-      rows={rows}
-      sortKey={sortKey}
-      sortDir={sortDir}
-      onSort={onSort}
+      rows={payload.entities}
       emptyMessage="No business entities to show."
       rightHint={null}
       rowKey={(r, i) => r.id || i}

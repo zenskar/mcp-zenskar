@@ -6,7 +6,6 @@ import {
   fmtDate,
   fmtDateTime,
   fmtMoney,
-  shortId,
   StatusPill,
 } from './format'
 
@@ -75,14 +74,14 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <div>
               <div className="text-sm">{i.customer_name}</div>
               {i.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[11px]">
-                  {shortId(i.customer_id, 12)}
+                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                  {i.customer_id}
                 </div>
               ) : null}
             </div>
           ) : i.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(i.customer_id, 14)}
+            <span className="text-secondary font-mono text-xs break-all">
+              {i.customer_id}
             </span>
           ) : (
             <Dim>—</Dim>
@@ -90,8 +89,8 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
         </Field>
         <Field label="Business Entity">
           {i.business_entity_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(i.business_entity_id, 14)}
+            <span className="text-secondary font-mono text-xs break-all">
+              {i.business_entity_id}
             </span>
           ) : (
             <Dim>—</Dim>
@@ -102,14 +101,14 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
             <div>
               <div className="text-sm">{i.contract_name}</div>
               {i.contract_id ? (
-                <div className="text-muted-foreground font-mono text-[11px]">
-                  {shortId(i.contract_id, 12)}
+                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                  {i.contract_id}
                 </div>
               ) : null}
             </div>
           ) : i.contract_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(i.contract_id, 14)}
+            <span className="text-secondary font-mono text-xs break-all">
+              {i.contract_id}
             </span>
           ) : (
             <Dim>—</Dim>

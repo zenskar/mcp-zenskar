@@ -144,7 +144,7 @@ export function StatusPill({ status }: { status: string | null | undefined }) {
   const cls = STATUS_COLOR_MAP[status.toLowerCase()] || STATUS_PILL_FALLBACK
   const label = formatStatus(status)
   return (
-    <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${cls}`}>
+    <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-xs ${cls}`}>
       {label}
     </span>
   )

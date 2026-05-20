@@ -1,6 +1,6 @@
 import type { InvoiceLineItemsPayload, LineItem } from '../types'
 import { type ColumnDef, DataTable } from './DataTable'
-import { Dim, fmtDate, fmtMoney, fmtMoneyObj, shortId } from './format'
+import { Dim, fmtDate, fmtMoney, fmtMoneyObj } from './format'
 
 export function InvoiceLineItems({
   payload,
@@ -17,9 +17,9 @@ export function InvoiceLineItems({
         ({lines.length})
       </span>
       {payload.invoice_id ? (
-        <span className="text-secondary font-mono text-xs">
+        <span className="text-secondary font-mono text-xs break-all">
           {' '}
-          · {shortId(payload.invoice_id, 12)}
+          · {payload.invoice_id}
         </span>
       ) : null}
     </>

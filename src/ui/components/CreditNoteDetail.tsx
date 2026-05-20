@@ -1,6 +1,6 @@
 import type { CreditNoteDetailPayload } from '../types'
 import { Field, Section, Stat } from './DetailScaffold'
-import { Dim, fmtDate, fmtMoney, shortId, StatusPill } from './format'
+import { Dim, fmtDate, fmtMoney, StatusPill } from './format'
 
 export function CreditNoteDetail({
   payload,
@@ -49,14 +49,14 @@ export function CreditNoteDetail({
             <div>
               <div className="text-sm">{cn.customer_name}</div>
               {cn.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[11px]">
-                  {shortId(cn.customer_id, 12)}
+                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                  {cn.customer_id}
                 </div>
               ) : null}
             </div>
           ) : cn.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(cn.customer_id, 14)}
+            <span className="text-secondary font-mono text-xs break-all">
+              {cn.customer_id}
             </span>
           ) : (
             <Dim>—</Dim>
@@ -67,14 +67,14 @@ export function CreditNoteDetail({
             <div>
               <div className="font-mono text-sm">{cn.invoice_number}</div>
               {cn.invoice_id ? (
-                <div className="text-muted-foreground font-mono text-[11px]">
-                  {shortId(cn.invoice_id, 12)}
+                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                  {cn.invoice_id}
                 </div>
               ) : null}
             </div>
           ) : cn.invoice_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(cn.invoice_id, 14)}
+            <span className="text-secondary font-mono text-xs break-all">
+              {cn.invoice_id}
             </span>
           ) : (
             <Dim>—</Dim>
@@ -97,19 +97,6 @@ export function CreditNoteDetail({
               </div>
             ))}
           </div>
-        </Section>
-      ) : null}
-
-      {cn.line_items_url ? (
-        <Section title="Line Items">
-          <a
-            href={cn.line_items_url}
-            target="_blank"
-            rel="noreferrer"
-            className="text-secondary text-xs break-all underline"
-          >
-            {cn.line_items_url}
-          </a>
         </Section>
       ) : null}
     </div>

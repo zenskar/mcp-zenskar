@@ -1,6 +1,6 @@
 import type { CustomerDetailPayload } from '../types'
 import { Field, Section } from './DetailScaffold'
-import { Dim, fmtDate, shortId } from './format'
+import { Dim, fmtDate } from './format'
 
 export function CustomerDetail({
   payload,
@@ -60,14 +60,14 @@ export function CustomerDetail({
             <div>
               <div>{c.business_entity_name}</div>
               {c.business_entity_id ? (
-                <div className="text-muted-foreground font-mono text-[11px]">
-                  {shortId(c.business_entity_id, 12)}
+                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                  {c.business_entity_id}
                 </div>
               ) : null}
             </div>
           ) : c.business_entity_id ? (
-            <span className="text-secondary font-mono text-xs">
-              {shortId(c.business_entity_id, 12)}
+            <span className="text-secondary font-mono text-xs break-all">
+              {c.business_entity_id}
             </span>
           ) : (
             <Dim>—</Dim>

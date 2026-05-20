@@ -1,5 +1,5 @@
 import type { PaymentMethodListPayload, PaymentMethodRow } from '../types'
-import { Dim, fmtDate, shortId } from './format'
+import { Dim, fmtDate } from './format'
 
 export function PaymentMethodList({
   payload,
@@ -16,9 +16,9 @@ export function PaymentMethodList({
             ({list.length})
           </span>
           {payload.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
+            <span className="text-secondary font-mono text-xs break-all">
               {' '}
-              · {shortId(payload.customer_id, 12)}
+              · {payload.customer_id}
             </span>
           ) : null}
         </h2>

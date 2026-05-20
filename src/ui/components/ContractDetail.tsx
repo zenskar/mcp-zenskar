@@ -1,6 +1,6 @@
 import type { ContractDetailPayload, ContractPhase } from '../types'
 import { Field, Section } from './DetailScaffold'
-import { Dim, fmtDate, shortId, StatusPill } from './format'
+import { Dim, fmtDate, StatusPill } from './format'
 
 export function ContractDetail({
   payload,
@@ -43,11 +43,11 @@ export function ContractDetail({
             <div>
               <div className="text-sm">{c.customer_name}</div>
               {c.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[11px]">{shortId(c.customer_id, 12)}</div>
+                <div className="text-muted-foreground font-mono text-[11px] break-all">{c.customer_id}</div>
               ) : null}
             </div>
           ) : c.customer_id ? (
-            <span className="text-secondary font-mono text-xs">{shortId(c.customer_id, 14)}</span>
+            <span className="text-secondary font-mono text-xs break-all">{c.customer_id}</span>
           ) : (
             <Dim>—</Dim>
           )}
@@ -73,7 +73,7 @@ export function ContractDetail({
         <Field label="Renewal Policy">{c.renewal_policy || <Dim>—</Dim>}</Field>
         <Field label="Plan">
           {c.plan_id ? (
-            <span className="text-secondary font-mono text-xs">{shortId(c.plan_id, 14)}</span>
+            <span className="text-secondary font-mono text-xs break-all">{c.plan_id}</span>
           ) : (
             <Dim>—</Dim>
           )}

@@ -1,5 +1,5 @@
 import type { AddressListPayload, AddressRow } from '../types'
-import { Dim, shortId } from './format'
+import { Dim } from './format'
 
 export function AddressList({ payload }: { payload: AddressListPayload }) {
   const list = payload.addresses || []
@@ -12,9 +12,9 @@ export function AddressList({ payload }: { payload: AddressListPayload }) {
             ({list.length})
           </span>
           {payload.customer_id ? (
-            <span className="text-secondary font-mono text-xs">
+            <span className="text-secondary font-mono text-xs break-all">
               {' '}
-              · {shortId(payload.customer_id, 12)}
+              · {payload.customer_id}
             </span>
           ) : null}
         </h2>

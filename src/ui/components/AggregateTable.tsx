@@ -8,7 +8,7 @@ import {
   ViewButton,
   sortByKey,
 } from './DataTable'
-import { Dim, fmtDate, shortId } from './format'
+import { Dim, fmtDate } from './format'
 
 type SortKey = 'name' | 'created_at'
 
@@ -45,12 +45,6 @@ export function AggregateTable({
       sortable: true,
       className: 'font-medium',
       render: (r) => r.name || <Dim>—</Dim>,
-    },
-    {
-      key: 'datasource',
-      header: 'Datasource',
-      className: 'text-muted-foreground font-mono text-xs',
-      render: (r) => shortId(r.datasource, 12),
     },
     {
       key: 'created_at',

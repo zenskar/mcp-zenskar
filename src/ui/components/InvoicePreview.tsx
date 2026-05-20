@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import type { InvoicePreviewPayload } from '../types'
-import { Dim, shortId } from './format'
+import { Dim } from './format'
 
 export function InvoicePreview({
   payload,
@@ -37,8 +37,8 @@ export function InvoicePreview({
       {payload.invoice_id ? (
         <header className="flex items-baseline gap-2">
           <h2 className="m-0 text-lg font-semibold">Invoice Preview</h2>
-          <span className="text-secondary font-mono text-xs">
-            {shortId(payload.invoice_id, 12)}
+          <span className="text-secondary font-mono text-xs break-all">
+            {payload.invoice_id}
           </span>
         </header>
       ) : null}
