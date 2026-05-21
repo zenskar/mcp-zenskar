@@ -656,7 +656,7 @@ function normalizeMatrix(pd) {
   return pd.prices.map((price, i) => ({
     dimension: pd.dimensions[i]?.name ?? null,
     display_alias: Array.isArray(pd.display_alias)
-      ? pd.display_alias[i] ?? null
+      ? (pd.display_alias[i] ?? null)
       : null,
     price: typeof price === 'number' ? price : null,
   }))
@@ -685,8 +685,7 @@ function normalizePhasePricing(pr) {
     quantity_type: qty.type ?? null,
     quantity_value: qty.quantity ?? null,
     quantity_unit: qty.unit ?? null,
-    meter_name:
-      qty.aggregate?.name ?? qty.aggregate_name ?? null,
+    meter_name: qty.aggregate?.name ?? qty.aggregate_name ?? null,
     billing_cadence: bp.cadence ?? null,
     billing_timing: pr.billing_timing ?? pricingObj.billing_timing ?? null,
     is_recurring:

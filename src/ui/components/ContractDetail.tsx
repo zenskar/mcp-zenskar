@@ -21,8 +21,8 @@ export function ContractDetail({
     <div className="space-y-4">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="m-0 flex items-center gap-2 text-lg font-semibold">
-            {c.name || <Dim>—</Dim>}
+          <h2 className="m-0 flex min-w-0 items-center gap-2 text-lg font-semibold">
+            <span className="min-w-0 truncate">{c.name || <Dim>—</Dim>}</span>
             {c.status ? <StatusPill status={c.status} /> : null}
           </h2>
           <div className="text-secondary mt-0.5 font-mono text-xs">{c.id}</div>
@@ -45,7 +45,7 @@ export function ContractDetail({
         <Field label="Customer">
           {c.customer_name ? (
             <div>
-              <div className="text-sm">{c.customer_name}</div>
+              <div className="truncate text-sm">{c.customer_name}</div>
               {c.customer_id ? (
                 <div className="text-muted-foreground font-mono text-xs break-all">
                   {c.customer_id}
@@ -128,7 +128,7 @@ export function ContractDetail({
             {Object.entries(c.custom_attributes).map(([k, v]) => (
               <div key={k} className="border-border rounded border px-2 py-1">
                 <div className="text-muted-foreground">{k}</div>
-                <div className="font-mono">
+                <div className="line-clamp-2 break-all font-mono">
                   {typeof v === 'object' ? JSON.stringify(v) : String(v ?? '')}
                 </div>
               </div>
@@ -157,9 +157,11 @@ function PhaseRow({
   return (
     <div className={`border-border rounded-md border p-3 ${ringCls}`}>
       <div className="flex items-baseline justify-between gap-2">
-        <div className="text-sm font-medium">
+        <div className="min-w-0 text-sm font-medium">
           <span className="text-muted-foreground mr-2">#{index + 1}</span>
-          {phase.name || <Dim>Untitled phase</Dim>}
+          <span className="wrap-break-word">
+            {phase.name || <Dim>Untitled phase</Dim>}
+          </span>
           {isCurrent ? (
             <span className="bg-secondary/20 text-secondary ring-secondary/30 ml-2 rounded-full px-2 py-0.5 text-xs ring-1">
               current
@@ -181,9 +183,7 @@ function PhaseRow({
         <div className="mt-1 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
           <div>
             <span className="text-muted-foreground">Products:</span>{' '}
-            <span className="tabular-nums">
-              {phase.product_count ?? '—'}
-            </span>
+            <span className="tabular-nums">{phase.product_count ?? '—'}</span>
           </div>
           {phase.pricing_summary ? (
             <div className="text-muted-foreground col-span-full sm:col-span-2">
@@ -212,9 +212,10 @@ function fmtCadence(iso: string): string {
 }
 
 function fmtPrice(
-  amount: number | null | undefined,
+  amount: number | number[] | null | undefined,
   currency?: string | null
 ): string {
+  if (Array.isArray(amount)) return '—'
   if (amount == null || !Number.isFinite(amount)) return '—'
   try {
     return new Intl.NumberFormat(undefined, {
@@ -237,8 +238,8 @@ function PricingCard({ p }: { p: PhasePricing }) {
       <div className="flex w-full flex-col gap-2.5">
         {/* Header: product name + type badge */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 truncate text-sm font-medium">
               {p.product_name || <Dim>Unnamed product</Dim>}
             </span>
             {p.product_type ? (
@@ -251,7 +252,7 @@ function PricingCard({ p }: { p: PhasePricing }) {
 
         {/* Description */}
         {p.description ? (
-          <div className="text-muted-foreground text-xs leading-relaxed">
+          <div className="text-muted-foreground line-clamp-3 text-xs leading-relaxed">
             {p.description}
           </div>
         ) : null}
@@ -277,7 +278,9 @@ function PricingCard({ p }: { p: PhasePricing }) {
                   {p.quantity_unit ? ` ${p.quantity_unit}` : ''}
                 </span>
               ) : p.quantity_type === 'metered' ? (
-                <span>{p.meter_name || <Dim>No metric</Dim>}</span>
+                <span className="truncate">
+                  {p.meter_name || <Dim>No metric</Dim>}
+                </span>
               ) : (
                 <Dim>—</Dim>
               )}
@@ -327,9 +330,7 @@ function LabelValue({
 
 function pricingModelLabel(model?: string | null): string {
   if (!model) return 'Unknown'
-  return model
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return model.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 // ── Price display per pricing type ──
@@ -415,7 +416,9 @@ function PriceDisplay({ p }: { p: PhasePricing }) {
           {p.unit_amount != null ? (
             <div className="text-muted-foreground mt-1.5 text-xs">
               Default price:{' '}
-              <span className="font-semibold">{fmtPrice(p.unit_amount, cur)}</span>
+              <span className="font-semibold">
+                {fmtPrice(p.unit_amount, cur)}
+              </span>
             </div>
           ) : null}
         </div>
@@ -454,40 +457,48 @@ function TierTable({
   if (!tiers || tiers.length === 0)
     return <span className="text-muted-foreground text-xs">No tiers</span>
   return (
-    <div className="overflow-x-auto">
-    <table className="w-full text-xs">
-      <caption className="sr-only">Pricing tiers</caption>
-      <thead>
-        <tr className="text-muted-foreground border-border border-b text-left">
-          <th scope="col" className="py-0.5 pr-2 font-medium">Min</th>
-          <th scope="col" className="py-0.5 pr-2 font-medium">Max</th>
-          <th scope="col" className="py-0.5 pr-2 text-right font-medium">Unit Price</th>
-          {showFlatFee ? (
-            <th scope="col" className="py-0.5 text-right font-medium">Flat Fee</th>
-          ) : null}
-        </tr>
-      </thead>
-      <tbody>
-        {tiers.map((t, i) => (
-          <tr key={i} className="border-border/50 border-b last:border-0">
-            <td className="py-0.5 pr-2 tabular-nums">
-              {t.min_quantity ?? 0}
-            </td>
-            <td className="py-0.5 pr-2 tabular-nums">
-              {t.max_quantity ?? '∞'}
-            </td>
-            <td className="py-0.5 pr-2 text-right tabular-nums">
-              {fmtPrice(t.unit_amount, currency)}
-            </td>
+    <div className="max-h-48 overflow-auto">
+      <table className="w-full text-xs">
+        <caption className="sr-only">Pricing tiers</caption>
+        <thead>
+          <tr className="text-muted-foreground border-border border-b text-left">
+            <th scope="col" className="py-0.5 pr-2 font-medium">
+              Min
+            </th>
+            <th scope="col" className="py-0.5 pr-2 font-medium">
+              Max
+            </th>
+            <th scope="col" className="py-0.5 pr-2 text-right font-medium">
+              Unit Price
+            </th>
             {showFlatFee ? (
-              <td className="py-0.5 text-right tabular-nums">
-                {t.flat_fee != null ? fmtPrice(t.flat_fee, currency) : '—'}
-              </td>
+              <th scope="col" className="py-0.5 text-right font-medium">
+                Flat Fee
+              </th>
             ) : null}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {tiers.map((t, i) => (
+            <tr key={i} className="border-border/50 border-b last:border-0">
+              <td className="py-0.5 pr-2 tabular-nums">
+                {t.min_quantity ?? 0}
+              </td>
+              <td className="py-0.5 pr-2 tabular-nums">
+                {t.max_quantity ?? '∞'}
+              </td>
+              <td className="py-0.5 pr-2 text-right tabular-nums">
+                {fmtPrice(t.unit_amount, currency)}
+              </td>
+              {showFlatFee ? (
+                <td className="py-0.5 text-right tabular-nums">
+                  {t.flat_fee != null ? fmtPrice(t.flat_fee, currency) : '—'}
+                </td>
+              ) : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -508,28 +519,34 @@ function MatrixTable({
       </span>
     )
   return (
-    <div className="overflow-x-auto">
-    <table className="w-full text-xs">
-      <caption className="sr-only">Matrix pricing dimensions</caption>
-      <thead>
-        <tr className="text-muted-foreground border-border border-b text-left">
-          <th scope="col" className="py-0.5 pr-2 font-medium">Dimension</th>
-          <th scope="col" className="py-0.5 pr-2 font-medium">Alias</th>
-          <th scope="col" className="py-0.5 text-right font-medium">Price</th>
-        </tr>
-      </thead>
-      <tbody>
-        {matrix.map((r, i) => (
-          <tr key={i} className="border-border/50 border-b last:border-0">
-            <td className="py-0.5 pr-2">{r.dimension ?? '—'}</td>
-            <td className="py-0.5 pr-2">{r.display_alias ?? '—'}</td>
-            <td className="py-0.5 text-right tabular-nums">
-              {fmtPrice(r.price, currency)}
-            </td>
+    <div className="max-h-48 overflow-auto">
+      <table className="w-full text-xs">
+        <caption className="sr-only">Matrix pricing dimensions</caption>
+        <thead>
+          <tr className="text-muted-foreground border-border border-b text-left">
+            <th scope="col" className="py-0.5 pr-2 font-medium">
+              Dimension
+            </th>
+            <th scope="col" className="py-0.5 pr-2 font-medium">
+              Alias
+            </th>
+            <th scope="col" className="py-0.5 text-right font-medium">
+              Price
+            </th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {matrix.map((r, i) => (
+            <tr key={i} className="border-border/50 border-b last:border-0">
+              <td className="py-0.5 pr-2">{r.dimension ?? '—'}</td>
+              <td className="py-0.5 pr-2">{r.display_alias ?? '—'}</td>
+              <td className="py-0.5 text-right tabular-nums">
+                {fmtPrice(r.price, currency)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -555,7 +572,10 @@ function FeaturesSection({ features }: { features: PhasePricingFeature[] }) {
           </span>
           <div className="flex flex-col gap-0.5">
             {items.map((f, i) => (
-              <div key={i} className="text-muted-foreground text-xs">
+              <div
+                key={i}
+                className="text-muted-foreground break-words text-xs"
+              >
                 {f.label ? (
                   <span className="mr-2 font-medium">{f.label}</span>
                 ) : null}

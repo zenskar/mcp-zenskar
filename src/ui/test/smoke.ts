@@ -96,16 +96,19 @@ console.log('• wrapToolResponse() — text-only mode')
 console.log(
   '• wrapToolResponse() — default client (stub + fallback + structuredContent)'
 )
-check('listCustomers returns stub + fallback + structuredContent.customers', () => {
-  setClientName(null as any)
-  const r = wrapToolResponse(
-    'listCustomers',
-    { customers: customerFixture.customers, total: customerFixture.total },
-    'long fallback prose',
-    {}
-  )
-  assertDefaultUIResult(r, 'customers')
-})
+check(
+  'listCustomers returns stub + fallback + structuredContent.customers',
+  () => {
+    setClientName(null as any)
+    const r = wrapToolResponse(
+      'listCustomers',
+      { customers: customerFixture.customers, total: customerFixture.total },
+      'long fallback prose',
+      {}
+    )
+    assertDefaultUIResult(r, 'customers')
+  }
+)
 
 check(
   'listInvoices (real backend envelope) → structuredContent.invoices',

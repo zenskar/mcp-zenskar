@@ -71,7 +71,8 @@ function summarizeItem(item, allowlist) {
 }
 
 export function compactSummary(noun, payload) {
-  const allowlist = FIELD_ALLOWLIST[noun] ?? FIELD_ALLOWLIST[noun.replace(/ /g, '_')] ?? null
+  const allowlist =
+    FIELD_ALLOWLIST[noun] ?? FIELD_ALLOWLIST[noun.replace(/ /g, '_')] ?? null
 
   const arrayKeys = [
     'customers',

@@ -62,7 +62,15 @@ export function wrapToolResponse(toolName, rawData, fallbackText, args) {
   }
 
   const clientClass = classifyClient(getClientName())
-  dbg(toolName, 'OK shape=', route.shape, 'items=', items, 'client=', clientClass)
+  dbg(
+    toolName,
+    'OK shape=',
+    route.shape,
+    'items=',
+    items,
+    'client=',
+    clientClass
+  )
 
   if (clientClass === 'coding-agent') {
     return textResult(fallbackText)
