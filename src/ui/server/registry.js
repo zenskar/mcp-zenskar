@@ -628,11 +628,9 @@ function normalizePhase(p) {
       pricing_summary: null,
       product_count: null,
       pricings: [],
-      features: [],
     }
   const prods = Array.isArray(p.products) ? p.products : []
   const pricings = Array.isArray(p.pricings) ? p.pricings : prods
-  const features = Array.isArray(p.features) ? p.features : []
   return {
     id: p.id ?? null,
     name: p.name ?? p.phase_name ?? null,
@@ -641,7 +639,6 @@ function normalizePhase(p) {
     pricing_summary: p.pricing_summary ?? null,
     product_count: pricings.length || numOrNull(p.product_count),
     pricings: pricings.map(normalizePhasePricing),
-    features: features.map(normalizePhaseFeature),
   }
 }
 

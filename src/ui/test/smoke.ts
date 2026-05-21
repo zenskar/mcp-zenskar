@@ -275,6 +275,109 @@ check('listContracts → structuredContent.contracts', () => {
   assertDefaultUIResult(r, 'contracts')
 })
 
+check('getContractById → structuredContent with phases and pricings', () => {
+  setClientName(null as any)
+  const raw = {
+    id: 'ctr_001',
+    name: 'ACME Agreement',
+    customer_id: 'cust-1',
+    customer: { id: 'cust-1', customer_name: 'ACME Corp' },
+    status: 'active',
+    currency: 'USD',
+    start_date: '2025-01-01',
+    end_date: '2026-01-01',
+    created_at: '2025-01-01T00:00:00Z',
+    contract_type: 'subscription',
+    phases: [
+      {
+        id: 'ph_1',
+        name: 'Year 1',
+        start_date: '2025-01-01',
+        end_date: '2026-01-01',
+        pricings: [
+          {
+            product: { name: 'Platform', type: 'product' },
+            pricing: {
+              pricing_data: {
+                pricing_type: 'flat_fee',
+                currency: 'USD',
+                unit_amount: 500,
+              },
+              billing_period: { cadence: 'P1M', offset: 'prepaid' },
+              is_recurring: true,
+              quantity: { type: 'fixed', quantity: 1, unit: 'seat' },
+            },
+            start_date: '2025-01-01',
+            end_date: '2026-01-01',
+          },
+          {
+            product: { name: 'API Calls', type: 'product' },
+            pricing: {
+              pricing_data: {
+                pricing_type: 'tiered_pricing',
+                currency: 'USD',
+                tiers: [
+                  { min_quantity: 0, max_quantity: 1000, unit_amount: 0.01 },
+                  { min_quantity: 1001, max_quantity: null, unit_amount: 0.005 },
+                ],
+              },
+              quantity: {
+                type: 'metered',
+                unit: 'calls',
+                aggregate: { name: 'API Call Counter' },
+              },
+              billing_period: { cadence: 'P1M' },
+              is_recurring: true,
+              discounts: [
+                { unit_amount: 10, type: 'percentage', label: 'Volume' },
+              ],
+            },
+            start_date: '2025-01-01',
+          },
+        ],
+      },
+    ],
+  }
+  const r = wrapToolResponse(
+    'getContractById',
+    raw,
+    'fallback',
+    {}
+  ) as UIResult
+  assertDefaultUIResult(r, 'contract')
+
+  // Verify via widget-host to inspect structuredContent payload
+  setClientName('claude-desktop')
+  const rw = wrapToolResponse('getContractById', raw, 'fallback', {}) as any
+  assert(rw.structuredContent, 'widget-host must get structuredContent')
+  const sc = rw.structuredContent as any
+  assert.equal(sc.contract.name, 'ACME Agreement')
+  assert.equal(sc.contract.customer_name, 'ACME Corp')
+  assert.equal(sc.phases.length, 1)
+  assert.equal(sc.phases[0].pricings.length, 2)
+
+  const p0 = sc.phases[0].pricings[0]
+  assert.equal(p0.product_name, 'Platform')
+  assert.equal(p0.pricing_model, 'flat_fee')
+  assert.equal(p0.unit_amount, 500)
+  assert.equal(p0.quantity_type, 'fixed')
+  assert.equal(p0.billing_cadence, 'P1M')
+  assert.equal(p0.is_recurring, true)
+
+  const p1 = sc.phases[0].pricings[1]
+  assert.equal(p1.product_name, 'API Calls')
+  assert.equal(p1.pricing_model, 'tiered_pricing')
+  assert.equal(p1.tiers.length, 2)
+  assert.equal(p1.meter_name, 'API Call Counter')
+  assert.equal(p1.quantity_type, 'metered')
+  assert(p1.features, 'pricing features must be extracted')
+  assert.equal(p1.features.length, 1)
+  assert.equal(p1.features[0].type, 'Discount')
+  assert(p1.features[0].summary.includes('10%'))
+
+  setClientName(null as any)
+})
+
 check('getInvoiceLineItems → structuredContent.lines', () => {
   setClientName(null as any)
   const raw = {

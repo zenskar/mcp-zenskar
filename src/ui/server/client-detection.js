@@ -11,7 +11,14 @@ const CODING_AGENTS = [
   'gemini-cli',
 ]
 
-const WIDGET_HOSTS = ['claude-desktop', 'claude-ai', 'chatgpt', 'mcp-inspector']
+const WIDGET_HOSTS = [
+  'claude-desktop',
+  'claude-ai',
+  'chatgpt',
+  'mcp-inspector',
+  'toon',
+  'cursor',
+]
 
 let _clientName = null
 let _resolver = null
