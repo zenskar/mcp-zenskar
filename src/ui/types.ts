@@ -35,6 +35,7 @@ export interface InvoiceRow {
   id: string
   invoice_number: string | null
   customer_id: string | null
+  customer_name: string | null
   status: string | null
   invoice_total: number | null
   amount_due: number | null
@@ -115,7 +116,9 @@ export interface PaymentRow {
   id: string
   external_id: string | null
   customer_id: string | null
+  customer_name: string | null
   invoice_id: string | null
+  invoice_name: string | null
   amount: number | null
   currency: string | null
   payment_method: string | null
@@ -138,7 +141,9 @@ export interface CreditNoteRow {
   id: string
   credit_note_number: string | null
   customer_id: string | null
+  customer_name: string | null
   invoice_id: string | null
+  invoice_name: string | null
   status: string | null
   amount: number | null
   currency: string | null
@@ -157,6 +162,7 @@ export interface CreditNoteTablePayload {
 export interface ContractRow {
   id: string
   customer_id: string | null
+  customer_name: string | null
   name: string | null
   status: string | null
   currency: string | null

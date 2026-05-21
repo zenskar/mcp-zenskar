@@ -8,6 +8,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_001',
       customer_id: 'c_001',
+      customer_name: null,
       name: 'ACME Corp — Master Agreement 2024',
       status: 'active',
       currency: 'USD',
@@ -18,6 +19,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_002',
       customer_id: 'c_002',
+      customer_name: null,
       name: 'Globex Annual Plan',
       status: 'active',
       currency: 'USD',
@@ -28,6 +30,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_003',
       customer_id: 'c_003',
+      customer_name: null,
       name: 'Initech Pilot',
       status: 'active',
       currency: 'USD',
@@ -38,6 +41,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_004',
       customer_id: 'c_004',
+      customer_name: null,
       name: 'Hooli Enterprise (churned)',
       status: 'expired',
       currency: 'USD',
@@ -48,6 +52,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_005',
       customer_id: 'c_010',
+      customer_name: null,
       name: 'Soylent Multi-Year Retainer',
       status: 'active',
       currency: 'EUR',
@@ -58,6 +63,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_006',
       customer_id: 'c_011',
+      customer_name: null,
       name: 'Vehement Capital — Standard',
       status: 'active',
       currency: 'USD',
@@ -68,6 +74,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_007',
       customer_id: 'c_012',
+      customer_name: null,
       name: 'Cyberdyne Pilot',
       status: 'paused',
       currency: 'USD',
@@ -78,6 +85,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_008',
       customer_id: 'c_007',
+      customer_name: null,
       name: 'Test Ashmi Trial',
       status: 'draft',
       currency: 'INR',
@@ -88,6 +96,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_009',
       customer_id: 'c_009',
+      customer_name: null,
       name: 'XXXX LLC — TURVO Amendment 4',
       status: 'active',
       currency: 'USD',
@@ -98,6 +107,7 @@ export const contractFixture: ContractTablePayload = {
     {
       id: 'ctr_010',
       customer_id: 'c_005',
+      customer_name: null,
       name: 'Aaron Smayling Solo Plan',
       status: 'active',
       currency: 'USD',

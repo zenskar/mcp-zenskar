@@ -211,6 +211,7 @@ function normalizeInvoice(r) {
       id: '',
       invoice_number: null,
       customer_id: null,
+      customer_name: null,
       status: null,
       invoice_total: null,
       amount_due: null,
@@ -222,10 +223,12 @@ function normalizeInvoice(r) {
       payment_url: null,
     }
   const period = r.invoice_period || {}
+  const cust = r.customer && typeof r.customer === 'object' ? r.customer : null
   return {
     id: String(r.id || r.invoice_id || ''),
     invoice_number: r.invoice_number ?? null,
-    customer_id: r.customer_id ?? null,
+    customer_id: cust?.id ?? r.customer_id ?? null,
+    customer_name: cust?.customer_name ?? cust?.name ?? null,
     status: r.status ?? null,
     invoice_total: numOrNull(r.net_invoice_total ?? r.invoice_total),
     amount_due: numOrNull(r.amount_due),
@@ -342,7 +345,9 @@ function normalizePayment(p) {
       id: '',
       external_id: null,
       customer_id: null,
+      customer_name: null,
       invoice_id: null,
+      invoice_name: null,
       amount: null,
       currency: null,
       payment_method: null,
@@ -357,11 +362,15 @@ function normalizePayment(p) {
     (parts.find((x) => x && x.invoice_id) || {}).invoice_id ||
     p.invoice_id ||
     null
+  const cust = p.customer && typeof p.customer === 'object' ? p.customer : null
+  const inv = p.invoice && typeof p.invoice === 'object' ? p.invoice : null
   return {
     id: String(p.id || p.payment_id || ''),
     external_id: p.external_id ?? null,
-    customer_id: p.customer_id ?? null,
-    invoice_id: firstInvoiceId,
+    customer_id: cust?.id ?? p.customer_id ?? null,
+    customer_name: cust?.customer_name ?? cust?.name ?? null,
+    invoice_id: inv?.id ?? firstInvoiceId,
+    invoice_name: inv?.name ?? inv?.invoice_number ?? null,
     amount: numOrNull(p.amount ?? p.value),
     currency: p.currency_code ?? p.currency ?? null,
     payment_method: p.payment_method ?? null,
@@ -403,18 +412,24 @@ function normalizeCreditNote(c) {
       id: '',
       credit_note_number: null,
       customer_id: null,
+      customer_name: null,
       invoice_id: null,
+      invoice_name: null,
       status: null,
       amount: null,
       currency: null,
       repayment_method: null,
       created_at: null,
     }
+  const cust = c.customer && typeof c.customer === 'object' ? c.customer : null
+  const inv = c.invoice && typeof c.invoice === 'object' ? c.invoice : null
   return {
     id: String(c.id || c.credit_note_id || ''),
     credit_note_number: c.credit_note_number ?? null,
-    customer_id: c.customer_id ?? null,
-    invoice_id: c.invoice_id ?? null,
+    customer_id: cust?.id ?? c.customer_id ?? null,
+    customer_name: cust?.customer_name ?? cust?.name ?? null,
+    invoice_id: inv?.id ?? c.invoice_id ?? null,
+    invoice_name: inv?.name ?? inv?.invoice_number ?? null,
     status: c.status ?? null,
     amount: numOrNull(c.amount ?? c.total ?? c.value),
     currency: c.currency_code ?? c.currency ?? null,
@@ -446,6 +461,7 @@ function normalizeContract(c) {
     return {
       id: '',
       customer_id: null,
+      customer_name: null,
       name: null,
       status: null,
       currency: null,
@@ -453,9 +469,11 @@ function normalizeContract(c) {
       end_date: null,
       created_at: null,
     }
+  const cust = c.customer && typeof c.customer === 'object' ? c.customer : null
   return {
     id: String(c.id || c.contract_id || ''),
-    customer_id: c.customer_id ?? null,
+    customer_id: cust?.id ?? c.customer_id ?? null,
+    customer_name: cust?.customer_name ?? cust?.name ?? null,
     name: c.name ?? c.contract_name ?? null,
     status: c.status ?? c.state ?? null,
     currency: c.currency ?? c.currency_code ?? null,
