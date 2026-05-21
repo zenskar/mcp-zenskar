@@ -2,6 +2,8 @@ import type {
   ContractDetailPayload,
   ContractPhase,
   PhasePricing,
+  PhasePricingFeature,
+  PhasePricingMatrixRow,
 } from '../types'
 import { Field, Section } from './DetailScaffold'
 import { Dim, fmtDate, StatusPill } from './format'
@@ -225,91 +227,163 @@ function fmtPrice(
   }
 }
 
+// ── Pricing card (mirrors PhaseCard → ProductPricingDetailsCardV2) ──
+
 function PricingCard({ p }: { p: PhasePricing }) {
-  const model = p.pricing_model?.replace(/_/g, ' ') || 'unknown'
+  const cur = p.currency
+  const modelLabel = pricingModelLabel(p.pricing_model)
+  const hasFeatures = p.features && p.features.length > 0
   return (
-    <div className="border-border bg-muted/30 rounded border p-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium">
-            {p.product_name || <Dim>Unnamed product</Dim>}
-          </span>
-          {p.product_type ? (
-            <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] uppercase">
-              {p.product_type}
+    <div className="flex overflow-hidden rounded-md">
+      {/* Leading highlight bar */}
+      <div className="w-1 shrink-0 rounded-l-md bg-ring" />
+      <div className="border-border flex w-full flex-col gap-2.5 border border-l-0 bg-card px-3 py-2.5">
+        {/* Header: product name + type badge */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {p.product_name || <Dim>Unnamed product</Dim>}
             </span>
+            {p.product_type ? (
+              <span className="bg-accent text-accent-foreground rounded px-1.5 py-0.5 text-[10px] font-medium uppercase">
+                {p.product_type}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Description */}
+        {p.description ? (
+          <div className="text-muted-foreground text-xs leading-relaxed">
+            {p.description}
+          </div>
+        ) : null}
+
+        <hr className="border-border m-0" />
+
+        {/* Pricing summary */}
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <PriceDisplay p={p} />
+
+          {/* Quantity */}
+          {p.pricing_model !== 'flat_fee' ? (
+            <LabelValue
+              label={
+                p.quantity_type === 'metered'
+                  ? `Billable Metric${p.quantity_unit ? ` (${p.quantity_unit})` : ''}`
+                  : 'Quantity'
+              }
+            >
+              {p.quantity_type === 'fixed' && p.quantity_value != null ? (
+                <span>
+                  {p.quantity_value}
+                  {p.quantity_unit ? ` ${p.quantity_unit}` : ''}
+                </span>
+              ) : p.quantity_type === 'metered' ? (
+                <span>{p.meter_name || <Dim>No metric</Dim>}</span>
+              ) : (
+                <Dim>—</Dim>
+              )}
+            </LabelValue>
+          ) : null}
+
+          {/* Billing cadence */}
+          {p.billing_cadence ? (
+            <LabelValue
+              label={`Billing Cadence (${p.is_recurring ? 'Recurring' : 'One Time'})`}
+            >
+              {p.billing_timing ? `${p.billing_timing} - ` : ''}Every{' '}
+              {fmtCadence(p.billing_cadence)}
+            </LabelValue>
+          ) : null}
+
+          {/* Product period */}
+          {p.start_date ? (
+            <LabelValue label="Product Period">
+              {p.start_date.slice(0, 10)} →{' '}
+              {p.end_date ? p.end_date.slice(0, 10) : 'Forever'}
+            </LabelValue>
           ) : null}
         </div>
-        <span className="text-muted-foreground rounded bg-accent px-1.5 py-0.5 text-[10px] capitalize">
-          {model}
-        </span>
-      </div>
 
-      <div className="mt-1.5">
-        <PriceDisplay p={p} />
-      </div>
-
-      <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
-        {p.quantity_type === 'fixed' && p.quantity_value != null ? (
-          <span>
-            Qty: {p.quantity_value}
-            {p.quantity_unit ? ` ${p.quantity_unit}` : ''}
-          </span>
-        ) : p.quantity_type === 'metered' ? (
-          <span>Metered{p.quantity_unit ? ` (${p.quantity_unit})` : ''}</span>
-        ) : null}
-        {p.billing_cadence ? (
-          <span>
-            {p.is_recurring ? 'Recurring' : 'One-time'} ·{' '}
-            {fmtCadence(p.billing_cadence)}
-          </span>
-        ) : null}
-        {p.start_date ? (
-          <span>
-            {p.start_date.slice(0, 10)} → {p.end_date?.slice(0, 10) || '∞'}
-          </span>
-        ) : null}
+        {/* Features */}
+        {hasFeatures ? <FeaturesSection features={p.features!} /> : null}
       </div>
     </div>
   )
 }
 
+function LabelValue({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="text-muted-foreground text-[10px] font-medium">
+        {label}
+      </div>
+      <div className="text-xs">{children}</div>
+    </div>
+  )
+}
+
+function pricingModelLabel(model?: string | null): string {
+  if (!model) return 'Unknown'
+  return model
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+// ── Price display per pricing type ──
+
 function PriceDisplay({ p }: { p: PhasePricing }) {
   const cur = p.currency
+  const curTag = cur ? ` (${cur})` : ''
   switch (p.pricing_model) {
     case 'flat_fee':
       return (
-        <span className="text-xs font-semibold tabular-nums">
-          {fmtPrice(p.unit_amount, cur)}
-        </span>
+        <LabelValue label={`Flat Fee${curTag}`}>
+          <span className="font-semibold tabular-nums">
+            {fmtPrice(p.unit_amount, cur)}
+          </span>
+        </LabelValue>
       )
     case 'per_unit':
     case 'per_unit_pricing':
       return (
-        <span className="text-xs font-semibold tabular-nums">
-          {fmtPrice(p.unit_amount, cur)}
-          <span className="text-muted-foreground font-normal"> / unit</span>
-        </span>
+        <LabelValue label={`Per Unit Price${curTag}`}>
+          <span className="font-semibold tabular-nums">
+            {fmtPrice(p.unit_amount, cur)}
+          </span>
+        </LabelValue>
       )
     case 'percent':
     case 'percent_pricing':
       return (
-        <span className="text-xs font-semibold tabular-nums">
-          {p.unit_amount != null ? `${p.unit_amount}%` : '—'}
-        </span>
+        <LabelValue label={`Percent Pricing${curTag}`}>
+          <span className="font-semibold tabular-nums">
+            {p.unit_amount != null ? `${p.unit_amount}%` : '—'}
+          </span>
+        </LabelValue>
       )
     case 'package':
     case 'package_pricing':
       return (
-        <span className="text-xs font-semibold tabular-nums">
-          {fmtPrice(p.unit_amount, cur)}
-          {p.package_size ? (
-            <span className="text-muted-foreground font-normal">
-              {' '}
-              per {p.package_size} units
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <LabelValue label={`Package Price${curTag}`}>
+            <span className="font-semibold tabular-nums">
+              {fmtPrice(p.unit_amount, cur)}
             </span>
+          </LabelValue>
+          {p.package_size ? (
+            <LabelValue label="Package Size">
+              <span>{p.package_size}</span>
+            </LabelValue>
           ) : null}
-        </span>
+        </div>
       )
     case 'volume':
     case 'volume_pricing':
@@ -317,38 +391,61 @@ function PriceDisplay({ p }: { p: PhasePricing }) {
     case 'tiered_pricing':
     case 'step':
     case 'step_pricing':
-      return <TierTable tiers={p.tiers} currency={cur} />
+      return (
+        <div className="w-full">
+          <div className="text-muted-foreground mb-1 text-[10px] font-medium">
+            {pricingModelLabel(p.pricing_model)} Price{curTag}
+          </div>
+          <TierTable tiers={p.tiers} currency={cur} />
+        </div>
+      )
     case 'volume_with_flat_fee':
     case 'tiered_with_flat_fee':
-      return <TierTable tiers={p.tiers} currency={cur} showFlatFee />
+      return (
+        <div className="w-full">
+          <div className="text-muted-foreground mb-1 text-[10px] font-medium">
+            {pricingModelLabel(p.pricing_model)} Price{curTag}
+          </div>
+          <TierTable tiers={p.tiers} currency={cur} showFlatFee />
+        </div>
+      )
     case 'matrix':
     case 'matrix_pricing':
       return (
-        <span className="text-xs">
-          Matrix pricing
+        <div className="w-full">
+          <div className="text-muted-foreground mb-1 text-[10px] font-medium">
+            Matrix Pricing{curTag}
+          </div>
+          <MatrixTable matrix={p.matrix} currency={cur} />
           {p.unit_amount != null ? (
-            <span className="text-muted-foreground">
-              {' '}
-              · default {fmtPrice(p.unit_amount, cur)}
-            </span>
+            <div className="text-muted-foreground mt-1.5 text-[11px]">
+              Default price:{' '}
+              <span className="font-semibold">{fmtPrice(p.unit_amount, cur)}</span>
+            </div>
           ) : null}
-        </span>
+        </div>
       )
     case 'custom':
     case 'custom_pricing':
       return (
-        <span className="text-muted-foreground text-xs">Custom pricing</span>
+        <LabelValue label="Custom Pricing">
+          <span className="text-muted-foreground">Custom script</span>
+        </LabelValue>
       )
     default:
       return p.unit_amount != null ? (
-        <span className="text-xs font-semibold tabular-nums">
-          {fmtPrice(p.unit_amount, cur)}
-        </span>
+        <LabelValue label={`Price${curTag}`}>
+          <span className="font-semibold tabular-nums">
+            {fmtPrice(p.unit_amount, cur)}
+          </span>
+        </LabelValue>
       ) : (
         <Dim>—</Dim>
       )
   }
 }
+
+// ── Tier table ──
 
 function TierTable({
   tiers,
@@ -362,20 +459,20 @@ function TierTable({
   if (!tiers || tiers.length === 0)
     return <span className="text-muted-foreground text-xs">No tiers</span>
   return (
-    <table className="mt-0.5 w-full text-[11px]">
+    <table className="w-full text-[11px]">
       <thead>
-        <tr className="text-muted-foreground border-b border-border text-left">
+        <tr className="text-muted-foreground border-border border-b text-left">
           <th className="py-0.5 pr-2 font-medium">Min</th>
           <th className="py-0.5 pr-2 font-medium">Max</th>
-          <th className="py-0.5 pr-2 font-medium text-right">Unit Price</th>
+          <th className="py-0.5 pr-2 text-right font-medium">Unit Price</th>
           {showFlatFee ? (
-            <th className="py-0.5 font-medium text-right">Flat Fee</th>
+            <th className="py-0.5 text-right font-medium">Flat Fee</th>
           ) : null}
         </tr>
       </thead>
       <tbody>
         {tiers.map((t, i) => (
-          <tr key={i} className="border-b border-border/50 last:border-0">
+          <tr key={i} className="border-border/50 border-b last:border-0">
             <td className="py-0.5 pr-2 tabular-nums">
               {t.min_quantity ?? 0}
             </td>
@@ -394,5 +491,79 @@ function TierTable({
         ))}
       </tbody>
     </table>
+  )
+}
+
+// ── Matrix table ──
+
+function MatrixTable({
+  matrix,
+  currency,
+}: {
+  matrix?: PhasePricingMatrixRow[] | null
+  currency?: string | null
+}) {
+  if (!matrix || matrix.length === 0)
+    return (
+      <span className="text-muted-foreground text-xs">
+        Matrix pricing (no data)
+      </span>
+    )
+  return (
+    <table className="w-full text-[11px]">
+      <thead>
+        <tr className="text-muted-foreground border-border border-b text-left">
+          <th className="py-0.5 pr-2 font-medium">Dimension</th>
+          <th className="py-0.5 pr-2 font-medium">Alias</th>
+          <th className="py-0.5 text-right font-medium">Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        {matrix.map((r, i) => (
+          <tr key={i} className="border-border/50 border-b last:border-0">
+            <td className="py-0.5 pr-2">{r.dimension ?? '—'}</td>
+            <td className="py-0.5 pr-2">{r.display_alias ?? '—'}</td>
+            <td className="py-0.5 text-right tabular-nums">
+              {fmtPrice(r.price, currency)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+// ── Features (mirrors FeaturesSummaryV2) ──
+
+function FeaturesSection({ features }: { features: PhasePricingFeature[] }) {
+  const grouped = new Map<string, PhasePricingFeature[]>()
+  for (const f of features) {
+    const list = grouped.get(f.type) || []
+    list.push(f)
+    grouped.set(f.type, list)
+  }
+  return (
+    <div className="mt-1 space-y-2">
+      <div className="text-muted-foreground text-[10px] font-medium uppercase">
+        Features
+      </div>
+      {Array.from(grouped.entries()).map(([type, items]) => (
+        <div key={type} className="flex gap-2">
+          <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px]">
+            {type}
+          </span>
+          <div className="border-ring/30 border-l-2 pl-2">
+            {items.map((f, i) => (
+              <div key={i} className="text-muted-foreground text-[11px]">
+                {f.label ? (
+                  <span className="mr-2 font-medium">{f.label}</span>
+                ) : null}
+                {f.summary}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }

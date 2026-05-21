@@ -1,3 +1,12 @@
+function startCase(s) {
+  if (!s || typeof s !== 'string') return ''
+  return s
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim()
+}
+
 const TEXT_ONLY_TOOLS = new Set([
   'getInvoiceSummary',
   'getCustomerBalance',
@@ -636,6 +645,23 @@ function normalizePhase(p) {
   }
 }
 
+function normalizeMatrix(pd) {
+  if (
+    !pd ||
+    !Array.isArray(pd.prices) ||
+    !Array.isArray(pd.dimensions) ||
+    pd.prices.length === 0
+  )
+    return null
+  return pd.prices.map((price, i) => ({
+    dimension: pd.dimensions[i]?.name ?? null,
+    display_alias: Array.isArray(pd.display_alias)
+      ? pd.display_alias[i] ?? null
+      : null,
+    price: typeof price === 'number' ? price : null,
+  }))
+}
+
 function normalizePhasePricing(pr) {
   if (!pr || typeof pr !== 'object')
     return { product_name: null, pricing_model: null }
@@ -655,9 +681,12 @@ function normalizePhasePricing(pr) {
     unit_amount: pd.unit_amount ?? null,
     tiers: Array.isArray(pd.tiers) ? pd.tiers : null,
     package_size: pd.package_size ?? null,
+    matrix: normalizeMatrix(pd),
     quantity_type: qty.type ?? null,
     quantity_value: qty.quantity ?? null,
     quantity_unit: qty.unit ?? null,
+    meter_name:
+      qty.aggregate?.name ?? qty.aggregate_name ?? null,
     billing_cadence: bp.cadence ?? null,
     billing_timing: pr.billing_timing ?? pricingObj.billing_timing ?? null,
     is_recurring:
@@ -668,7 +697,83 @@ function normalizePhasePricing(pr) {
           : null,
     start_date: pr.start_date ?? null,
     end_date: pr.end_date ?? null,
+    features: extractPricingFeatures(pricingObj),
   }
+}
+
+function extractPricingFeatures(pricingObj) {
+  const out = []
+  const arr = (k) => (Array.isArray(pricingObj[k]) ? pricingObj[k] : [])
+
+  for (const d of arr('discounts')) {
+    const pct = d.type === 'percentage'
+    out.push({
+      type: 'Discount',
+      label: d.label ?? null,
+      summary: `${d.unit_amount ?? '?'}${pct ? '%' : ' (Fixed)'}`,
+    })
+  }
+  for (const t of arr('taxes')) {
+    const isAvalara = t.type === 'avalara'
+    out.push({
+      type: 'Tax',
+      label: t.label ?? null,
+      summary: isAvalara
+        ? `Avalara - ${t.code ?? '?'}`
+        : `${t.unit_amount ?? '?'}%`,
+    })
+  }
+  for (const f of arr('free_units')) {
+    out.push({
+      type: 'Free Units',
+      label: f.label ?? null,
+      summary: `${f.unit_amount ?? '?'} units`,
+    })
+  }
+  for (const c of arr('commitments')) {
+    const cType = c.type ? startCase(c.type) : 'Commitment'
+    out.push({
+      type: 'Commitment',
+      label: c.label ?? null,
+      summary: `${cType}: ${c.unit_amount ?? '?'}`,
+    })
+  }
+  for (const g of arr('grants')) {
+    const trigger = g.trigger_event ? startCase(g.trigger_event) : ''
+    const expiry = g.expires_at ? `, expires ${startCase(g.expires_at)}` : ''
+    const ent = g.entitlement?.name ? ` → ${g.entitlement.name}` : ''
+    out.push({
+      type: 'Grant',
+      label: g.label ?? null,
+      summary: `${g.unit_amount ?? '?'} units on ${trigger}${expiry}${ent}`,
+    })
+  }
+  for (const c of arr('consumptions')) {
+    const ent = c.entitlement?.name ?? 'Entitlement'
+    const trigger = c.trigger_event ? startCase(c.trigger_event) : ''
+    out.push({
+      type: 'Consumption',
+      label: c.label ?? null,
+      summary: `${ent} (${startCase(c.type ?? '')}) on ${trigger}`,
+    })
+  }
+  for (const s of arr('service_fees')) {
+    const pct = s.type === 'percentage'
+    out.push({
+      type: 'Service Fee',
+      label: s.label ?? null,
+      summary: `${s.unit_amount ?? '?'}${pct ? '%' : ' (Fixed)'}`,
+    })
+  }
+  for (const p of arr('payment_terms')) {
+    const due = p.due_days != null ? `Due in ${p.due_days} days` : ''
+    out.push({
+      type: 'Payment Terms',
+      label: p.label ?? null,
+      summary: due || 'Custom',
+    })
+  }
+  return out.length > 0 ? out : null
 }
 
 function normalizePhaseFeature(f) {
