@@ -47,7 +47,7 @@ export function ContractDetail({
             <div>
               <div className="text-sm">{c.customer_name}</div>
               {c.customer_id ? (
-                <div className="text-muted-foreground font-mono text-[11px] break-all">
+                <div className="text-muted-foreground font-mono text-xs break-all">
                   {c.customer_id}
                 </div>
               ) : null}
@@ -231,13 +231,10 @@ function fmtPrice(
 
 function PricingCard({ p }: { p: PhasePricing }) {
   const cur = p.currency
-  const modelLabel = pricingModelLabel(p.pricing_model)
   const hasFeatures = p.features && p.features.length > 0
   return (
-    <div className="flex overflow-hidden rounded-md">
-      {/* Leading highlight bar */}
-      <div className="w-1 shrink-0 rounded-l-md bg-ring" />
-      <div className="border-border flex w-full flex-col gap-2.5 border border-l-0 bg-card px-3 py-2.5">
+    <div className="border-border rounded-md border bg-card px-3 py-2.5">
+      <div className="flex w-full flex-col gap-2.5">
         {/* Header: product name + type badge */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -245,7 +242,7 @@ function PricingCard({ p }: { p: PhasePricing }) {
               {p.product_name || <Dim>Unnamed product</Dim>}
             </span>
             {p.product_type ? (
-              <span className="bg-accent text-accent-foreground rounded px-1.5 py-0.5 text-[10px] font-medium uppercase">
+              <span className="bg-accent text-accent-foreground rounded px-1.5 py-0.5 text-xs font-medium uppercase">
                 {p.product_type}
               </span>
             ) : null}
@@ -322,9 +319,7 @@ function LabelValue({
 }) {
   return (
     <div className="min-w-0">
-      <div className="text-muted-foreground text-[10px] font-medium">
-        {label}
-      </div>
+      <div className="text-muted-foreground text-xs font-medium">{label}</div>
       <div className="text-xs">{children}</div>
     </div>
   )
@@ -393,7 +388,7 @@ function PriceDisplay({ p }: { p: PhasePricing }) {
     case 'step_pricing':
       return (
         <div className="w-full">
-          <div className="text-muted-foreground mb-1 text-[10px] font-medium">
+          <div className="text-muted-foreground mb-1 text-xs font-medium">
             {pricingModelLabel(p.pricing_model)} Price{curTag}
           </div>
           <TierTable tiers={p.tiers} currency={cur} />
@@ -403,7 +398,7 @@ function PriceDisplay({ p }: { p: PhasePricing }) {
     case 'tiered_with_flat_fee':
       return (
         <div className="w-full">
-          <div className="text-muted-foreground mb-1 text-[10px] font-medium">
+          <div className="text-muted-foreground mb-1 text-xs font-medium">
             {pricingModelLabel(p.pricing_model)} Price{curTag}
           </div>
           <TierTable tiers={p.tiers} currency={cur} showFlatFee />
@@ -413,12 +408,12 @@ function PriceDisplay({ p }: { p: PhasePricing }) {
     case 'matrix_pricing':
       return (
         <div className="w-full">
-          <div className="text-muted-foreground mb-1 text-[10px] font-medium">
+          <div className="text-muted-foreground mb-1 text-xs font-medium">
             Matrix Pricing{curTag}
           </div>
           <MatrixTable matrix={p.matrix} currency={cur} />
           {p.unit_amount != null ? (
-            <div className="text-muted-foreground mt-1.5 text-[11px]">
+            <div className="text-muted-foreground mt-1.5 text-xs">
               Default price:{' '}
               <span className="font-semibold">{fmtPrice(p.unit_amount, cur)}</span>
             </div>
@@ -459,14 +454,16 @@ function TierTable({
   if (!tiers || tiers.length === 0)
     return <span className="text-muted-foreground text-xs">No tiers</span>
   return (
-    <table className="w-full text-[11px]">
+    <div className="overflow-x-auto">
+    <table className="w-full text-xs">
+      <caption className="sr-only">Pricing tiers</caption>
       <thead>
         <tr className="text-muted-foreground border-border border-b text-left">
-          <th className="py-0.5 pr-2 font-medium">Min</th>
-          <th className="py-0.5 pr-2 font-medium">Max</th>
-          <th className="py-0.5 pr-2 text-right font-medium">Unit Price</th>
+          <th scope="col" className="py-0.5 pr-2 font-medium">Min</th>
+          <th scope="col" className="py-0.5 pr-2 font-medium">Max</th>
+          <th scope="col" className="py-0.5 pr-2 text-right font-medium">Unit Price</th>
           {showFlatFee ? (
-            <th className="py-0.5 text-right font-medium">Flat Fee</th>
+            <th scope="col" className="py-0.5 text-right font-medium">Flat Fee</th>
           ) : null}
         </tr>
       </thead>
@@ -491,6 +488,7 @@ function TierTable({
         ))}
       </tbody>
     </table>
+    </div>
   )
 }
 
@@ -510,12 +508,14 @@ function MatrixTable({
       </span>
     )
   return (
-    <table className="w-full text-[11px]">
+    <div className="overflow-x-auto">
+    <table className="w-full text-xs">
+      <caption className="sr-only">Matrix pricing dimensions</caption>
       <thead>
         <tr className="text-muted-foreground border-border border-b text-left">
-          <th className="py-0.5 pr-2 font-medium">Dimension</th>
-          <th className="py-0.5 pr-2 font-medium">Alias</th>
-          <th className="py-0.5 text-right font-medium">Price</th>
+          <th scope="col" className="py-0.5 pr-2 font-medium">Dimension</th>
+          <th scope="col" className="py-0.5 pr-2 font-medium">Alias</th>
+          <th scope="col" className="py-0.5 text-right font-medium">Price</th>
         </tr>
       </thead>
       <tbody>
@@ -530,6 +530,7 @@ function MatrixTable({
         ))}
       </tbody>
     </table>
+    </div>
   )
 }
 
@@ -544,17 +545,17 @@ function FeaturesSection({ features }: { features: PhasePricingFeature[] }) {
   }
   return (
     <div className="mt-1 space-y-2">
-      <div className="text-muted-foreground text-[10px] font-medium uppercase">
+      <div className="text-muted-foreground text-xs font-medium uppercase">
         Features
       </div>
       {Array.from(grouped.entries()).map(([type, items]) => (
-        <div key={type} className="flex gap-2">
-          <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-[10px]">
+        <div key={type} className="flex flex-wrap items-start gap-2">
+          <span className="bg-muted text-muted-foreground shrink-0 rounded px-1.5 py-0.5 text-xs">
             {type}
           </span>
-          <div className="border-ring/30 border-l-2 pl-2">
+          <div className="flex flex-col gap-0.5">
             {items.map((f, i) => (
-              <div key={i} className="text-muted-foreground text-[11px]">
+              <div key={i} className="text-muted-foreground text-xs">
                 {f.label ? (
                   <span className="mr-2 font-medium">{f.label}</span>
                 ) : null}
