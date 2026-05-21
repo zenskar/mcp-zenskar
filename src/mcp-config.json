@@ -5547,6 +5547,14 @@
           "type": "string",
           "required": false,
           "position": "query"
+        },
+        {
+          "name": "resource__neq",
+          "description": "Exclude jobs whose resource type equals this value. Defaults to 'revenue_posting' to hide noisy internal revenue-recognition jobs; pass a different value or empty string to override.",
+          "type": "string",
+          "required": false,
+          "default": "revenue_posting",
+          "position": "query"
         }
       ],
       "requestTemplate": {
