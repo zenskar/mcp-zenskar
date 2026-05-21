@@ -3,8 +3,8 @@ import { stub } from './stub.js'
 
 function uiEnabled() {
   const v = process.env.ZENSKAR_MCP_UI_ENABLED
-  if (v == null) return false
-  return /^(1|true|yes|on)$/i.test(String(v).trim())
+  if (v == null || v === '') return true
+  return !/^(0|false|no|off)$/i.test(String(v).trim())
 }
 
 function disabledList() {
@@ -27,7 +27,7 @@ function dbg(...args) {
 
 export function wrapToolResponse(toolName, rawData, fallbackText, args) {
   if (!uiEnabled()) {
-    dbg(toolName, 'skipped: ZENSKAR_MCP_UI_ENABLED not set')
+    dbg(toolName, 'skipped: ZENSKAR_MCP_UI_ENABLED explicitly disabled')
     return textResult(fallbackText)
   }
   const route = lookup(toolName)
