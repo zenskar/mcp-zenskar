@@ -618,15 +618,54 @@ function normalizePhase(p) {
       end_date: null,
       pricing_summary: null,
       product_count: null,
+      pricings: [],
+      features: [],
     }
   const prods = Array.isArray(p.products) ? p.products : []
+  const pricings = Array.isArray(p.pricings) ? p.pricings : prods
+  const features = Array.isArray(p.features) ? p.features : []
   return {
     id: p.id ?? null,
     name: p.name ?? p.phase_name ?? null,
     start_date: p.start_date ?? null,
     end_date: p.end_date ?? null,
     pricing_summary: p.pricing_summary ?? null,
-    product_count: prods.length || numOrNull(p.product_count),
+    product_count: pricings.length || numOrNull(p.product_count),
+    pricings: pricings.map(normalizePhasePricing),
+    features: features.map(normalizePhaseFeature),
+  }
+}
+
+function normalizePhasePricing(pr) {
+  if (!pr || typeof pr !== 'object') return { name: null, pricing_model: null }
+  const pd = pr.pricing_data ?? pr
+  const qty = pr.quantity ?? {}
+  const bp = pr.billing_period ?? {}
+  return {
+    id: pr.id ?? null,
+    name: pr.name ?? pr.product_name ?? null,
+    pricing_model: pd.pricing_type ?? pr.pricing_model ?? null,
+    currency: pd.currency ?? null,
+    unit_amount: pd.unit_amount ?? null,
+    tiers: Array.isArray(pd.tiers) ? pd.tiers : null,
+    quantity_type: qty.type ?? null,
+    quantity_value: qty.quantity ?? null,
+    quantity_unit: qty.unit ?? null,
+    billing_cadence: bp.cadence ?? null,
+    billing_timing: pr.billing_timing ?? null,
+    proration: pr.proration ?? null,
+  }
+}
+
+function normalizePhaseFeature(f) {
+  if (!f || typeof f !== 'object') return { name: null }
+  return {
+    id: f.id ?? null,
+    name: f.name ?? null,
+    entitlement_type: f.entitlement_type ?? null,
+    units: f.units ?? null,
+    is_active: typeof f.is_active === 'boolean' ? f.is_active : null,
+    tax_percentage: f.tax_percentage ?? null,
   }
 }
 

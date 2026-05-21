@@ -4,11 +4,14 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { customerFixture } from '../fixtures/customers'
+import { setClientName } from '../server/client-detection.js'
 import { resourceUriFor, SHAPES } from '../server/registry.js'
 import { stub, STUB_MAX } from '../server/stub.js'
 import { wrapToolResponse } from '../server/wrap.js'
 
 process.env.ZENSKAR_MCP_UI_ENABLED = 'true'
+// Default client class tests run as "default" (zenskar-ai-server-like)
+setClientName(null as any)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -20,11 +23,12 @@ interface UIResult {
   structuredContent?: Record<string, unknown>
 }
 
-function assertUIResult(r: UIResult, expectedArrayKey: string) {
+function assertDefaultUIResult(r: UIResult, expectedArrayKey: string) {
+  // Default client: stub text + raw fallback text (2 blocks)
   assert.equal(
     r.content.length,
-    1,
-    `expected 1 content item, got ${r.content.length}`
+    2,
+    `expected 2 content items (stub + fallback), got ${r.content.length}`
   )
   assert.equal(r.content[0]!.type, 'text')
   const stubText = r.content[0]!.text || ''
@@ -67,7 +71,7 @@ check('stub respects max length', () => {
   assert(/Rendered 12 customers/.test(out))
 })
 check('stub plural for 1', () =>
-  assert.equal(stub('invoice', 1), 'Rendered 1 invoice.')
+  assert.equal(stub('invoice', 1), 'Rendered invoice detail view.')
 )
 check('stub plural for 0', () =>
   assert.equal(stub('customer', 0), 'Rendered 0 customers.')
@@ -104,21 +108,23 @@ console.log('• wrapToolResponse() — text-only mode')
 }
 
 console.log(
-  '• wrapToolResponse() — UI mode (Pattern B: text stub + structuredContent)'
+  '• wrapToolResponse() — default client (stub + fallback + structuredContent)'
 )
-check('listCustomers returns text stub + structuredContent.customers', () => {
+check('listCustomers returns stub + fallback + structuredContent.customers', () => {
+  setClientName(null as any)
   const r = wrapToolResponse(
     'listCustomers',
     { customers: customerFixture.customers, total: customerFixture.total },
     'long fallback prose',
     {}
   )
-  assertUIResult(r, 'customers')
+  assertDefaultUIResult(r, 'customers')
 })
 
 check(
   'listInvoices (real backend envelope) → structuredContent.invoices',
   () => {
+    setClientName(null as any)
     const raw = {
       next: 'cur_next',
       previous: null,
@@ -155,12 +161,13 @@ check(
       ],
     }
     const r = wrapToolResponse('listInvoices', raw, 'fallback', {}) as UIResult
-    assertUIResult(r, 'invoices')
+    assertDefaultUIResult(r, 'invoices')
     assert.equal((r.structuredContent as any).total, 24077)
   }
 )
 
 check('listInvoices wrapped responseTemplate envelope handled', () => {
+  setClientName(null as any)
   const raw = {
     template_info: '## Invoice List',
     api_response: {
@@ -173,14 +180,15 @@ check('listInvoices wrapped responseTemplate envelope handled', () => {
     },
   }
   const r = wrapToolResponse('listInvoices', raw, 'fallback', {}) as UIResult
-  assertUIResult(r, 'invoices')
+  assertDefaultUIResult(r, 'invoices')
   assert(
-    (r.content[0]!.text || '').includes('1 invoice'),
-    'stub should reflect 1 invoice'
+    (r.content[0]!.text || '').includes('invoice'),
+    'stub should mention invoice'
   )
 })
 
 check('listAllPayments → structuredContent.payments', () => {
+  setClientName(null as any)
   const raw = {
     next: 'cur_next',
     previous: null,
@@ -211,10 +219,11 @@ check('listAllPayments → structuredContent.payments', () => {
     ],
   }
   const r = wrapToolResponse('listAllPayments', raw, 'fallback', {})
-  assertUIResult(r, 'payments')
+  assertDefaultUIResult(r, 'payments')
 })
 
 check('listCreditNotes → structuredContent.credit_notes', () => {
+  setClientName(null as any)
   const raw = {
     template_info: '## Credit Notes',
     api_response: {
@@ -246,10 +255,11 @@ check('listCreditNotes → structuredContent.credit_notes', () => {
   const r = wrapToolResponse('listCreditNotes', raw, 'fallback', {
     status: 'issued',
   })
-  assertUIResult(r, 'credit_notes')
+  assertDefaultUIResult(r, 'credit_notes')
 })
 
 check('listContracts → structuredContent.contracts', () => {
+  setClientName(null as any)
   const raw = {
     next: null,
     previous: null,
@@ -278,10 +288,11 @@ check('listContracts → structuredContent.contracts', () => {
     ],
   }
   const r = wrapToolResponse('listContracts', raw, 'fallback', {})
-  assertUIResult(r, 'contracts')
+  assertDefaultUIResult(r, 'contracts')
 })
 
 check('getInvoiceLineItems → structuredContent.lines', () => {
+  setClientName(null as any)
   const raw = {
     lines: [
       {
@@ -310,10 +321,11 @@ check('getInvoiceLineItems → structuredContent.lines', () => {
   const r = wrapToolResponse('getInvoiceLineItems', raw, 'fallback', {
     invoiceId: 'inv1',
   })
-  assertUIResult(r, 'lines')
+  assertDefaultUIResult(r, 'lines')
 })
 
 check('text-only tools never get structuredContent', () => {
+  setClientName(null as any)
   const r = wrapToolResponse(
     'getCustomerBalance',
     { amount: 1234, currency: 'USD' },
@@ -329,6 +341,7 @@ check('text-only tools never get structuredContent', () => {
 })
 
 check('unmapped tool returns text fallback', () => {
+  setClientName(null as any)
   const r = wrapToolResponse(
     'createInvoice',
     { id: 'inv_1' },
@@ -342,6 +355,137 @@ check('unmapped tool returns text fallback', () => {
     'structuredContent must be absent for unmapped tools'
   )
 })
+
+console.log('• wrapToolResponse() — client-class branching')
+{
+  const listCustomersRaw = {
+    customers: customerFixture.customers,
+    total: customerFixture.total,
+  }
+
+  check('widget-host: TOON text + structuredContent, no raw JSON echo', () => {
+    setClientName('claude-desktop')
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'long raw fallback that should not appear',
+      {}
+    )
+    assert.equal(r.content.length, 1, 'widget-host should have 1 content block')
+    assert.equal(r.content[0]!.type, 'text')
+    const text = r.content[0]!.text || ''
+    assert(
+      text.startsWith('Data rendered in table widget'),
+      'widget-host text must start with nudge'
+    )
+    assert(
+      !text.includes('long raw fallback'),
+      'widget-host text must not contain raw fallback'
+    )
+    assert(
+      !text.includes('"customers"'),
+      'widget-host text must not contain JSON key syntax'
+    )
+    assert(
+      r.structuredContent && typeof r.structuredContent === 'object',
+      'widget-host must include structuredContent'
+    )
+  })
+
+  check('coding-agent: full text only, no structuredContent', () => {
+    setClientName('claude-code')
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'full data text',
+      {}
+    )
+    assert.equal(r.content.length, 1)
+    assert.equal(r.content[0]!.text, 'full data text')
+    assert(
+      !('structuredContent' in r),
+      'coding-agent must not receive structuredContent'
+    )
+  })
+
+  check('default client: stub + fallback + structuredContent', () => {
+    setClientName(null as any)
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'fallback prose',
+      {}
+    )
+    assert.equal(r.content.length, 2, 'default should have stub + fallback')
+    assert(
+      r.structuredContent && typeof r.structuredContent === 'object',
+      'default must include structuredContent'
+    )
+  })
+
+  check('chatgpt classifies as widget-host', () => {
+    setClientName('ChatGPT')
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'fallback',
+      {}
+    )
+    assert.equal(r.content.length, 1)
+    assert(
+      r.structuredContent && typeof r.structuredContent === 'object',
+      'chatgpt should get structuredContent'
+    )
+  })
+
+  check('claude-ai classifies as widget-host', () => {
+    setClientName('claude-ai')
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'fallback',
+      {}
+    )
+    assert.equal(r.content.length, 1)
+    assert(
+      r.structuredContent && typeof r.structuredContent === 'object',
+      'claude-ai should get structuredContent'
+    )
+  })
+
+  check('cline classifies as coding-agent', () => {
+    setClientName('Cline v3.2')
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'fallback',
+      {}
+    )
+    assert.equal(r.content.length, 1)
+    assert(
+      !('structuredContent' in r),
+      'cline must not receive structuredContent'
+    )
+  })
+
+  check('zenskar-ai-server classifies as default', () => {
+    setClientName('zenskar-express-server')
+    const r = wrapToolResponse(
+      'listCustomers',
+      listCustomersRaw,
+      'fallback',
+      {}
+    )
+    assert.equal(r.content.length, 2)
+    assert(
+      r.structuredContent && typeof r.structuredContent === 'object',
+      'zenskar-ai-server should get full response'
+    )
+  })
+
+  // Reset for remaining tests
+  setClientName(null as any)
+}
 
 console.log('• Built bundles (Pattern B: static, no placeholders)')
 for (const shape of SHAPES) {

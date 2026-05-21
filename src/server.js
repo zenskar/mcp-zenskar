@@ -16,6 +16,7 @@ import {
   resourceUriFor,
   lookup as uiRouteLookup,
 } from './ui/server/registry.js'
+import { setClientNameResolver } from './ui/server/client-detection.js'
 import { wrapToolResponse } from './ui/server/wrap.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -88,6 +89,11 @@ try {
 const server = new McpServer({
   name: mcpConfig.server?.name || 'zenskar-api-server',
   version: '1.0.0',
+})
+
+setClientNameResolver(() => {
+  const cv = server.server.getClientVersion()
+  return cv && cv.name ? cv.name : null
 })
 
 // Initialize the sophisticated response processor
