@@ -637,23 +637,37 @@ function normalizePhase(p) {
 }
 
 function normalizePhasePricing(pr) {
-  if (!pr || typeof pr !== 'object') return { name: null, pricing_model: null }
-  const pd = pr.pricing_data ?? pr
-  const qty = pr.quantity ?? {}
-  const bp = pr.billing_period ?? {}
+  if (!pr || typeof pr !== 'object')
+    return { product_name: null, pricing_model: null }
+  const pricingObj = pr.pricing ?? {}
+  const pd = pr.pricing_data ?? pricingObj.pricing_data ?? pr
+  const qty = pricingObj.quantity ?? pr.quantity ?? {}
+  const bp = pricingObj.billing_period ?? pr.billing_period ?? {}
+  const prod = pr.product ?? {}
   return {
     id: pr.id ?? null,
-    name: pr.name ?? pr.product_name ?? null,
+    product_name: prod.name ?? pr.name ?? pr.product_name ?? null,
+    product_type: prod.type ?? null,
+    description:
+      pr.description ?? pricingObj.description ?? prod.description ?? null,
     pricing_model: pd.pricing_type ?? pr.pricing_model ?? null,
     currency: pd.currency ?? null,
     unit_amount: pd.unit_amount ?? null,
     tiers: Array.isArray(pd.tiers) ? pd.tiers : null,
+    package_size: pd.package_size ?? null,
     quantity_type: qty.type ?? null,
     quantity_value: qty.quantity ?? null,
     quantity_unit: qty.unit ?? null,
     billing_cadence: bp.cadence ?? null,
-    billing_timing: pr.billing_timing ?? null,
-    proration: pr.proration ?? null,
+    billing_timing: pr.billing_timing ?? pricingObj.billing_timing ?? null,
+    is_recurring:
+      typeof pricingObj.is_recurring === 'boolean'
+        ? pricingObj.is_recurring
+        : typeof pr.is_recurring === 'boolean'
+          ? pr.is_recurring
+          : null,
+    start_date: pr.start_date ?? null,
+    end_date: pr.end_date ?? null,
   }
 }
 

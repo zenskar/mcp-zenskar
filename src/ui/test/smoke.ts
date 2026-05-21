@@ -23,31 +23,17 @@ interface UIResult {
   structuredContent?: Record<string, unknown>
 }
 
-function assertDefaultUIResult(r: UIResult, expectedArrayKey: string) {
-  // Default client: stub text + raw fallback text (2 blocks)
+function assertDefaultUIResult(r: UIResult, _expectedArrayKey: string) {
+  // Default client: plain text only, no structuredContent
   assert.equal(
     r.content.length,
-    2,
-    `expected 2 content items (stub + fallback), got ${r.content.length}`
+    1,
+    `expected 1 content item (fallback text), got ${r.content.length}`
   )
   assert.equal(r.content[0]!.type, 'text')
-  const stubText = r.content[0]!.text || ''
   assert(
-    stubText.length <= STUB_MAX,
-    `stub exceeds ${STUB_MAX}: ${stubText.length}`
-  )
-  assert(!stubText.includes('|'), `stub looks like markdown table: ${stubText}`)
-  assert(
-    !r.content.some((c) => c.type === 'resource'),
-    'inline resource must be absent — Pattern B uses static registerResource'
-  )
-  assert(
-    r.structuredContent && typeof r.structuredContent === 'object',
-    'structuredContent must be present and be an object'
-  )
-  assert(
-    Array.isArray((r.structuredContent as any)[expectedArrayKey]),
-    `structuredContent.${expectedArrayKey} must be an array`
+    !('structuredContent' in r),
+    'default client must not receive structuredContent'
   )
 }
 
@@ -162,7 +148,6 @@ check(
     }
     const r = wrapToolResponse('listInvoices', raw, 'fallback', {}) as UIResult
     assertDefaultUIResult(r, 'invoices')
-    assert.equal((r.structuredContent as any).total, 24077)
   }
 )
 
@@ -181,10 +166,6 @@ check('listInvoices wrapped responseTemplate envelope handled', () => {
   }
   const r = wrapToolResponse('listInvoices', raw, 'fallback', {}) as UIResult
   assertDefaultUIResult(r, 'invoices')
-  assert(
-    (r.content[0]!.text || '').includes('invoice'),
-    'stub should mention invoice'
-  )
 })
 
 check('listAllPayments → structuredContent.payments', () => {
@@ -416,10 +397,10 @@ console.log('• wrapToolResponse() — client-class branching')
       'fallback prose',
       {}
     )
-    assert.equal(r.content.length, 2, 'default should have stub + fallback')
+    assert.equal(r.content.length, 1, 'default should have fallback text only')
     assert(
-      r.structuredContent && typeof r.structuredContent === 'object',
-      'default must include structuredContent'
+      !('structuredContent' in r),
+      'default must not include structuredContent'
     )
   })
 
@@ -476,10 +457,10 @@ console.log('• wrapToolResponse() — client-class branching')
       'fallback',
       {}
     )
-    assert.equal(r.content.length, 2)
+    assert.equal(r.content.length, 1)
     assert(
-      r.structuredContent && typeof r.structuredContent === 'object',
-      'zenskar-ai-server should get full response'
+      !('structuredContent' in r),
+      'zenskar-ai-server must not receive structuredContent'
     )
   })
 

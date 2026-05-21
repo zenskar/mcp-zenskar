@@ -79,14 +79,7 @@ export function wrapToolResponse(toolName, rawData, fallbackText, args) {
   }
 
   // default: full-fidelity for zenskar-ai-server and unknown clients
-  const stubText = stub(route.noun, items, payload && payload.scope)
-  return {
-    content: [
-      { type: 'text', text: stubText },
-      { type: 'text', text: fallbackText },
-    ],
-    structuredContent: payload,
-  }
+  return textResult(fallbackText)
 }
 
 function arrayLength(payload) {
