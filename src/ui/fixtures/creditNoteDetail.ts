@@ -6,6 +6,7 @@ export const creditNoteDetailFixture: CreditNoteDetailPayload = {
     credit_note_number: 'CN-2026-007',
     customer_id: 'c_001',
     invoice_id: 'inv_001',
+    invoice_name: null,
     status: 'issued',
     amount: 500,
     currency: 'USD',

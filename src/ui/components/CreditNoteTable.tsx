@@ -52,14 +52,28 @@ export function CreditNoteTable({
     {
       key: 'customer',
       header: 'Customer',
-      className: 'text-secondary font-mono text-xs',
-      render: (r) => shortId(r.customer_id, 10),
+      className: 'text-xs',
+      render: (r) =>
+        r.customer_name ? (
+          r.customer_name
+        ) : (
+          <span className="text-secondary font-mono">
+            {shortId(r.customer_id, 10)}
+          </span>
+        ),
     },
     {
       key: 'invoice',
       header: 'Invoice',
-      className: 'text-secondary font-mono text-xs',
-      render: (r) => shortId(r.invoice_id, 10),
+      className: 'text-xs',
+      render: (r) =>
+        r.invoice_name ? (
+          r.invoice_name
+        ) : (
+          <span className="text-secondary font-mono">
+            {shortId(r.invoice_id, 10)}
+          </span>
+        ),
     },
     {
       key: 'status',
