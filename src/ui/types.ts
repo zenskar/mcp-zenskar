@@ -235,6 +235,48 @@ export interface InvoiceDetailPayload {
   line_items?: LineItem[]
 }
 
+export interface PhasePricingTier {
+  min_quantity?: number | null
+  max_quantity?: number | null
+  unit_amount?: number | null
+  flat_fee?: number | null
+}
+
+export interface PhasePricingMatrixRow {
+  dimension?: string | null
+  display_alias?: string | null
+  price?: number | null
+}
+
+export interface PhasePricingFeature {
+  type: string
+  label?: string | null
+  summary: string
+}
+
+export interface PhasePricing {
+  id?: string | null
+  product_name?: string | null
+  product_type?: string | null
+  description?: string | null
+  pricing_model?: string | null
+  currency?: string | null
+  unit_amount?: number | null
+  tiers?: PhasePricingTier[] | null
+  package_size?: number | null
+  matrix?: PhasePricingMatrixRow[] | null
+  quantity_type?: string | null
+  quantity_value?: number | string | null
+  quantity_unit?: string | null
+  meter_name?: string | null
+  billing_cadence?: string | null
+  billing_timing?: string | null
+  is_recurring?: boolean | null
+  start_date?: string | null
+  end_date?: string | null
+  features?: PhasePricingFeature[] | null
+}
+
 export interface ContractPhase {
   id?: string | null
   name?: string | null
@@ -242,6 +284,7 @@ export interface ContractPhase {
   end_date?: string | null
   pricing_summary?: string | null
   product_count?: number | null
+  pricings?: PhasePricing[]
 }
 
 export interface ContractDetailPayload {

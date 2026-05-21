@@ -1,5 +1,12 @@
+import { classifyClient, getClientName } from './client-detection.js'
 import { lookup } from './registry.js'
+import { formatResponse } from './response.js'
 import { stub } from './stub.js'
+
+const LIST_NUDGE =
+  'Data rendered in table widget above. Use values below for follow-up questions — do not restate rows.'
+const DETAIL_NUDGE =
+  'Full detail rendered in widget above — user already sees every field. Do not summarize or restate. Only respond if user asks a specific question. Reference data below for follow-ups.'
 
 function uiEnabled() {
   const v = process.env.ZENSKAR_MCP_UI_ENABLED
@@ -54,15 +61,33 @@ export function wrapToolResponse(toolName, rawData, fallbackText, args) {
     return textResult(fallbackText)
   }
 
-  const stubText = stub(route.noun, items, payload && payload.scope)
-  dbg(toolName, 'OK shape=', route.shape, 'items=', items, 'stub=', stubText)
-  return {
-    content: [
-      { type: 'text', text: stubText },
-      { type: 'text', text: fallbackText },
-    ],
-    structuredContent: payload,
+  const clientClass = classifyClient(getClientName())
+  dbg(
+    toolName,
+    'OK shape=',
+    route.shape,
+    'items=',
+    items,
+    'client=',
+    clientClass
+  )
+
+  if (clientClass === 'coding-agent') {
+    return textResult(fallbackText)
   }
+
+  if (clientClass === 'widget-host') {
+    const isDetail = items <= 1 && route.shape.includes('detail')
+    const nudge = isDetail ? DETAIL_NUDGE : LIST_NUDGE
+    const toonText = nudge + '\n' + formatResponse(payload)
+    return {
+      content: [{ type: 'text', text: toonText }],
+      structuredContent: payload,
+    }
+  }
+
+  // default: full-fidelity for zenskar-ai-server and unknown clients
+  return textResult(fallbackText)
 }
 
 function arrayLength(payload) {
