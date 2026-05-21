@@ -260,7 +260,7 @@ function PricingCard({ p }: { p: PhasePricing }) {
         <hr className="border-border m-0" />
 
         {/* Pricing summary */}
-        <div className="flex flex-wrap gap-x-8 gap-y-3">
+        <div className="flex flex-wrap gap-x-6 gap-y-2.5">
           <PriceDisplay p={p} />
 
           {/* Quantity */}
@@ -368,7 +368,7 @@ function PriceDisplay({ p }: { p: PhasePricing }) {
     case 'package':
     case 'package_pricing':
       return (
-        <div className="flex flex-wrap gap-x-8 gap-y-3">
+        <div className="flex flex-wrap gap-x-6 gap-y-2.5">
           <LabelValue label={`Package Price${curTag}`}>
             <span className="font-semibold tabular-nums">
               {fmtPrice(p.unit_amount, cur)}
