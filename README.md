@@ -113,7 +113,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 "Create a $25 credit note against the latest invoice for customer X"
 "Show me the balance sheet and income statement"
 "List all products and their pricing configurations"
-"Record a $1000 manual payment against invoice Y"
+"Record a $1000 successful manual payment against invoice Y"
 ```
 
 ## Available Tools
@@ -188,7 +188,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | --------------------- | ---------------------------------------------------------------------- |
 | `listAllPayments`     | List all payments with filtering and sorting, including refund records |
 | `getPaymentById`      | Get a payment by ID                                                    |
-| `createPayment`       | Record a payment against an invoice                                    |
+| `createPayment`       | Record a successful manual/offline payment against an invoice          |
 | `updatePayment`       | Update a payment's invoice allocations (`payment_parts`)               |
 | `deleteManualPayment` | Delete a manual payment                                                |
 | `editManualPayment`   | Edit a manual payment's amount or method                               |

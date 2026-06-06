@@ -3799,7 +3799,7 @@
     },
     {
       "name": "createPayment",
-      "description": "Record a payment. Link to invoices via payment_parts array. Payment method enum: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, etc. Type enum: payment, refund, payment_reversal, authorization, tax_withheld. For manual payments use payment_method='other' and type='payment'.",
+      "description": "Record a realized payment. Link to invoices via payment_parts array. Payment method enum: card, cash, check, charge_back, bank_transfer, direct_debit, other, credits, etc. Type enum: payment, refund, payment_reversal, authorization, tax_withheld. For manually recorded offline payments, send type='payment', payment_method='cash', 'check', 'bank_transfer', or 'other', and status='success'. Do not use status='created' for manually recorded payments; created payments are unrealized and will not reduce invoice amount_due or mark invoices paid.",
       "args": [
         {
           "name": "customer_id",
@@ -3868,10 +3868,12 @@
         },
         {
           "name": "status",
-          "description": "Payment status.",
+          "description": "Payment status for this recorded payment. Use 'success' for manually recorded/offline payments so linked invoices are marked paid when payment_parts cover the amount due.",
           "type": "string",
           "required": false,
-          "position": "body"
+          "position": "body",
+          "default": "success",
+          "enum": ["success"]
         },
         {
           "name": "external_id",
