@@ -3799,7 +3799,7 @@
     },
     {
       "name": "createPayment",
-      "description": "Record a successful manual/offline payment or tax-withheld amount, equivalent to the frontend Add Payment flow. Link to invoices via payment_parts array. Use type='payment' with payment_method='bank_transfer', 'check', 'cash', or 'card'. Use type='tax_withheld' without payment_method. Always use status='success'. Do not use status='created' for manually recorded payments; created payments are unrealized and will not reduce invoice amount_due or mark invoices paid. Refunds, authorizations, reversals, payment links, and gateway charge attempts are outside this tool's scope.",
+      "description": "Record a successful manual/offline payment or tax-withheld amount, equivalent to the frontend Add Payment flow. Link to invoices via payment_parts array. Use type='payment' with payment_method='bank_transfer', 'check', 'cash', or 'card'. Use type='tax_withheld' without payment_method. Always use status='success'. Do not use status='created' for manually recorded payments; created payments are unrealized and will not reduce invoice amount_due or mark invoices paid. The backend assigns the payment timestamp when the payment is recorded. Refunds, authorizations, reversals, payment links, and gateway charge attempts are outside this tool's scope.",
       "args": [
         {
           "name": "customer_id",
@@ -3866,13 +3866,6 @@
         {
           "name": "external_id",
           "description": "External reference ID for this payment.",
-          "type": "string",
-          "required": false,
-          "position": "body"
-        },
-        {
-          "name": "timestamp",
-          "description": "Payment timestamp in ISO 8601 format.",
           "type": "string",
           "required": false,
           "position": "body"
