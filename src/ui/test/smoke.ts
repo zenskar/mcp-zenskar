@@ -3,6 +3,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { fmtInvoiceDetailMoney } from '../components/InvoiceDetail'
 import { customerFixture } from '../fixtures/customers'
 import { setClientName } from '../server/client-detection.js'
 import { resourceUriFor, SHAPES } from '../server/registry.js'
@@ -63,6 +64,11 @@ check('stub plural for 0', () =>
   assert.equal(stub('customer', 0), 'Rendered 0 customers.')
 )
 check('stub y -> ies', () => assert(stub('entity', 3).includes('entities')))
+
+console.log('• formatters')
+check('invoice detail renders API totals as major currency units', () => {
+  assert.equal(fmtInvoiceDetailMoney(489.94, 'USD'), '$489.94')
+})
 
 console.log('• resourceUriFor()')
 check('uri shape stable per shape', () => {
