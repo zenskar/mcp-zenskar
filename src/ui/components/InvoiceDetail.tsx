@@ -1,13 +1,6 @@
 import type { InvoiceDetailPayload } from '../types'
 import { Field, Section, Stat } from './DetailScaffold'
-import {
-  daysBetween,
-  Dim,
-  fmtDate,
-  fmtDateTime,
-  fmtMoney,
-  StatusPill,
-} from './format'
+import { daysBetween, Dim, fmtDate, fmtDateTime, StatusPill } from './format'
 
 export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
   const i = payload.invoice
@@ -44,11 +37,14 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
       </header>
 
       <div className="border-border grid grid-cols-2 gap-3 rounded-md border p-3 sm:grid-cols-4">
-        <Stat label="Total" value={fmtMoney(i.invoice_total, cur)} />
-        <Stat label="Paid" value={fmtMoney(i.paid_amount, cur)} />
+        <Stat
+          label="Total"
+          value={fmtInvoiceDetailMoney(i.invoice_total, cur)}
+        />
+        <Stat label="Paid" value={fmtInvoiceDetailMoney(i.paid_amount, cur)} />
         <Stat
           label="Due"
-          value={fmtMoney(i.amount_due, cur)}
+          value={fmtInvoiceDetailMoney(i.amount_due, cur)}
           tone={isOverdue ? 'warn' : undefined}
         />
         <Stat
@@ -173,6 +169,22 @@ export function InvoiceDetail({ payload }: { payload: InvoiceDetailPayload }) {
       ) : null}
     </div>
   )
+}
+
+export function fmtInvoiceDetailMoney(
+  amount: number | null | undefined,
+  currency: string = 'USD'
+) {
+  if (amount == null || !Number.isFinite(amount)) return <Dim>—</Dim>
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  } catch {
+    return `${currency} ${amount.toLocaleString()}`
+  }
 }
 
 function ActionLink({
