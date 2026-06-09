@@ -207,6 +207,61 @@ function normalizeRawMetricDataschema(schema) {
   return normalized
 }
 
+function convertJsonSchemaToZod(schema) {
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+    return z.any()
+  }
+
+  if (Array.isArray(schema.enum) && schema.enum.length > 0) {
+    const values = schema.enum.filter((value) => typeof value === 'string')
+    if (values.length === schema.enum.length && values.length > 0) {
+      return z.enum(values)
+    }
+  }
+
+  let zodType
+  const schemaType = Array.isArray(schema.type) ? schema.type[0] : schema.type
+
+  if (schemaType === 'integer' || schemaType === 'number') {
+    zodType = schemaType === 'integer' ? z.number().int() : z.number()
+    if (typeof schema.minimum === 'number') {
+      zodType = zodType.min(schema.minimum)
+    }
+    if (typeof schema.maximum === 'number') {
+      zodType = zodType.max(schema.maximum)
+    }
+  } else if (schemaType === 'boolean') {
+    zodType = z.boolean()
+  } else if (schemaType === 'array') {
+    zodType = z.array(convertJsonSchemaToZod(schema.items))
+  } else if (schemaType === 'object') {
+    const required = new Set(Array.isArray(schema.required) ? schema.required : [])
+    const properties = schema.properties || {}
+    const shape = {}
+
+    Object.entries(properties).forEach(([key, value]) => {
+      let propertySchema = convertJsonSchemaToZod(value)
+      if (!required.has(key)) {
+        propertySchema = propertySchema.optional()
+      }
+      shape[key] = propertySchema
+    })
+
+    zodType =
+      schema.additionalProperties === false
+        ? z.object(shape)
+        : z.object(shape).passthrough()
+  } else {
+    zodType = z.string()
+  }
+
+  if (schema.description) {
+    zodType = zodType.describe(schema.description)
+  }
+
+  return zodType
+}
+
 function extractListPayload(data) {
   if (!data) return []
   if (Array.isArray(data)) return data
@@ -763,7 +818,9 @@ function convertArgsToZodSchema(args) {
   args.forEach((arg) => {
     let zodType
 
-    if (arg.type === 'integer' || arg.type === 'number') {
+    if (arg.schema) {
+      zodType = convertJsonSchemaToZod(arg.schema)
+    } else if (arg.type === 'integer' || arg.type === 'number') {
       zodType = z.number()
     } else if (arg.type === 'boolean') {
       zodType = z.boolean()
