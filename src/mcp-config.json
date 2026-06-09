@@ -3869,12 +3869,7 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": [
-            "bank_transfer",
-            "check",
-            "cash",
-            "card"
-          ]
+          "enum": ["bank_transfer", "check", "cash", "card"]
         },
         {
           "name": "type",
@@ -3883,10 +3878,7 @@
           "required": false,
           "position": "body",
           "default": "payment",
-          "enum": [
-            "payment",
-            "tax_withheld"
-          ]
+          "enum": ["payment", "tax_withheld"]
         },
         {
           "name": "status",
