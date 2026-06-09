@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { v4 as uuidv4 } from 'uuid'
-import { z } from 'zod'
 
 import ResponseProcessor from './response-processor.js'
+import { convertArgsToZodSchema } from './tool-schema.js'
 import { registerUIResources } from './ui/server/registerResources.js'
 import {
   resourceUriFor,
@@ -754,76 +754,6 @@ async function enrichAccountingReportResult(
     )
     return result
   }
-}
-
-// Helper function to convert OpenAPI args to Zod schema
-function convertArgsToZodSchema(args) {
-  const schemaObj = {}
-
-  args.forEach((arg) => {
-    let zodType
-
-    if (arg.type === 'integer' || arg.type === 'number') {
-      zodType = z.number()
-    } else if (arg.type === 'boolean') {
-      zodType = z.boolean()
-    } else if (arg.type === 'object') {
-      zodType = z.record(z.any())
-    } else if (arg.type === 'array') {
-      zodType = z.array(z.any())
-    } else if (arg.type === 'datetime') {
-      // Accept ISO-8601 string or numeric unix seconds. Backend Pydantic
-      // datetime fields parse both. Lets the LLM copy ISO strings directly
-      // from getContractBillingCycles output instead of converting to unix.
-      zodType = z.union([z.string(), z.number()])
-    } else {
-      zodType = z.string()
-    }
-
-    // Handle default values
-    if (arg.default !== undefined) {
-      zodType = zodType.default(arg.default)
-    }
-
-    if (!arg.required) {
-      zodType = zodType.optional()
-    }
-
-    if (arg.description) {
-      zodType = zodType.describe(arg.description)
-    }
-
-    schemaObj[arg.name] = zodType
-  })
-
-  // Add __userContext as an optional object parameter for all tools
-  schemaObj['__userContext'] = z
-    .object({
-      userId: z.string().optional(),
-      authorization: z.string().optional(),
-      organization: z.string().optional(),
-      apiKey: z.string().optional(),
-      headers: z.object({}).optional(),
-      // Add approval support for human-in-the-loop workflow
-      approval: z
-        .object({
-          approved: z.boolean(),
-          // Single-use token issued by server in the approval_required response.
-          // Without this in the schema, Zod strips it from __userContext.approval
-          // and consumeApprovalToken() always sees undefined → infinite re-approval loop.
-          token: z.string().optional(),
-          modifiedArguments: z.record(z.any()).optional(),
-          originalArguments: z.record(z.any()).optional(),
-          toolName: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional()
-    .describe(
-      'Internal user context for multi-tenant authentication and approval workflow'
-    )
-
-  return schemaObj
 }
 
 // Enhanced API execution with better error handling and logging

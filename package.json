@@ -1,6 +1,6 @@
 {
   "name": "mcp-zenskar",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Model Context Protocol (MCP) server for Zenskar API - customer management, invoicing, and billing operations",
   "type": "module",
   "main": "dist/server.mjs",
@@ -19,8 +19,9 @@
     "prebuild": "pnpm run build:ui",
     "build": "tsdown",
     "prepublishOnly": "pnpm run build",
+    "test:tool-schema": "node --test src/test/tool-schema.test.js",
     "smoke": "tsx src/ui/test/smoke.ts",
-    "test": "pnpm run smoke"
+    "test": "pnpm run test:tool-schema && pnpm run smoke"
   },
   "keywords": [
     "mcp",

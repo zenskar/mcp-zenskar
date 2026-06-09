@@ -3453,6 +3453,40 @@
           "name": "pricing",
           "description": "Inline pricing configuration object. Either this or pricing_id must be provided.",
           "type": "object",
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "payment_terms": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["payment_term_type", "due_days"],
+                  "properties": {
+                    "payment_term_type": {
+                      "type": "string",
+                      "enum": ["on_approval", "on_creation"]
+                    },
+                    "due_days": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "payment_term_mode": {
+                      "type": "string",
+                      "enum": ["relative", "absolute"]
+                    },
+                    "last_day_of_month": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "required": false,
           "position": "body"
         },
@@ -3835,12 +3869,7 @@
           "type": "string",
           "required": false,
           "position": "body",
-          "enum": [
-            "bank_transfer",
-            "check",
-            "cash",
-            "card"
-          ]
+          "enum": ["bank_transfer", "check", "cash", "card"]
         },
         {
           "name": "type",
@@ -3849,10 +3878,7 @@
           "required": false,
           "position": "body",
           "default": "payment",
-          "enum": [
-            "payment",
-            "tax_withheld"
-          ]
+          "enum": ["payment", "tax_withheld"]
         },
         {
           "name": "status",
