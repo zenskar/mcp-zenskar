@@ -5,6 +5,12 @@ export function convertJsonSchemaToZod(schema) {
     return z.any()
   }
 
+  const unionSchemas = schema.oneOf || schema.anyOf
+  if (Array.isArray(unionSchemas) && unionSchemas.length > 0) {
+    const options = unionSchemas.map(convertJsonSchemaToZod)
+    return options.length === 1 ? options[0] : z.union(options)
+  }
+
   if (Array.isArray(schema.enum) && schema.enum.length > 0) {
     const values = schema.enum.filter((value) => typeof value === 'string')
     if (values.length === schema.enum.length && values.length > 0) {
@@ -27,6 +33,12 @@ export function convertJsonSchemaToZod(schema) {
     zodType = z.boolean()
   } else if (schemaType === 'array') {
     zodType = z.array(convertJsonSchemaToZod(schema.items))
+    if (typeof schema.minItems === 'number') {
+      zodType = zodType.min(schema.minItems)
+    }
+    if (typeof schema.maxItems === 'number') {
+      zodType = zodType.max(schema.maxItems)
+    }
   } else if (schemaType === 'object') {
     const required = new Set(
       Array.isArray(schema.required) ? schema.required : []
