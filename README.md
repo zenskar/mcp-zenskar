@@ -372,6 +372,10 @@ To iterate on `src/server.js` without rebuilding, run it directly — `npm insta
 
 The server uses `src/mcp-config.json` to define available tools and API endpoints. This file contains the complete mapping of MCP tools to Zenskar API operations. All tools are declarative — no code changes needed to add new tools.
 
+For complex nested arguments, use the first-class `schema` field on an arg.
+When present, that JSON Schema is the source of truth for MCP input validation;
+see `src/mcp-config.schema.md`.
+
 ## License
 
 MIT
