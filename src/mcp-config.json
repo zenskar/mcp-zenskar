@@ -5734,46 +5734,136 @@
                       "type": "array",
                       "minItems": 1,
                       "items": {
-                        "type": "object",
-                        "additionalProperties": true,
-                        "required": ["schedule"],
-                        "properties": {
-                          "schedule": {
+                        "oneOf": [
+                          {
                             "type": "object",
                             "additionalProperties": true,
-                            "required": ["duration"],
+                            "required": [
+                              "schedule",
+                              "pricing_id",
+                              "product_id"
+                            ],
                             "properties": {
-                              "duration": { "type": "string" },
-                              "start_offset": { "type": "string" },
-                              "trigger_type": {
-                                "type": "string",
-                                "enum": ["event_based", "time_based"]
-                              }
-                            }
-                          },
-                          "pricing_id": { "type": "string" },
-                          "product_id": { "type": "string" },
-                          "pricing": {
-                            "type": "object",
-                            "additionalProperties": true,
-                            "required": ["pricing_data"],
-                            "properties": {
-                              "pricing_data": {
+                              "schedule": {
                                 "type": "object",
                                 "additionalProperties": true,
-                                "required": ["pricing_type", "currency"],
+                                "required": ["duration"],
                                 "properties": {
-                                  "pricing_type": { "type": "string" },
-                                  "currency": { "type": "string" }
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
                                 }
+                              },
+                              "pricing_id": { "type": "string" },
+                              "product_id": { "type": "string" }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["schedule", "pricing_id", "product"],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing_id": { "type": "string" },
+                              "product": {
+                                "type": "object",
+                                "additionalProperties": true
                               }
                             }
                           },
-                          "product": {
+                          {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": true,
+                            "required": ["schedule", "pricing", "product_id"],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["pricing_data"],
+                                "properties": {
+                                  "pricing_data": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "required": ["pricing_type", "currency"],
+                                    "properties": {
+                                      "pricing_type": { "type": "string" },
+                                      "currency": { "type": "string" }
+                                    }
+                                  }
+                                }
+                              },
+                              "product_id": { "type": "string" }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["schedule", "pricing", "product"],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["pricing_data"],
+                                "properties": {
+                                  "pricing_data": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "required": ["pricing_type", "currency"],
+                                    "properties": {
+                                      "pricing_type": { "type": "string" },
+                                      "currency": { "type": "string" }
+                                    }
+                                  }
+                                }
+                              },
+                              "product": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
                           }
-                        }
+                        ]
                       }
                     }
                   }

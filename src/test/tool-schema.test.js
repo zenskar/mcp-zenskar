@@ -484,6 +484,67 @@ test('createPlan structured args reject empty or unusable phases declaratively',
   )
 })
 
+test('createPlan phase pricings require both pricing and product sources', () => {
+  const schema = z.object(
+    convertArgsToZodSchema([
+      toolArg('createPlan', 'schedule'),
+      toolArg('createPlan', 'phases'),
+    ])
+  )
+
+  assert.throws(() =>
+    schema.parse({
+      schedule: { duration: 'P1Y' },
+      phases: [
+        {
+          name: 'Phase 1',
+          schedule: { duration: 'P1Y' },
+          order: 0,
+          pricings: [{ schedule: { duration: 'P1Y' } }],
+        },
+      ],
+    })
+  )
+
+  assert.throws(() =>
+    schema.parse({
+      schedule: { duration: 'P1Y' },
+      phases: [
+        {
+          name: 'Phase 1',
+          schedule: { duration: 'P1Y' },
+          order: 0,
+          pricings: [
+            {
+              schedule: { duration: 'P1Y' },
+              pricing_id: 'price_123',
+            },
+          ],
+        },
+      ],
+    })
+  )
+
+  assert.throws(() =>
+    schema.parse({
+      schedule: { duration: 'P1Y' },
+      phases: [
+        {
+          name: 'Phase 1',
+          schedule: { duration: 'P1Y' },
+          order: 0,
+          pricings: [
+            {
+              schedule: { duration: 'P1Y' },
+              product_id: 'prod_123',
+            },
+          ],
+        },
+      ],
+    })
+  )
+})
+
 test('createPlan structured args accept backend-shaped phases', () => {
   const schema = z.object(
     convertArgsToZodSchema([
