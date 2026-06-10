@@ -3044,6 +3044,77 @@
           "name": "phases",
           "description": "Array of contract phases with pricing details. Each phase includes name, start_date, end_date, phase_type, and pricings array. Defaults to empty array if omitted.",
           "type": "array",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "name": { "type": "string" },
+                "start_date": { "type": "string" },
+                "end_date": { "type": "string" },
+                "phase_type": {
+                  "type": "string",
+                  "enum": ["active", "pause", "trial"]
+                },
+                "pricings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "properties": {
+                      "pricing_id": { "type": "string" },
+                      "product_id": { "type": "string" },
+                      "pricing": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["pricing_data"],
+                        "properties": {
+                          "pricing_data": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["pricing_type", "currency"],
+                            "properties": {
+                              "pricing_type": {
+                                "type": "string"
+                              },
+                              "currency": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "product": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                },
+                "features": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["pricing_data"],
+                  "properties": {
+                    "pricing_data": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["pricing_type", "currency"],
+                      "properties": {
+                        "pricing_type": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "required": false,
           "position": "body"
         },
@@ -3182,6 +3253,77 @@
           "name": "phases",
           "description": "Array of contract phases. Each phase needs at minimum: name, start_date, end_date. Include pricings array if the phase has pricing. Defaults to empty array if omitted.",
           "type": "array",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "name": { "type": "string" },
+                "start_date": { "type": "string" },
+                "end_date": { "type": "string" },
+                "phase_type": {
+                  "type": "string",
+                  "enum": ["active", "pause", "trial"]
+                },
+                "pricings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "properties": {
+                      "pricing_id": { "type": "string" },
+                      "product_id": { "type": "string" },
+                      "pricing": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["pricing_data"],
+                        "properties": {
+                          "pricing_data": {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["pricing_type", "currency"],
+                            "properties": {
+                              "pricing_type": {
+                                "type": "string"
+                              },
+                              "currency": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "product": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  }
+                },
+                "features": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["pricing_data"],
+                  "properties": {
+                    "pricing_data": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["pricing_type", "currency"],
+                      "properties": {
+                        "pricing_type": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "required": false,
           "position": "body"
         },
@@ -3388,6 +3530,41 @@
           "name": "pricings",
           "description": "Array of pricing configurations for this phase.",
           "type": "array",
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "pricing_id": { "type": "string" },
+                "product_id": { "type": "string" },
+                "pricing": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["pricing_data"],
+                  "properties": {
+                    "pricing_data": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["pricing_type", "currency"],
+                      "properties": {
+                        "pricing_type": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "product": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
           "required": false,
           "position": "body"
         },
@@ -3456,7 +3633,21 @@
           "schema": {
             "type": "object",
             "additionalProperties": true,
+            "required": ["pricing_data"],
             "properties": {
+              "pricing_data": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": ["pricing_type", "currency"],
+                "properties": {
+                  "pricing_type": {
+                    "type": "string"
+                  },
+                  "currency": {
+                    "type": "string"
+                  }
+                }
+              },
               "payment_terms": {
                 "type": "array",
                 "items": {
@@ -5230,6 +5421,36 @@
           "name": "pricing_data",
           "description": "Pricing data object (required). MUST include 'pricing_type' discriminator AND 'currency' (ISO 4217, e.g. 'USD'). 'unit_amount' is in MAJOR currency units (float) — 3 means $3, NOT 300 cents. Do NOT convert to cents. Supported pricing_type values with examples: flat_fee: {pricing_type:'flat_fee', unit_amount:100, currency:'USD'}. per_unit: {pricing_type:'per_unit', unit_amount:3, currency:'USD'}. tiered: {pricing_type:'tiered', unit_amount:[10,5], up_to:[100,null], currency:'USD'}. volume: {pricing_type:'volume', unit_amount:[10,5], up_to:[100,null], currency:'USD'}. percent: {pricing_type:'percent', percentage:5.0, currency:'USD'}. package: {pricing_type:'package', package_size:10, unit_amount:50, currency:'USD'}. step: {pricing_type:'step', unit_amount:[...], up_to:[...], currency:'USD'}. matrix: {pricing_type:'matrix', dimensions:[...], values:[...], currency:'USD'}. Optional inside pricing_data for per_unit: 'proration_type' ('day_based'|'cadence_based'), 'charge_full_amount' (bool).",
           "type": "object",
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["pricing_type", "currency"],
+            "properties": {
+              "pricing_type": {
+                "type": "string",
+                "enum": [
+                  "percent",
+                  "per_unit",
+                  "volume",
+                  "volume_with_flat_fee",
+                  "tiered",
+                  "tiered_with_flat_fee",
+                  "step",
+                  "matrix",
+                  "custom_tiered",
+                  "package",
+                  "flat_fee",
+                  "features",
+                  "two_dimensional_tiered",
+                  "custom_pricing",
+                  "bundle"
+                ]
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          },
           "required": true,
           "position": "body"
         },
@@ -5237,13 +5458,65 @@
           "name": "quantity",
           "description": "Quantity configuration (REQUIRED — ask the user; do not omit). Top-level object, NOT inside pricing_data. Shape: {type: 'fixed'|'metered', quantity?: number, unit?: string, aggregate_id?: UUID}. 'fixed' = static quantity (e.g. seats); also set 'unit' (label like 'user') and 'quantity' (number). 'metered' = consumption tracked via a billable metric; set aggregate_id to the billable-metric UUID. Omitting this object causes the UI to show 0 for billing metric.",
           "type": "object",
+          "schema": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "required": ["type", "quantity", "unit"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["fixed"]
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "required": ["type", "aggregate_id"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["metered"]
+                  },
+                  "aggregate_id": {
+                    "type": "string"
+                  },
+                  "unit": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          },
           "required": true,
           "position": "body"
         },
         {
           "name": "billing_period",
-          "description": "Billing cadence (REQUIRED — ask the user; do not omit). Object: {cadence: ISO-8601 duration ('P1M'=monthly, 'P3M'=quarterly, 'P1Y'=annually), offset: ISO-8601 duration ('P0D' for no offset, 'P1M' to bill 1 month after period start)}. Both fields needed. Example: {\"cadence\":\"P1M\",\"offset\":\"P0D\"}. Omitting this causes the UI to render 'Undefined- Every Undefined Undefined'.",
+          "description": "Billing cadence (REQUIRED — ask the user; do not omit). Backend shape: {cadence: ISO-8601 duration ('P1M'=monthly, 'P3M'=quarterly, 'P1Y'=annually), offset: 'prepaid'|'postpaid'}. Both fields needed. Example: {\"cadence\":\"P1M\",\"offset\":\"prepaid\"}. Omitting this causes the UI to render 'Undefined- Every Undefined Undefined'.",
           "type": "object",
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["cadence", "offset"],
+            "properties": {
+              "cadence": {
+                "type": "string"
+              },
+              "offset": {
+                "type": "string",
+                "enum": ["prepaid", "postpaid"]
+              }
+            }
+          },
           "required": true,
           "position": "body"
         },
@@ -5363,6 +5636,23 @@
           "name": "schedule",
           "description": "Plan-level schedule (required). Object: {duration: ISO-8601 e.g. 'P1Y'|'P1M', start_offset?: ISO-8601 e.g. 'P0D', trigger_type?: 'time_based'}. Example: {\"duration\":\"P1Y\",\"start_offset\":\"P0D\"}.",
           "type": "object",
+          "schema": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["duration"],
+            "properties": {
+              "duration": {
+                "type": "string"
+              },
+              "start_offset": {
+                "type": "string"
+              },
+              "trigger_type": {
+                "type": "string",
+                "enum": ["event_based", "time_based"]
+              }
+            }
+          },
           "required": true,
           "position": "body"
         },
@@ -5375,8 +5665,212 @@
         },
         {
           "name": "phases",
-          "description": "Array of plan phases (REQUIRED — must be non-empty). Each phase: {name: string (required), schedule: {duration, start_offset?, trigger_type?} (required), order: int (required, 0-indexed), description?: string, features?: CreateProductPricingRequestSchema (one-off phase-level pricing/features), pricings?: [{schedule, pricing_id?, product_id?, pricing?: CreateProductPricingRequestSchema, product?: CreateProductRequestSchema}] (per-product pricings)}. Each phase must have features OR a non-empty pricings array. Minimal example: [{\"name\":\"Phase 1\",\"schedule\":{\"duration\":\"P1Y\"},\"order\":0,\"features\":{\"pricing_data\":{\"pricing_type\":\"features\"}}}].",
+          "description": "Array of plan phases (REQUIRED — must be non-empty). Each phase: {name: string (required), schedule: {duration, start_offset?, trigger_type?} (required), order: int (required, 0-indexed), description?: string, features?: CreateProductPricingRequestSchema (one-off phase-level pricing/features), pricings?: [{schedule, pricing_id?, product_id?, pricing?: CreateProductPricingRequestSchema, product?: CreateProductRequestSchema}] (per-product pricings)}. Each phase must have features OR a non-empty pricings array. Minimal example: [{\"name\":\"Phase 1\",\"schedule\":{\"duration\":\"P1Y\"},\"order\":0,\"features\":{\"pricing_data\":{\"pricing_type\":\"features\",\"currency\":\"USD\"}}}].",
           "type": "array",
+          "schema": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["name", "schedule", "order", "features"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "schedule": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["duration"],
+                      "properties": {
+                        "duration": { "type": "string" },
+                        "start_offset": { "type": "string" },
+                        "trigger_type": {
+                          "type": "string",
+                          "enum": ["event_based", "time_based"]
+                        }
+                      }
+                    },
+                    "order": { "type": "integer" },
+                    "features": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["pricing_data"],
+                      "properties": {
+                        "pricing_data": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "required": ["pricing_type", "currency"],
+                          "properties": {
+                            "pricing_type": { "type": "string" },
+                            "currency": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["name", "schedule", "order", "pricings"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "schedule": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "required": ["duration"],
+                      "properties": {
+                        "duration": { "type": "string" },
+                        "start_offset": { "type": "string" },
+                        "trigger_type": {
+                          "type": "string",
+                          "enum": ["event_based", "time_based"]
+                        }
+                      }
+                    },
+                    "order": { "type": "integer" },
+                    "pricings": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": [
+                              "schedule",
+                              "pricing_id",
+                              "product_id"
+                            ],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing_id": { "type": "string" },
+                              "product_id": { "type": "string" }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["schedule", "pricing_id", "product"],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing_id": { "type": "string" },
+                              "product": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["schedule", "pricing", "product_id"],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["pricing_data"],
+                                "properties": {
+                                  "pricing_data": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "required": ["pricing_type", "currency"],
+                                    "properties": {
+                                      "pricing_type": { "type": "string" },
+                                      "currency": { "type": "string" }
+                                    }
+                                  }
+                                }
+                              },
+                              "product_id": { "type": "string" }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "additionalProperties": true,
+                            "required": ["schedule", "pricing", "product"],
+                            "properties": {
+                              "schedule": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["duration"],
+                                "properties": {
+                                  "duration": { "type": "string" },
+                                  "start_offset": { "type": "string" },
+                                  "trigger_type": {
+                                    "type": "string",
+                                    "enum": ["event_based", "time_based"]
+                                  }
+                                }
+                              },
+                              "pricing": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "required": ["pricing_data"],
+                                "properties": {
+                                  "pricing_data": {
+                                    "type": "object",
+                                    "additionalProperties": true,
+                                    "required": ["pricing_type", "currency"],
+                                    "properties": {
+                                      "pricing_type": { "type": "string" },
+                                      "currency": { "type": "string" }
+                                    }
+                                  }
+                                }
+                              },
+                              "product": {
+                                "type": "object",
+                                "additionalProperties": true
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
           "required": true,
           "position": "body"
         }
