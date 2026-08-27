@@ -1,6 +1,6 @@
 {
   "name": "mcp-zenskar",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "description": "Model Context Protocol (MCP) server for Zenskar API - customer management, invoicing, and billing operations",
   "type": "module",
   "main": "dist/server.mjs",
@@ -35,7 +35,6 @@
     "claude",
     "llm"
   ],
-  "author": "Abhishek Gahlot <me@abhishek.it>",
   "license": "MIT",
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
