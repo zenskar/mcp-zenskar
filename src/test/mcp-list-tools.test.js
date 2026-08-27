@@ -105,3 +105,87 @@ test('updateContract blocks a phase-only expiry that would leave the contract ac
     await client.close()
   }
 })
+
+test('updateContract blocks a future-dated phase-only expiry', async () => {
+  const transport = new StdioClientTransport({
+    command: execPath,
+    args: ['src/server.js'],
+    env: {
+      ...process.env,
+      ZENSKAR_API_KEY: 'test',
+    },
+  })
+  const client = new Client({ name: 'mcp-schema-test', version: '1.0.0' })
+
+  await client.connect(transport)
+  try {
+    const futureEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+    const blocked = await client.callTool({
+      name: 'updateContract',
+      arguments: {
+        contractId: '00000000-0000-0000-0000-000000000001',
+        name: 'Contract',
+        status: 'active',
+        currency: 'USD',
+        start_date: '2024-01-01T00:00:00',
+        customer_id: '00000000-0000-0000-0000-000000000002',
+        phases: [
+          {
+            name: 'Phase 1',
+            start_date: '2024-01-01T00:00:00',
+            end_date: futureEnd,
+          },
+        ],
+      },
+    })
+
+    assert.equal(blocked.isError, true)
+    const blockedText = blocked.content.map((part) => part.text).join('\n')
+    assert.match(blockedText, /invalid_arguments/)
+    assert.match(blockedText, /expireContract/)
+  } finally {
+    await client.close()
+  }
+})
+
+test('updateContract blocks a phase that outlives the contract end_date', async () => {
+  const transport = new StdioClientTransport({
+    command: execPath,
+    args: ['src/server.js'],
+    env: {
+      ...process.env,
+      ZENSKAR_API_KEY: 'test',
+    },
+  })
+  const client = new Client({ name: 'mcp-schema-test', version: '1.0.0' })
+
+  await client.connect(transport)
+  try {
+    const blocked = await client.callTool({
+      name: 'updateContract',
+      arguments: {
+        contractId: '00000000-0000-0000-0000-000000000001',
+        name: 'Contract',
+        status: 'active',
+        currency: 'USD',
+        start_date: '2024-01-01T00:00:00',
+        customer_id: '00000000-0000-0000-0000-000000000002',
+        end_date: '2030-06-30T00:00:00',
+        phases: [
+          {
+            name: 'Phase 1',
+            start_date: '2024-01-01T00:00:00',
+            end_date: '2030-12-31T00:00:00',
+          },
+        ],
+      },
+    })
+
+    assert.equal(blocked.isError, true)
+    const blockedText = blocked.content.map((part) => part.text).join('\n')
+    assert.match(blockedText, /end after the contract-level/)
+    assert.match(blockedText, /expireContract/)
+  } finally {
+    await client.close()
+  }
+})

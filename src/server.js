@@ -1593,23 +1593,52 @@ function validateToolArgs(toolName, args) {
   // Backend derives status from contract-level end_date only; phase dates never expire a contract.
   if (toolName === 'updateContract') {
     const phases = Array.isArray(args.phases) ? args.phases : null
-    if (phases && phases.length > 0 && !args.end_date) {
-      const now = Date.now()
-      const endsInPast = (phase) => {
-        const value = phase && phase.end_date
-        if (!value) return false
-        const parsed = Date.parse(value)
-        return Number.isFinite(parsed) && parsed < now
-      }
-      if (phases.every(endsInPast)) {
+    const contractEnd = args.end_date ? Date.parse(args.end_date) : NaN
+    const hasContractEnd = Number.isFinite(contractEnd)
+    const phaseEnd = (phase) => {
+      const parsed = phase && phase.end_date ? Date.parse(phase.end_date) : NaN
+      return Number.isFinite(parsed) ? parsed : null
+    }
+
+    // Back-dating end_date expires the contract without trimming phases or product dates.
+    if (hasContractEnd && contractEnd < Date.now()) {
+      errors.push(
+        "'end_date' is in the past, which expires the contract. Call expireContract instead — " +
+          'it sets the same end_date and also prunes future phases, trims overlapping phases ' +
+          'and caps product dates.'
+      )
+    }
+
+    // A phase outliving its contract is rejected by the API; expireContract trims instead.
+    if (hasContractEnd && phases) {
+      const overruns = phases.filter((phase) => {
+        const end = phaseEnd(phase)
+        return end !== null && end > contractEnd
+      })
+      if (overruns.length > 0) {
         errors.push(
-          "Every phase ends in the past but no contract-level 'end_date' was supplied. " +
-            'Contract status is derived from the contract-level end_date, not from phase dates, ' +
-            'so this would leave the contract ACTIVE with no current phase. ' +
-            'To expire the contract, call expireContract — it also trims phases and product dates. ' +
-            "To update without expiring, keep a phase open or set 'end_date' explicitly."
+          `${overruns.length} phase(s) end after the contract-level 'end_date'. The API rejects ` +
+            'this. To shorten a contract call expireContract, which trims phases automatically; ' +
+            "otherwise set each phase end_date to at most the contract 'end_date'."
         )
       }
+    }
+
+    // Bounded phases under an open-ended contract leave it ACTIVE forever with no live phase,
+    // whether or not those phase dates have passed yet.
+    if (
+      !hasContractEnd &&
+      phases &&
+      phases.length > 0 &&
+      phases.every((phase) => phaseEnd(phase) !== null)
+    ) {
+      errors.push(
+        "Every phase has an 'end_date' but no contract-level 'end_date' was supplied. " +
+          'Contract status is derived from the contract-level end_date, not from phase dates, ' +
+          'so this would leave the contract ACTIVE with no current phase. ' +
+          'To expire the contract, call expireContract — it also trims phases and product dates. ' +
+          "To update without expiring, keep a phase open or set 'end_date' explicitly."
+      )
     }
   }
 
