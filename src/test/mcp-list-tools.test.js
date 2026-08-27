@@ -41,3 +41,67 @@ test('createContractPhasePricing exposes payment term requirements through MCP l
     await client.close()
   }
 })
+
+test('updateContract blocks a phase-only expiry that would leave the contract active', async () => {
+  const transport = new StdioClientTransport({
+    command: execPath,
+    args: ['src/server.js'],
+    env: {
+      ...process.env,
+      ZENSKAR_API_KEY: 'test',
+    },
+  })
+  const client = new Client({ name: 'mcp-schema-test', version: '1.0.0' })
+
+  await client.connect(transport)
+  try {
+    const blocked = await client.callTool({
+      name: 'updateContract',
+      arguments: {
+        contractId: '00000000-0000-0000-0000-000000000001',
+        name: 'Contract',
+        status: 'active',
+        currency: 'USD',
+        start_date: '2024-01-01T00:00:00',
+        customer_id: '00000000-0000-0000-0000-000000000002',
+        phases: [
+          {
+            name: 'Phase 1',
+            start_date: '2024-01-01T00:00:00',
+            end_date: '2024-06-30T23:59:59',
+          },
+        ],
+      },
+    })
+
+    assert.equal(blocked.isError, true)
+    const blockedText = blocked.content.map((part) => part.text).join('\n')
+    assert.match(blockedText, /invalid_arguments/)
+    assert.match(blockedText, /expireContract/)
+
+    // Fails at the API call, not the guard — only the guard's verdict matters here.
+    const allowed = await client.callTool({
+      name: 'updateContract',
+      arguments: {
+        contractId: '00000000-0000-0000-0000-000000000001',
+        name: 'Contract',
+        status: 'active',
+        currency: 'USD',
+        start_date: '2024-01-01T00:00:00',
+        customer_id: '00000000-0000-0000-0000-000000000002',
+        phases: [
+          {
+            name: 'Phase 1',
+            start_date: '2024-01-01T00:00:00',
+            end_date: null,
+          },
+        ],
+      },
+    })
+
+    const allowedText = allowed.content.map((part) => part.text).join('\n')
+    assert.doesNotMatch(allowedText, /invalid_arguments/)
+  } finally {
+    await client.close()
+  }
+})

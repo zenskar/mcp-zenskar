@@ -3169,7 +3169,7 @@
     },
     {
       "name": "updateContract",
-      "description": "Update an existing contract. This is a PUT endpoint — you MUST fetch the contract first with getContractById, then send ALL required fields including phases. Without phases the API returns 500. Copy phases from the GET response (each phase needs name, start_date, end_date at minimum). Status: draft, active, paused, expired, disputed. Renewal: renew_with_default_contract, renew_with_existing, do_not_renew.",
+      "description": "Update an existing contract. This is a PUT endpoint — you MUST fetch the contract first with getContractById, then send ALL required fields including phases. Without phases the API returns 500. Copy phases from the GET response (each phase needs name, start_date, end_date at minimum). Renewal: renew_with_default_contract, renew_with_existing, do_not_renew. EXPIRY: a contract reads as EXPIRED when its CONTRACT-LEVEL end_date is in the past. Phase end_dates do NOT affect contract status — setting phases[].end_date without a contract-level end_date leaves the contract ACTIVE with no current phase. To expire a contract use expireContract, which also trims phases and product dates to the expiry date.",
       "args": [
         {
           "name": "contractId",
@@ -3187,7 +3187,7 @@
         },
         {
           "name": "status",
-          "description": "Contract status: draft, active, paused, or disputed. Cannot set to 'expired' via update.",
+          "description": "Contract status: draft, active, paused, or disputed. 'expired' is not settable here — it is derived from contract-level end_date. Use expireContract to expire a contract.",
           "type": "string",
           "required": true,
           "position": "body",
@@ -3223,7 +3223,7 @@
         },
         {
           "name": "end_date",
-          "description": "Contract end date in ISO 8601 format.",
+          "description": "Contract end date in ISO 8601 format. Drives the effective contract status: a past end_date makes the contract read as EXPIRED. Leave null for an open-ended contract. Prefer expireContract over setting a past end_date here.",
           "type": "string",
           "required": false,
           "position": "body"

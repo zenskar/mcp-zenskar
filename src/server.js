@@ -1590,6 +1590,29 @@ function validateToolArgs(toolName, args) {
       )
   }
 
+  // Backend derives status from contract-level end_date only; phase dates never expire a contract.
+  if (toolName === 'updateContract') {
+    const phases = Array.isArray(args.phases) ? args.phases : null
+    if (phases && phases.length > 0 && !args.end_date) {
+      const now = Date.now()
+      const endsInPast = (phase) => {
+        const value = phase && phase.end_date
+        if (!value) return false
+        const parsed = Date.parse(value)
+        return Number.isFinite(parsed) && parsed < now
+      }
+      if (phases.every(endsInPast)) {
+        errors.push(
+          "Every phase ends in the past but no contract-level 'end_date' was supplied. " +
+            'Contract status is derived from the contract-level end_date, not from phase dates, ' +
+            'so this would leave the contract ACTIVE with no current phase. ' +
+            'To expire the contract, call expireContract — it also trims phases and product dates. ' +
+            "To update without expiring, keep a phase open or set 'end_date' explicitly."
+        )
+      }
+    }
+  }
+
   return { valid: errors.length === 0, errors }
 }
 
