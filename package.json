@@ -20,9 +20,10 @@
     "build": "tsdown",
     "prepublishOnly": "pnpm run build",
     "test:mcp-schema": "node --test src/test/mcp-list-tools.test.js",
+    "test:e2e-expiry": "node --test src/test/e2e-expiry.test.js",
     "test:tool-schema": "node --test src/test/tool-schema.test.js",
     "smoke": "tsx src/ui/test/smoke.ts",
-    "test": "pnpm run test:tool-schema && pnpm run test:mcp-schema && pnpm run smoke"
+    "test": "pnpm run test:tool-schema && pnpm run test:mcp-schema && pnpm run test:e2e-expiry && pnpm run smoke"
   },
   "keywords": [
     "mcp",
