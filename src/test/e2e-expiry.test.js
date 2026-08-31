@@ -77,6 +77,40 @@ test('end to end: guard, approval gate, and real endpoints', async (t) => {
       assert.equal(received.length, 0)
     })
 
+    await t.test('a past-dated contract end_date never reaches the API', async () => {
+      received.length = 0
+      const past = new Date(Date.now() - 30 * 864e5).toISOString()
+      const r = await client.callTool({
+        name: 'updateContract',
+        arguments: {
+          ...baseArgs,
+          end_date: past,
+          // Phases trimmed to the same date, so only the past-end_date branch can fire.
+          phases: [{ name: 'Phase 1', start_date: '2024-01-01T00:00:00', end_date: past }],
+        },
+      })
+      assert.equal(r.isError, true)
+      assert.match(text(r), /in the past, which expires the contract/)
+      assert.match(text(r), /expireContract/)
+      assert.doesNotMatch(text(r), /end after the contract-level/)
+      assert.equal(received.length, 0, 'no HTTP request should be issued')
+    })
+
+    await t.test('a future-dated contract end_date is allowed through', async () => {
+      received.length = 0
+      const future = new Date(Date.now() + 200 * 864e5).toISOString()
+      await client.callTool({
+        name: 'updateContract',
+        arguments: {
+          ...baseArgs,
+          end_date: future,
+          phases: [{ name: 'Phase 1', start_date: '2024-01-01T00:00:00', end_date: future }],
+        },
+      })
+      assert.equal(received.length, 1)
+      assert.equal(received[0].method, 'PUT')
+    })
+
     await t.test('legitimate update still reaches PUT /contract_v2/{id}', async () => {
       received.length = 0
       await client.callTool({
