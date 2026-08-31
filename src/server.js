@@ -1593,11 +1593,35 @@ function validateToolArgs(toolName, args) {
   // Backend derives status from contract-level end_date only; phase dates never expire a contract.
   if (toolName === 'updateContract') {
     const phases = Array.isArray(args.phases) ? args.phases : null
-    const contractEnd = args.end_date ? Date.parse(args.end_date) : NaN
+    // NaN marks a date that was supplied but could not be parsed. Folding that into
+    // "absent" would skip every check below, letting a malformed date through.
+    const readDate = (value) => {
+      if (value === undefined || value === null || value === '') return null
+      const parsed = Date.parse(value)
+      return Number.isFinite(parsed) ? parsed : NaN
+    }
+    const contractEnd = readDate(args.end_date)
     const hasContractEnd = Number.isFinite(contractEnd)
     const phaseEnd = (phase) => {
-      const parsed = phase && phase.end_date ? Date.parse(phase.end_date) : NaN
+      const parsed = readDate(phase && phase.end_date)
       return Number.isFinite(parsed) ? parsed : null
+    }
+
+    const malformed = []
+    if (Number.isNaN(contractEnd)) malformed.push(`contract end_date '${args.end_date}'`)
+    if (phases) {
+      phases.forEach((phase, index) => {
+        if (Number.isNaN(readDate(phase && phase.end_date))) {
+          malformed.push(`phase ${index + 1} end_date '${phase.end_date}'`)
+        }
+      })
+    }
+    if (malformed.length > 0) {
+      errors.push(
+        `Unparseable date(s): ${malformed.join(', ')}. Use ISO 8601, e.g. 2026-08-24T00:00:00. ` +
+          'Day-first formats such as 24/08/2026 are not accepted, and a date that cannot be ' +
+          'parsed is not treated as an absent one.'
+      )
     }
 
     // Back-dating end_date expires the contract without trimming phases or product dates.

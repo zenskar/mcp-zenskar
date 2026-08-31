@@ -111,6 +111,32 @@ test('end to end: guard, approval gate, and real endpoints', async (t) => {
       assert.equal(received[0].method, 'PUT')
     })
 
+    // Date.parse returns NaN for day-first strings, so a malformed date must not be
+    // mistaken for an absent one — that would skip every check above.
+    for (const malformed of ['24/08/2026', '24-08-2026', 'not-a-date']) {
+      await t.test(`a phase end_date of '${malformed}' never reaches the API`, async () => {
+        received.length = 0
+        const r = await client.callTool({
+          name: 'updateContract',
+          arguments: { ...baseArgs, phases: [{ name: 'Phase 1', start_date: '2024-01-01T00:00:00', end_date: malformed }] },
+        })
+        assert.equal(r.isError, true)
+        assert.match(text(r), /Unparseable date/)
+        assert.equal(received.length, 0, 'no HTTP request should be issued')
+      })
+    }
+
+    await t.test('a malformed contract end_date never reaches the API', async () => {
+      received.length = 0
+      const r = await client.callTool({
+        name: 'updateContract',
+        arguments: { ...baseArgs, end_date: '24/08/2026', phases: [{ name: 'Phase 1', start_date: '2024-01-01T00:00:00' }] },
+      })
+      assert.equal(r.isError, true)
+      assert.match(text(r), /contract end_date '24\/08\/2026'/)
+      assert.equal(received.length, 0)
+    })
+
     await t.test('legitimate update still reaches PUT /contract_v2/{id}', async () => {
       received.length = 0
       await client.callTool({
