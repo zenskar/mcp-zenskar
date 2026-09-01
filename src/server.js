@@ -1275,6 +1275,45 @@ async function executeAPICall(tool, args) {
   }
 }
 
+// Applies a single-resource endpoint across a list of ids from one tool call, so a
+// batch costs one approval instead of one per item. Each id is independent: a
+// failure is recorded and the rest still run, since there is no transaction to roll
+// back and stopping early would leave the batch half-applied with no way to tell.
+async function executeBulkAPICall(tool, args) {
+  const { listArg, singleArg } = tool.bulkOver
+  const ids = Array.isArray(args[listArg]) ? args[listArg] : [args[singleArg]]
+
+  const results = []
+  for (const id of ids) {
+    const singleArgs = { ...args, [singleArg]: id }
+    delete singleArgs[listArg]
+    try {
+      results.push({
+        [singleArg]: id,
+        status: 'succeeded',
+        response: await executeAPICall(tool, singleArgs),
+      })
+    } catch (error) {
+      logger.error(`[${tool.name}] ${id} failed:`, error)
+      results.push({ [singleArg]: id, status: 'failed', error: error.message })
+    }
+  }
+
+  const failed = results.filter((r) => r.status === 'failed')
+  logger.info(
+    `[${tool.name}] bulk complete: ${results.length - failed.length}/${results.length} succeeded`
+  )
+  return {
+    summary: {
+      requested: results.length,
+      succeeded: results.length - failed.length,
+      failed: failed.length,
+    },
+    // Reported per id so a partial batch cannot be summarised as a clean success.
+    results,
+  }
+}
+
 // One-time approval tokens. Server issues a token on the approval_required response;
 // the host must echo it back on the second invocation. Prevents prompt-injection
 // scenarios where an LLM fabricates `approval.approved=true` to bypass the dialog.
@@ -1541,6 +1580,11 @@ function generateApprovalRequest(tool, args) {
 // Tool-specific deep argument validation. Catches semantic gaps that JSON Schema
 // `required` cannot express (e.g. nested fields inside an `object` arg).
 // Return shape matches validateToolLimits: {valid, errors[]}.
+// Terminal action, so a batch must stay small enough to review in one approval dialog.
+// The ceiling is really latency: expiry runs sequentially at roughly 600ms per contract,
+// and a client timing out mid-batch would leave contracts expired with no report of which.
+const EXPIRE_BATCH_LIMIT = 25
+
 function validateToolArgs(toolName, args) {
   const errors = []
 
@@ -1608,7 +1652,8 @@ function validateToolArgs(toolName, args) {
     }
 
     const malformed = []
-    if (Number.isNaN(contractEnd)) malformed.push(`contract end_date '${args.end_date}'`)
+    if (Number.isNaN(contractEnd))
+      malformed.push(`contract end_date '${args.end_date}'`)
     if (phases) {
       phases.forEach((phase, index) => {
         if (Number.isNaN(readDate(phase && phase.end_date))) {
@@ -1642,7 +1687,8 @@ function validateToolArgs(toolName, args) {
       if (overruns.length > 0) {
         errors.push(
           `${overruns.length} phase(s) end after the contract-level 'end_date'. The API rejects ` +
-            'this. To shorten a contract call expireContract, which trims phases automatically; ' +
+            'this. To shorten contracts call expireContract, which trims phases automatically and ' +
+            'accepts several contract ids in one call; ' +
             "otherwise set each phase end_date to at most the contract 'end_date'."
         )
       }
@@ -1660,9 +1706,69 @@ function validateToolArgs(toolName, args) {
         "Every phase has an 'end_date' but no contract-level 'end_date' was supplied. " +
           'Contract status is derived from the contract-level end_date, not from phase dates, ' +
           'so this would leave the contract ACTIVE with no current phase. ' +
-          'To expire the contract, call expireContract — it also trims phases and product dates. ' +
+          'To expire the contract, call expireContract — it also trims phases and product dates, ' +
+          'and accepts several contract ids in one call. ' +
           "To update without expiring, keep a phase open or set 'end_date' explicitly."
       )
+    }
+  }
+
+  // contractId is retained for existing callers; contractIds is the batching form.
+  // Exactly one must be supplied, or the request is ambiguous about what to expire.
+  if (toolName === 'expireContract') {
+    const ids = args.contractIds
+    const hasList = Array.isArray(ids)
+    const hasSingle =
+      typeof args.contractId === 'string' && args.contractId !== ''
+
+    // A malformed date would fail identically on every contract in the batch.
+    if (args.expiry_date !== undefined && args.expiry_date !== null) {
+      if (!Number.isFinite(Date.parse(args.expiry_date))) {
+        errors.push(
+          `Unparseable 'expiry_date' '${args.expiry_date}'. Use ISO 8601, e.g. 2026-08-24. ` +
+            'Day-first formats such as 24/08/2026 are not accepted.'
+        )
+      }
+    }
+
+    if (!hasList && !hasSingle) {
+      errors.push(
+        "Supply 'contractIds' with the UUIDs to expire. Pass every contract in one call — " +
+          'a separate call per contract raises a separate approval dialog.'
+      )
+    } else if (hasList && hasSingle) {
+      errors.push(
+        "Supply either 'contractIds' or 'contractId', not both. Prefer 'contractIds'."
+      )
+    } else if (hasList) {
+      if (ids.length === 0) {
+        errors.push("'contractIds' is empty — nothing to expire.")
+      }
+      if (ids.length > EXPIRE_BATCH_LIMIT) {
+        errors.push(
+          `'contractIds' has ${ids.length} entries, above the ${EXPIRE_BATCH_LIMIT} limit. ` +
+            'Expiry is terminal and runs one contract at a time, so a batch must stay small ' +
+            'enough to review and to finish before the client times out. Split it up.'
+        )
+      }
+      const blank = ids.filter(
+        (id) => typeof id !== 'string' || id.trim() === ''
+      )
+      if (blank.length > 0) {
+        errors.push(
+          `'contractIds' has ${blank.length} empty or non-string entr(y/ies).`
+        )
+      }
+      const seen = new Set()
+      const duplicates = ids.filter((id) =>
+        seen.has(id) ? true : (seen.add(id), false)
+      )
+      if (duplicates.length > 0) {
+        // Expiry is not idempotent: the second call on an id returns 400.
+        errors.push(
+          `'contractIds' repeats ${[...new Set(duplicates)].join(', ')}.`
+        )
+      }
     }
   }
 
@@ -1937,7 +2043,13 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           })
 
           // Execute API call with validated and adjusted arguments
-          const rawResult = await executeAPICall(tool, adjustedArgs)
+          // Only the list form gets the batch envelope. A caller still passing the
+          // single arg keeps the exact response shape it had before batching existed.
+          const isBulkCall =
+            tool.bulkOver && Array.isArray(adjustedArgs[tool.bulkOver.listArg])
+          const rawResult = isBulkCall
+            ? await executeBulkAPICall(tool, adjustedArgs)
+            : await executeAPICall(tool, adjustedArgs)
 
           // Process the response with intelligent optimization
           const processedResult = responseProcessor.processResponse(
