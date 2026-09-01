@@ -3169,7 +3169,7 @@
     },
     {
       "name": "updateContract",
-      "description": "Update an existing contract. This is a PUT endpoint — you MUST fetch the contract first with getContractById, then send ALL required fields including phases. Without phases the API returns 500. Copy phases from the GET response (each phase needs name, start_date, end_date at minimum). Status: draft, active, paused, expired, disputed. Renewal: renew_with_default_contract, renew_with_existing, do_not_renew.",
+      "description": "Update an existing contract. This is a PUT endpoint — you MUST fetch the contract first with getContractById, then send ALL required fields including phases. Without phases the API returns 500. Copy phases from the GET response (each phase needs name, start_date, end_date at minimum). Renewal: renew_with_default_contract, renew_with_existing, do_not_renew. EXPIRY: this tool CANNOT expire, end, terminate or cancel a contract. Contract status is derived from the CONTRACT-LEVEL end_date; phase end_dates never affect it. If the user asks to expire/end/terminate/cancel a contract, or to 'set' or 'update' its expiry date, you MUST call expireContract instead of this tool — it sets the end_date and also prunes future phases, trims overlapping phases and caps product dates, which this tool does not. Setting a past end_date here is rejected.",
       "args": [
         {
           "name": "contractId",
@@ -3187,7 +3187,7 @@
         },
         {
           "name": "status",
-          "description": "Contract status: draft, active, paused, or disputed. Cannot set to 'expired' via update.",
+          "description": "Contract status: draft, active, paused, or disputed. 'expired' is not settable here — it is derived from contract-level end_date. Use expireContract to expire a contract.",
           "type": "string",
           "required": true,
           "position": "body",
@@ -3223,7 +3223,7 @@
         },
         {
           "name": "end_date",
-          "description": "Contract end date in ISO 8601 format.",
+          "description": "Contract end date in ISO 8601 format. Drives the effective contract status: a past end_date makes the contract read as EXPIRED. Leave null for an open-ended contract. Prefer expireContract over setting a past end_date here.",
           "type": "string",
           "required": false,
           "position": "body"
@@ -3751,7 +3751,7 @@
     },
     {
       "name": "expireContract",
-      "description": "Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "description": "THE ONLY tool that can expire, end, terminate or cancel a contract — use it whenever the user wants a contract to stop on a given date, including when they phrase it as 'update the expiry date'. Do NOT use updateContract for this. Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Expire Contract",
