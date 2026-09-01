@@ -24,6 +24,7 @@
     "test:bulk-expire": "node --test src/test/bulk-expire.test.js",
     "test:tool-schema": "node --test src/test/tool-schema.test.js",
     "smoke": "tsx src/ui/test/smoke.ts",
+    "eval:routing": "node scripts/routing-eval.js",
     "test": "pnpm run test:tool-schema && pnpm run test:mcp-schema && pnpm run test:e2e-expiry && pnpm run test:bulk-expire && pnpm run smoke"
   },
   "keywords": [
