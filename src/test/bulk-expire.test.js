@@ -134,17 +134,17 @@ test('bulk expiry', async (t) => {
       assert.match(body, /already expired/)
     })
 
-    await t.test('the single-contract form still works', async () => {
+    await t.test('one contract is a batch of one', async () => {
       received.length = 0
       const contractId = ids(1)[0]
       const asked = await client.callTool({
         name: 'expireContract',
-        arguments: { contractId, expiry_date: '2026-08-24' },
+        arguments: { contractIds: [contractId], expiry_date: '2026-08-24' },
       })
       const done = await client.callTool({
         name: 'expireContract',
         arguments: {
-          contractId,
+          contractIds: [contractId],
           expiry_date: '2026-08-24',
           __userContext: {
             approval: {
@@ -157,12 +157,84 @@ test('bulk expiry', async (t) => {
       assert.equal(received.length, 1)
       assert.equal(received[0].path, `/contract_v2/${contractId}/expire`)
 
-      // Existing callers parse api_response directly, so the single form must not
-      // acquire the batch envelope.
       const body = JSON.parse(text(done))
-      assert.ok(body.api_response, 'legacy response shape is preserved')
-      assert.equal(body.summary, undefined)
-      assert.equal(body.results, undefined)
+      assert.equal(body.summary.requested, 1)
+      assert.equal(body.summary.succeeded, 1)
+    })
+
+    // The dialog edits every field as text, so an edited list arrives joined.
+    await t.test('a list edited in the dialog arrives as text', async () => {
+      received.length = 0
+      const asked = await client.callTool({
+        name: 'expireContract',
+        arguments: { contractIds: ids(3), expiry_date: '2026-08-24' },
+      })
+      const done = await client.callTool({
+        name: 'expireContract',
+        arguments: {
+          contractIds: ids(3),
+          expiry_date: '2026-08-24',
+          __userContext: {
+            approval: {
+              approved: true,
+              token: approvalOf(asked).approvalToken,
+              modifiedArguments: {
+                contractIds: ids(2).join(', '),
+                expiry_date: '2026-08-24',
+              },
+            },
+          },
+        },
+      })
+      assert.equal(received.length, 2, 'the edited list is honoured')
+      assert.match(text(done), /"succeeded": 2/)
+    })
+
+    await t.test('a batch where everything fails is an error', async () => {
+      received.length = 0
+      failFor = '-1111-1111-1111-'
+      const contractIds = ids(3)
+      const asked = await client.callTool({
+        name: 'expireContract',
+        arguments: { contractIds, expiry_date: '2026-08-24' },
+      })
+      const done = await client.callTool({
+        name: 'expireContract',
+        arguments: {
+          contractIds,
+          expiry_date: '2026-08-24',
+          __userContext: {
+            approval: {
+              approved: true,
+              token: approvalOf(asked).approvalToken,
+            },
+          },
+        },
+      })
+      failFor = null
+
+      assert.equal(received.length, 3, 'every contract is still attempted')
+      assert.equal(done.isError, true, '0 of 3 is not a successful call')
+      assert.match(text(done), /ACTION_NOT_EXECUTED/)
+      assert.match(text(done), /"succeeded": 0/)
+    })
+
+    await t.test('the dialog marks the batch field sensitive', async () => {
+      const asked = await client.callTool({
+        name: 'expireContract',
+        arguments: { contractIds: ids(3), expiry_date: '2026-08-24' },
+      })
+      const fields = approvalOf(asked).fields
+      assert.deepEqual(
+        fields.map((f) => f.name),
+        ['contractIds', 'expiry_date'],
+        'no vestigial single-contract field'
+      )
+      const list = fields.find((f) => f.name === 'contractIds')
+      assert.equal(list.sensitive, true)
+      assert.equal(list.required, true)
+      assert.equal(list.type, 'textarea', 'a list needs room to read')
+      assert.deepEqual(list.value, ids(3))
     })
 
     // A token is a receipt for what the user saw, so a batch approved for two
@@ -226,24 +298,14 @@ test('bulk expiry', async (t) => {
           },
         })
         assert.equal(r.isError, true)
-        assert.match(text(r), /above the 25 limit/)
+        assert.match(text(r), /The limit is 25/)
         assert.equal(received.length, 0)
       }
     )
 
     const rejected = [
-      ['neither id form', {}, /Supply 'contractIds'/],
-      [
-        'both id forms',
-        { contractIds: ids(2), contractId: ids(1)[0] },
-        /not both/,
-      ],
-      ['an empty list', { contractIds: [] }, /nothing to expire/],
-      [
-        'a batch over the limit',
-        { contractIds: ids(26) },
-        /above the 25 limit/,
-      ],
+      ['an empty list', { contractIds: [] }, /nothing to do/],
+      ['a batch over the limit', { contractIds: ids(26) }, /The limit is 25/],
       ['a repeated id', { contractIds: [ids(1)[0], ids(1)[0]] }, /repeats/],
       [
         'a day-first expiry_date',

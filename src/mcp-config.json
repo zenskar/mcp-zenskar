@@ -3759,21 +3759,14 @@
         "warningText": "Approving this expires EVERY contract listed in contractIds — review the full list before confirming. Expiry is terminal: contracts cannot be re-activated through this endpoint, and future-dated phases beyond the expiry will be removed.",
         "confirmText": "Expire Contract",
         "cancelText": "Cancel",
-        "sensitiveFields": ["contractId", "expiry_date"]
+        "sensitiveFields": ["contractIds", "expiry_date"]
       },
       "args": [
         {
           "name": "contractIds",
-          "description": "UUIDs of the contracts to expire. Use this for one contract or many — pass every contract in a single call. Each contract is expired independently and the result reports them one by one.",
+          "description": "UUIDs of the contracts to expire. Always a list, even for one contract. Pass every contract in one call. Each contract expires independently. The result reports each one.",
           "type": "array",
-          "required": false,
-          "position": "path"
-        },
-        {
-          "name": "contractId",
-          "description": "Deprecated single-contract form, kept for existing callers. Prefer contractIds. Supply exactly one of contractId or contractIds.",
-          "type": "string",
-          "required": false,
+          "required": true,
           "position": "path"
         },
         {
@@ -3784,9 +3777,9 @@
           "position": "body"
         }
       ],
-      "bulkOver": { "listArg": "contractIds", "singleArg": "contractId" },
+      "bulkOver": { "listArg": "contractIds", "maxBatch": 25 },
       "requestTemplate": {
-        "url": "/contract_v2/{contractId}/expire",
+        "url": "/contract_v2/{contractIds}/expire",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"

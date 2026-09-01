@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import ResponseProcessor from './response-processor.js'
 import { convertArgsToZodSchema } from './tool-schema.js'
+import { validateToolArgs } from './tool-validators.js'
 import { registerUIResources } from './ui/server/registerResources.js'
 import {
   resourceUriFor,
@@ -1275,27 +1276,21 @@ async function executeAPICall(tool, args) {
   }
 }
 
-// Applies a single-resource endpoint across a list of ids from one tool call, so a
-// batch costs one approval instead of one per item. Each id is independent: a
-// failure is recorded and the rest still run, since there is no transaction to roll
-// back and stopping early would leave the batch half-applied with no way to tell.
+// `bulkOver.listArg` names both the argument and the URL placeholder, bound to one id per pass.
 async function executeBulkAPICall(tool, args) {
-  const { listArg, singleArg } = tool.bulkOver
-  const ids = Array.isArray(args[listArg]) ? args[listArg] : [args[singleArg]]
+  const { listArg } = tool.bulkOver
 
   const results = []
-  for (const id of ids) {
-    const singleArgs = { ...args, [singleArg]: id }
-    delete singleArgs[listArg]
+  for (const id of args[listArg]) {
     try {
       results.push({
-        [singleArg]: id,
+        id,
         status: 'succeeded',
-        response: await executeAPICall(tool, singleArgs),
+        response: await executeAPICall(tool, { ...args, [listArg]: id }),
       })
     } catch (error) {
       logger.error(`[${tool.name}] ${id} failed:`, error)
-      results.push({ [singleArg]: id, status: 'failed', error: error.message })
+      results.push({ id, status: 'failed', error: error.message })
     }
   }
 
@@ -1309,7 +1304,6 @@ async function executeBulkAPICall(tool, args) {
       succeeded: results.length - failed.length,
       failed: failed.length,
     },
-    // Reported per id so a partial batch cannot be summarised as a clean success.
     results,
   }
 }
@@ -1484,6 +1478,21 @@ function resolveApprovedArgs(approval, tokenEntry) {
   return { args: tokenEntry.args, source: 'tokenSnapshot' }
 }
 
+// The approval dialog edits every field as text, so an array arrives joined.
+function coerceDialogArgs(tool, resolvedArgs) {
+  const coerced = { ...resolvedArgs }
+  for (const arg of tool.args || []) {
+    if (arg.type !== 'array') continue
+    const value = coerced[arg.name]
+    if (typeof value !== 'string') continue
+    coerced[arg.name] = value
+      .split(',')
+      .map((part) => part.trim())
+      .filter((part) => part !== '')
+  }
+  return coerced
+}
+
 // Replace `args` contents with `resolvedArgs` while preserving __userContext.
 // Kept separate from the resolver so the decision logic stays pure/testable.
 function applyResolvedArgs(args, resolvedArgs) {
@@ -1524,7 +1533,12 @@ function checkNeedsApproval(tool, args) {
       logger.info(
         `[${tool.name}] Approval token verified; arg source=${source}`
       )
-      applyResolvedArgs(args, resolvedArgs)
+      applyResolvedArgs(
+        args,
+        source === 'modifiedArguments'
+          ? coerceDialogArgs(tool, resolvedArgs)
+          : resolvedArgs
+      )
       logger.info(
         `[${tool.name}] Restored arguments for approved execution:`,
         Object.keys(resolvedArgs)
@@ -1577,204 +1591,6 @@ function generateApprovalRequest(tool, args) {
   }
 }
 
-// Tool-specific deep argument validation. Catches semantic gaps that JSON Schema
-// `required` cannot express (e.g. nested fields inside an `object` arg).
-// Return shape matches validateToolLimits: {valid, errors[]}.
-// Terminal action, so a batch must stay small enough to review in one approval dialog.
-// The ceiling is really latency: expiry runs sequentially at roughly 600ms per contract,
-// and a client timing out mid-batch would leave contracts expired with no report of which.
-const EXPIRE_BATCH_LIMIT = 25
-
-function validateToolArgs(toolName, args) {
-  const errors = []
-
-  if (toolName === 'generateInvoice') {
-    const toUnix = (v) => {
-      if (typeof v === 'number') return Number.isInteger(v) ? v : null
-      if (typeof v === 'string') {
-        const t = Date.parse(v)
-        return Number.isFinite(t) ? Math.floor(t / 1000) : null
-      }
-      return null
-    }
-    const from = toUnix(args.from_date)
-    const to = toUnix(args.to_date)
-    if (from === null)
-      errors.push(
-        "'from_date' must be either an integer UNIX timestamp (seconds) or an ISO-8601 datetime string. Copy from getContractBillingCycles.start_date."
-      )
-    if (to === null)
-      errors.push(
-        "'to_date' must be either an integer UNIX timestamp (seconds) or an ISO-8601 datetime string. Copy from getContractBillingCycles.end_date."
-      )
-    if (from !== null && to !== null && to <= from) {
-      errors.push("'to_date' must be strictly greater than 'from_date'.")
-    }
-    if (toUnix(args.bill_for_date) === null) {
-      errors.push(
-        "'bill_for_date' is REQUIRED (UNIX seconds or ISO-8601 string). Without it the API returns a $0 invoice. Copy from getContractBillingCycles.bill_for_date — do NOT compute."
-      )
-    }
-    if (
-      !Number.isInteger(args.billing_cycle_start_day) ||
-      args.billing_cycle_start_day < 1 ||
-      args.billing_cycle_start_day > 31
-    ) {
-      errors.push(
-        "'billing_cycle_start_day' is REQUIRED and must be an integer 1-31. Copy from getContractBillingCycles.billing_cycle_start_day."
-      )
-    }
-  }
-
-  if (toolName === 'pauseContract') {
-    if (!args.start_date) errors.push("'start_date' is required (ISO 8601).")
-    if (!args.unpause_extension_policy)
-      errors.push(
-        "'unpause_extension_policy' is required: 'extend' or 'overlap'."
-      )
-  }
-
-  // Backend derives status from contract-level end_date only; phase dates never expire a contract.
-  if (toolName === 'updateContract') {
-    const phases = Array.isArray(args.phases) ? args.phases : null
-    // NaN marks a date that was supplied but could not be parsed. Folding that into
-    // "absent" would skip every check below, letting a malformed date through.
-    const readDate = (value) => {
-      if (value === undefined || value === null || value === '') return null
-      const parsed = Date.parse(value)
-      return Number.isFinite(parsed) ? parsed : NaN
-    }
-    const contractEnd = readDate(args.end_date)
-    const hasContractEnd = Number.isFinite(contractEnd)
-    const phaseEnd = (phase) => {
-      const parsed = readDate(phase && phase.end_date)
-      return Number.isFinite(parsed) ? parsed : null
-    }
-
-    const malformed = []
-    if (Number.isNaN(contractEnd))
-      malformed.push(`contract end_date '${args.end_date}'`)
-    if (phases) {
-      phases.forEach((phase, index) => {
-        if (Number.isNaN(readDate(phase && phase.end_date))) {
-          malformed.push(`phase ${index + 1} end_date '${phase.end_date}'`)
-        }
-      })
-    }
-    if (malformed.length > 0) {
-      errors.push(
-        `Unparseable date(s): ${malformed.join(', ')}. Use ISO 8601, e.g. 2026-08-24T00:00:00. ` +
-          'Day-first formats such as 24/08/2026 are not accepted, and a date that cannot be ' +
-          'parsed is not treated as an absent one.'
-      )
-    }
-
-    // Back-dating end_date expires the contract without trimming phases or product dates.
-    if (hasContractEnd && contractEnd < Date.now()) {
-      errors.push(
-        "'end_date' is in the past, which expires the contract. Call expireContract instead — " +
-          'it sets the same end_date and also prunes future phases, trims overlapping phases ' +
-          'and caps product dates.'
-      )
-    }
-
-    // A phase outliving its contract is rejected by the API; expireContract trims instead.
-    if (hasContractEnd && phases) {
-      const overruns = phases.filter((phase) => {
-        const end = phaseEnd(phase)
-        return end !== null && end > contractEnd
-      })
-      if (overruns.length > 0) {
-        errors.push(
-          `${overruns.length} phase(s) end after the contract-level 'end_date'. The API rejects ` +
-            'this. To shorten contracts call expireContract, which trims phases automatically and ' +
-            'accepts several contract ids in one call; ' +
-            "otherwise set each phase end_date to at most the contract 'end_date'."
-        )
-      }
-    }
-
-    // Bounded phases under an open-ended contract leave it ACTIVE forever with no live phase,
-    // whether or not those phase dates have passed yet.
-    if (
-      !hasContractEnd &&
-      phases &&
-      phases.length > 0 &&
-      phases.every((phase) => phaseEnd(phase) !== null)
-    ) {
-      errors.push(
-        "Every phase has an 'end_date' but no contract-level 'end_date' was supplied. " +
-          'Contract status is derived from the contract-level end_date, not from phase dates, ' +
-          'so this would leave the contract ACTIVE with no current phase. ' +
-          'To expire the contract, call expireContract — it also trims phases and product dates, ' +
-          'and accepts several contract ids in one call. ' +
-          "To update without expiring, keep a phase open or set 'end_date' explicitly."
-      )
-    }
-  }
-
-  // contractId is retained for existing callers; contractIds is the batching form.
-  // Exactly one must be supplied, or the request is ambiguous about what to expire.
-  if (toolName === 'expireContract') {
-    const ids = args.contractIds
-    const hasList = Array.isArray(ids)
-    const hasSingle =
-      typeof args.contractId === 'string' && args.contractId !== ''
-
-    // A malformed date would fail identically on every contract in the batch.
-    if (args.expiry_date !== undefined && args.expiry_date !== null) {
-      if (!Number.isFinite(Date.parse(args.expiry_date))) {
-        errors.push(
-          `Unparseable 'expiry_date' '${args.expiry_date}'. Use ISO 8601, e.g. 2026-08-24. ` +
-            'Day-first formats such as 24/08/2026 are not accepted.'
-        )
-      }
-    }
-
-    if (!hasList && !hasSingle) {
-      errors.push(
-        "Supply 'contractIds' with the UUIDs to expire. Pass every contract in one call — " +
-          'a separate call per contract raises a separate approval dialog.'
-      )
-    } else if (hasList && hasSingle) {
-      errors.push(
-        "Supply either 'contractIds' or 'contractId', not both. Prefer 'contractIds'."
-      )
-    } else if (hasList) {
-      if (ids.length === 0) {
-        errors.push("'contractIds' is empty — nothing to expire.")
-      }
-      if (ids.length > EXPIRE_BATCH_LIMIT) {
-        errors.push(
-          `'contractIds' has ${ids.length} entries, above the ${EXPIRE_BATCH_LIMIT} limit. ` +
-            'Expiry is terminal and runs one contract at a time, so a batch must stay small ' +
-            'enough to review and to finish before the client times out. Split it up.'
-        )
-      }
-      const blank = ids.filter(
-        (id) => typeof id !== 'string' || id.trim() === ''
-      )
-      if (blank.length > 0) {
-        errors.push(
-          `'contractIds' has ${blank.length} empty or non-string entr(y/ies).`
-        )
-      }
-      const seen = new Set()
-      const duplicates = ids.filter((id) =>
-        seen.has(id) ? true : (seen.add(id), false)
-      )
-      if (duplicates.length > 0) {
-        // Expiry is not idempotent: the second call on an id returns 400.
-        errors.push(
-          `'contractIds' repeats ${[...new Set(duplicates)].join(', ')}.`
-        )
-      }
-    }
-  }
-
-  return { valid: errors.length === 0, errors }
-}
-
 // Helper to map API types to form field types
 function getFieldType(apiType) {
   switch (apiType) {
@@ -1785,6 +1601,9 @@ function getFieldType(apiType) {
       return 'number'
     case 'boolean':
       return 'checkbox'
+    case 'array':
+      // The dialog shows 'text' on one line, which is too small for a list.
+      return 'textarea'
     default:
       return 'text'
   }
@@ -1842,7 +1661,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           })
 
           // Validate args BEFORE the approval gate so users do not approve broken calls.
-          const earlyArgValidation = validateToolArgs(tool.name, args)
+          const earlyArgValidation = validateToolArgs(tool, args)
           if (!earlyArgValidation.valid) {
             logger.error(
               `[${tool.name}] Tool execution blocked due to invalid arguments (pre-approval):`,
@@ -1918,7 +1737,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           // (host dialog edits), which were not part of the pre-approval
           // validation pass. Bypass attempts via crafted modifiedArguments
           // get caught here.
-          const postApprovalValidation = validateToolArgs(tool.name, args)
+          const postApprovalValidation = validateToolArgs(tool, args)
           if (!postApprovalValidation.valid) {
             logger.error(
               `[${tool.name}] Approved arguments failed validation:`,
@@ -2043,13 +1862,15 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           })
 
           // Execute API call with validated and adjusted arguments
-          // Only the list form gets the batch envelope. A caller still passing the
-          // single arg keeps the exact response shape it had before batching existed.
-          const isBulkCall =
-            tool.bulkOver && Array.isArray(adjustedArgs[tool.bulkOver.listArg])
-          const rawResult = isBulkCall
+          const rawResult = tool.bulkOver
             ? await executeBulkAPICall(tool, adjustedArgs)
             : await executeAPICall(tool, adjustedArgs)
+
+          // Without this the model reads a wholly failed batch as a complete one.
+          const batchFailedEntirely =
+            tool.bulkOver &&
+            rawResult.summary.requested > 0 &&
+            rawResult.summary.succeeded === 0
 
           // Process the response with intelligent optimization
           const processedResult = responseProcessor.processResponse(
@@ -2087,6 +1908,13 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             responseText = responseText + warningText
           }
 
+          if (batchFailedEntirely) {
+            responseText =
+              `ACTION_NOT_EXECUTED — every item in the batch failed. ` +
+              `Do NOT report success to the user.\n\n` +
+              responseText
+          }
+
           // Estimate response tokens
           responseTokens = Math.ceil(responseText.length / 4)
 
@@ -2111,12 +1939,13 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
             )
           }
 
-          return wrapToolResponse(
+          const response = wrapToolResponse(
             tool.name,
             rawResult,
             responseText,
             adjustedArgs
           )
+          return batchFailedEntirely ? { ...response, isError: true } : response
         } catch (error) {
           const executionTime = Date.now() - executionStart
           logger.error(

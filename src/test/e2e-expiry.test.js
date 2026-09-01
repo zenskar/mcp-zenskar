@@ -153,7 +153,7 @@ test('end to end: guard, approval gate, and real endpoints', async (t) => {
       received.length = 0
       const r = await client.callTool({
         name: 'expireContract',
-        arguments: { contractId: CONTRACT_ID, expiry_date: '2026-08-24' },
+        arguments: { contractIds: [CONTRACT_ID], expiry_date: '2026-08-24' },
       })
       const payload = JSON.parse(r.content[0].text)
       assert.equal(payload.type, 'approval_required')
@@ -166,7 +166,7 @@ test('end to end: guard, approval gate, and real endpoints', async (t) => {
       await client.callTool({
         name: 'expireContract',
         arguments: {
-          contractId: CONTRACT_ID,
+          contractIds: [CONTRACT_ID],
           expiry_date: '2026-08-24',
           __userContext: { approval: { approved: true, token: payload.approvalToken } },
         },
