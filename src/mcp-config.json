@@ -3751,21 +3751,21 @@
     },
     {
       "name": "expireContract",
-      "description": "THE ONLY tool that can expire, end, terminate or cancel a contract — use it whenever the user wants a contract to stop on a given date, including when they phrase it as 'update the expiry date'. Do NOT use updateContract for this. Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "description": "THE ONLY tool that can expire, end, terminate or cancel contracts — use it whenever the user wants contracts to stop on a given date, including when they phrase it as 'update the expiry date'. Do NOT use updateContract for this. To expire SEVERAL contracts, pass every id in contractIds on a SINGLE call — never call this tool once per contract, as each call raises its own approval dialog and only the most recent one can be approved. Expire an ACTIVE or PAUSED contract by adjusting its end_date. Allowed status transitions: ACTIVE→EXPIRED, PAUSED→EXPIRED. EXPIRED is terminal — calling on an already-expired contract returns 400; do NOT retry, do NOT escalate to deleteContract or any other destructive tool as a fallback. Verify contract.status via getContractById before calling. Idempotency: NO. The contract expires at end of day 23:59:59.999999. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
       "needsApproval": true,
       "approvalConfig": {
         "title": "Expire Contract",
         "description": "This will set the contract's end_date and transition status to EXPIRED. EXPIRED is terminal.",
-        "warningText": "Once expired, the contract cannot be re-activated through this endpoint. Future-dated phases beyond the expiry will be removed.",
+        "warningText": "Approving this expires EVERY contract listed in contractIds — review the full list before confirming. Expiry is terminal: contracts cannot be re-activated through this endpoint, and future-dated phases beyond the expiry will be removed.",
         "confirmText": "Expire Contract",
         "cancelText": "Cancel",
-        "sensitiveFields": ["contractId", "expiry_date"]
+        "sensitiveFields": ["contractIds", "expiry_date"]
       },
       "args": [
         {
-          "name": "contractId",
-          "description": "The unique identifier (UUID) of the contract to expire.",
-          "type": "string",
+          "name": "contractIds",
+          "description": "UUIDs of the contracts to expire. Always a list, even for one contract. Pass every contract in one call. Each contract expires independently. The result reports each one.",
+          "type": "array",
           "required": true,
           "position": "path"
         },
@@ -3777,8 +3777,9 @@
           "position": "body"
         }
       ],
+      "bulkOver": { "listArg": "contractIds", "maxBatch": 25 },
       "requestTemplate": {
-        "url": "/contract_v2/{contractId}/expire",
+        "url": "/contract_v2/{contractIds}/expire",
         "method": "PATCH",
         "headers": {
           "Content-Type": "application/json"
