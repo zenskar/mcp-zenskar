@@ -2904,6 +2904,46 @@
       }
     },
     {
+      "name": "ingestRawMetricEventsBulk",
+      "description": "Ingest MULTIPLE Usage Events for the specified resource slug in a single API call (bulk ingestion). Use this instead of calling ingestRawMetricEvent once per event — it sends one HTTP request carrying every event, which is far more efficient for CSV/batch imports. Each element of 'events' has the same shape as ingestRawMetricEvent's 'event' arg: customer_id, timestamp, and a data map with schema-compliant types. Limit: 500 events per call — split larger batches into multiple calls. Host enforces user confirmation via the approval gate; do NOT ask the user to re-confirm before calling.",
+      "needsApproval": true,
+      "approvalConfig": {
+        "title": "Ingest Usage Events (Bulk)",
+        "description": "This will ingest ALL of the listed Usage Events for the selected Usage Event schema in one request. Review the full payload carefully — approving this ingests every event shown, not just one.",
+        "warningText": "Ensure every event's data payload matches the Usage Event schema (raw metric schema) before proceeding. Up to 500 events are ingested in a single call; review the count and a sample of entries before confirming.",
+        "confirmText": "Ingest Usage Events",
+        "cancelText": "Cancel",
+        "sensitiveFields": ["rawMetricSlug", "events"]
+      },
+      "args": [
+        {
+          "name": "rawMetricSlug",
+          "description": "Slug of the Usage Event resource (raw metric), e.g. api_usage_events.",
+          "type": "string",
+          "required": true,
+          "position": "path"
+        },
+        {
+          "name": "events",
+          "description": "Array of Usage Event payloads, each containing customer_id, timestamp, and a data map with schema-compliant types — same shape as ingestRawMetricEvent's 'event' arg, but plural. customer_id and timestamp are mandatory on EVERY event; MCP does not auto-add them. Events are validated server-side against the raw metric's real schema before anything is sent — an unknown data field or wrong type is rejected with the exact list of valid fields, so you do NOT need to pre-fetch the schema via getRawMetricBySlug first; only do so if you're unsure what fields/types this raw metric expects. Maximum 500 events per call — if you have more, split into multiple calls to this tool. Example event shape: {\"customer_id\": \"example_customer\", \"timestamp\": \"2025-01-01 00:00:00\", \"data\": {\"String\": \"sample value\", \"Int64\": 10, \"Float64\": 42.5}}.",
+          "type": "array",
+          "required": true,
+          "position": "body"
+        }
+      ],
+      "requestTemplate": {
+        "url": "/usage/{rawMetricSlug}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "apiversion": "20240301"
+        }
+      },
+      "responseTemplate": {
+        "prependBody": "## Usage Events Ingested (Bulk)\n\nThe usage events were ingested successfully:\n\n"
+      }
+    },
+    {
       "name": "extractContractFromRaw",
       "description": "Extract structured contract data from raw text content using AI. This tool analyzes natural language contract descriptions and extracts key fields like dates, products, pricing, and billing terms. The extracted data can then be used to create a customer and contract via createCustomer and createContract tools.",
       "needsApproval": false,
