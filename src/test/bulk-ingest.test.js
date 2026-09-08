@@ -53,6 +53,12 @@ function startStub() {
         if (req.method === 'GET' && req.url.startsWith('/rawmetric/slug/')) {
           const slug = req.url.replace('/rawmetric/slug/', '')
           if (slug === 'missing_metric') {
+            // Real backend behavior: 200 with a bare `null` body, never 404.
+            res.writeHead(200, { 'Content-Type': 'application/json' })
+            return res.end('null')
+          }
+          if (slug === 'missing_metric_404') {
+            // Defense-in-depth path, in case that backend behavior ever changes.
             res.writeHead(404, { 'Content-Type': 'application/json' })
             return res.end(JSON.stringify({ error: 'not found' }))
           }
@@ -284,7 +290,7 @@ test('bulk usage-event ingestion', async (t) => {
     })
 
     await t.test(
-      'an unknown raw metric slug (404) is rejected',
+      'an unknown raw metric slug (real backend: 200 + null body) is rejected',
       async () => {
         received.length = 0
         const r = await client.callTool({
@@ -293,6 +299,20 @@ test('bulk usage-event ingestion', async (t) => {
         })
         assert.equal(r.isError, true)
         assert.match(text(r), /'missing_metric' was not found/)
+        assert.equal(posts().length, 0)
+      }
+    )
+
+    await t.test(
+      'an unknown raw metric slug (defense-in-depth: real 404 status) is rejected',
+      async () => {
+        received.length = 0
+        const r = await client.callTool({
+          name: 'ingestRawMetricEventsBulk',
+          arguments: { rawMetricSlug: 'missing_metric_404', events: events(1) },
+        })
+        assert.equal(r.isError, true)
+        assert.match(text(r), /'missing_metric_404' was not found/)
         assert.equal(posts().length, 0)
       }
     )
@@ -422,6 +442,108 @@ test('bulk usage-event ingestion', async (t) => {
         )
       }
     )
+
+    await t.test(
+      'a dialog edit that drops events entirely is rejected, not sent as []',
+      async () => {
+        received.length = 0
+        const asked = await client.callTool({
+          name: 'ingestRawMetricEventsBulk',
+          arguments: { rawMetricSlug: 'storage_event', events: events(1) },
+        })
+        const r = await client.callTool({
+          name: 'ingestRawMetricEventsBulk',
+          arguments: {
+            rawMetricSlug: 'storage_event',
+            events: events(1),
+            __userContext: {
+              approval: {
+                approved: true,
+                token: approvalOf(asked).approvalToken,
+                modifiedArguments: { rawMetricSlug: 'storage_event' },
+              },
+            },
+          },
+        })
+        assert.equal(r.isError, true)
+        assert.match(text(r), /'events' is required/)
+        assert.equal(posts().length, 0, 'must not silently POST an empty array')
+      }
+    )
+
+    await t.test('a null data value is not flagged as a type mismatch', async () => {
+      received.length = 0
+      const good = events(1)
+      good[0].data.region = null
+      const asked = await client.callTool({
+        name: 'ingestRawMetricEventsBulk',
+        arguments: { rawMetricSlug: 'storage_event', events: good },
+      })
+      const approval = approvalOf(asked)
+      assert.equal(
+        approval.type,
+        'approval_required',
+        'a null value must not be rejected as "got object"'
+      )
+    })
+
+    await t.test(
+      'a data field named after a built-in property is rejected as unknown, not skipped',
+      async () => {
+        received.length = 0
+        const bad = events(1)
+        bad[0].data.constructor = 'sneaky'
+        const r = await client.callTool({
+          name: 'ingestRawMetricEventsBulk',
+          arguments: { rawMetricSlug: 'storage_event', events: bad },
+        })
+        assert.equal(r.isError, true)
+        assert.match(text(r), /unknown field 'data\.constructor'/)
+        assert.equal(posts().length, 0)
+      }
+    )
+
+    await t.test('a falsy but defined customer_id (0) is not flagged as missing', async () => {
+      received.length = 0
+      const good = events(1)
+      good[0].customer_id = 0
+      const asked = await client.callTool({
+        name: 'ingestRawMetricEventsBulk',
+        arguments: { rawMetricSlug: 'storage_event', events: good },
+      })
+      const approval = approvalOf(asked)
+      assert.equal(
+        approval.type,
+        'approval_required',
+        "customer_id: 0 must not be treated as missing"
+      )
+    })
+
+    await t.test('an event with no data field at all is rejected', async () => {
+      received.length = 0
+      const bad = events(1)
+      delete bad[0].data
+      const r = await client.callTool({
+        name: 'ingestRawMetricEventsBulk',
+        arguments: { rawMetricSlug: 'storage_event', events: bad },
+      })
+      assert.equal(r.isError, true)
+      assert.match(text(r), /missing required field 'data'/)
+      assert.equal(posts().length, 0)
+    })
+
+    await t.test('an event with data as an array is rejected', async () => {
+      received.length = 0
+      const bad = events(1)
+      bad[0].data = ['not', 'an', 'object']
+      const r = await client.callTool({
+        name: 'ingestRawMetricEventsBulk',
+        arguments: { rawMetricSlug: 'storage_event', events: bad },
+      })
+      assert.equal(r.isError, true)
+      assert.match(text(r), /missing required field 'data'/)
+      assert.equal(posts().length, 0)
+    })
   } finally {
     await client.close()
     server.close()

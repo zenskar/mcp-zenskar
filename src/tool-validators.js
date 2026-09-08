@@ -62,25 +62,32 @@ function resolveZenskarRequestContext(userContext) {
   return { baseUrl, headers }
 }
 
-// Fails open on anything but a confirmed 404 — an infra hiccup here shouldn't block ingestion.
+// Fails open on anything but a confirmed not-found — an infra hiccup here shouldn't block ingestion.
 async function fetchRawMetricSchema(rawMetricSlug, userContext) {
   try {
     const { baseUrl, headers } = resolveZenskarRequestContext(userContext)
     const res = await fetch(
       `${baseUrl}/rawmetric/slug/${encodeURIComponent(rawMetricSlug)}`,
-      { headers }
+      { headers, signal: AbortSignal.timeout(8000) }
     )
     if (res.status === 404) return { notFound: true }
     if (!res.ok) return { schema: null }
     const body = await res.json()
-    const schema = body?.dataschema || body?.api_response?.dataschema
-    return { schema: schema || null }
+    // The real backend never 404s here — an unknown slug returns 200 with a bare
+    // `null` body. The 404 branch above stays as defense-in-depth in case that changes.
+    if (body === null || typeof body !== 'object') return { notFound: true }
+    return { schema: body.dataschema || null }
   } catch {
     return { schema: null }
   }
 }
 
+const isMissing = (value) =>
+  value === undefined || value === null || value === ''
+
 // Schema-independent shape checks — must still run when the schema fetch fails open.
+// Mirrors UsageEventPayload (backend): customer_id/timestamp/data are all required,
+// though data may be an empty object — the backend does not require it non-empty.
 function checkEventsStructure(events) {
   const errors = []
   events.forEach((event, i) => {
@@ -88,15 +95,19 @@ function checkEventsStructure(events) {
       errors.push(`Event ${i}: must be an object.`)
       return
     }
-    if (!event.customer_id)
+    if (isMissing(event.customer_id))
       errors.push(`Event ${i}: missing required field 'customer_id'.`)
-    if (!event.timestamp)
+    if (isMissing(event.timestamp))
       errors.push(`Event ${i}: missing required field 'timestamp'.`)
     if (
-      event.data !== undefined &&
-      (typeof event.data !== 'object' || event.data === null)
+      event.data === undefined ||
+      typeof event.data !== 'object' ||
+      event.data === null ||
+      Array.isArray(event.data)
     ) {
-      errors.push(`Event ${i}: 'data' must be an object.`)
+      errors.push(
+        `Event ${i}: missing required field 'data' (must be an object; an empty object is fine).`
+      )
     }
   })
   return errors
@@ -109,16 +120,23 @@ function checkEventsAgainstSchema(events, schema) {
     // Bad shape already reported by checkEventsStructure.
     if (typeof event !== 'object' || event === null) return
     const data = event.data
-    if (data === undefined || typeof data !== 'object' || data === null) return
+    if (
+      data === undefined ||
+      typeof data !== 'object' ||
+      data === null ||
+      Array.isArray(data)
+    )
+      return
     Object.keys(data).forEach((key) => {
-      const expectedType = dataFields[key]
-      if (!expectedType) {
+      if (!Object.prototype.hasOwnProperty.call(dataFields, key)) {
         errors.push(
           `Event ${i}: unknown field 'data.${key}' — not part of this raw metric's schema. ` +
             `Valid fields: ${Object.keys(dataFields).join(', ') || '(none)'}.`
         )
         return
       }
+      if (data[key] === null) return // schema carries no nullability info; don't flag null
+      const expectedType = dataFields[key]
       const expectedFamily = clickHouseTypeFamily(expectedType)
       const actual = Array.isArray(data[key]) ? 'array' : typeof data[key]
       if (actual !== expectedFamily) {
@@ -285,7 +303,12 @@ const TOOL_VALIDATORS = {
 
   async ingestRawMetricEventsBulk(args) {
     const events = args.events
-    if (!Array.isArray(events)) return []
+    // Also covers a dialog edit whose modifiedArguments dropped `events` entirely —
+    // this validator re-runs post-approval against the swapped-in args (server.js),
+    // so a missing array here must be a hard error, not "nothing to validate".
+    if (!Array.isArray(events)) {
+      return ["'events' is required and must be an array of Usage Event payloads."]
+    }
     const errors = []
     if (events.length === 0) {
       errors.push("'events' is empty — nothing to ingest.")
