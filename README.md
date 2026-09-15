@@ -1,6 +1,6 @@
 # Zenskar MCP Server
 
-MCP server for the Zenskar API. 113 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, entitlements, billable metrics, and more.
+MCP server for the Zenskar API. 115 tools covering customers, contracts, invoices, payments, credit notes, accounting, products, plans, entitlements, billable metrics, and more.
 
 ## What it does
 
@@ -290,6 +290,7 @@ Once configured, you can ask Claude to interact with your Zenskar data:
 | `getRawMetricLogs`      | Get recent event rows for a Usage Event using the same preview-query path as the frontend                      |
 | `getRawMetricBySlug`    | Get a Usage Event by API slug; backend/API may also call it a raw metric                                       |
 | `ingestRawMetricEvent`  | Ingest a usage event                                                                                           |
+| `ingestRawMetricEventsBulk` | Ingest multiple usage events (up to 500) for a resource slug in a single call                              |
 
 ### Entitlements
 

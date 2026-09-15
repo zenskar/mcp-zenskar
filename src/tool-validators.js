@@ -1,5 +1,163 @@
 // Checks that JSON Schema `required` cannot express, for example nested object fields.
 
+const MAX_BULK_INGEST_EVENTS = 500
+const MAX_SCHEMA_ERRORS_REPORTED = 15
+
+// ClickHouse type -> JS typeof/Array.isArray family. Substring match, not an
+// exact lookup: dataschema types beyond normalizeClickHouseType's known
+// aliases (server.js) — e.g. 'decimal', createRawMetric's own default —
+// pass through unnormalized.
+function clickHouseTypeFamily(type) {
+  const lower = String(type).toLowerCase().trim()
+  if (lower.startsWith('array(')) return 'array'
+  if (/bool/.test(lower)) return 'boolean'
+  if (/int|float|double|decimal|number/.test(lower)) return 'number'
+  return 'string'
+}
+
+// Mirrors executeAPICall's header precedence (server.js) for a read-only GET.
+function resolveZenskarRequestContext(userContext) {
+  const baseUrl =
+    process.env.ZENSKAR_API_BASE_URL || 'https://api.zenskar.com'
+  const orgId = userContext?.organization || process.env.ZENSKAR_ORGANIZATION
+  const authToken =
+    userContext?.authorization ||
+    userContext?.headers?.['authorization'] ||
+    userContext?.headers?.['Authorization'] ||
+    process.env.ZENSKAR_AUTH_TOKEN
+  const apiKey =
+    userContext?.apiKey ||
+    userContext?.headers?.['x-api-key'] ||
+    process.env.ZENSKAR_API_KEY ||
+    process.env.ZENSKAR_AUTH_TOKEN
+  if (!orgId) throw new Error('Organization ID is required for API access.')
+  const headers = {
+    'Content-Type': 'application/json',
+    'User-Agent': 'Zenskar-MCP-Server/1.0.0',
+    apiversion: '20230501',
+    organisation: orgId,
+  }
+  if (authToken && authToken.startsWith('eyJ')) {
+    headers['Authorization'] = authToken.startsWith('Bearer ')
+      ? authToken
+      : `Bearer ${authToken}`
+  } else if (apiKey) {
+    headers['x-api-key'] = apiKey
+  } else {
+    throw new Error('Authorization is required for API access.')
+  }
+  // Mirrors executeAPICall's custom-header passthrough, including its
+  // prototype-pollution guard (userContext.headers can originate from JSON).
+  if (userContext?.headers) {
+    const existingLower = new Set(Object.keys(headers).map((k) => k.toLowerCase()))
+    const POISON_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
+    Object.keys(userContext.headers).forEach((key) => {
+      if (POISON_KEYS.has(key)) return
+      if (!Object.prototype.hasOwnProperty.call(userContext.headers, key)) return
+      if (userContext.headers[key] && !existingLower.has(key.toLowerCase())) {
+        headers[key] = userContext.headers[key]
+      }
+    })
+  }
+  return { baseUrl, headers }
+}
+
+// Fails open on anything but a confirmed not-found — an infra hiccup here shouldn't block ingestion.
+async function fetchRawMetricSchema(rawMetricSlug, userContext) {
+  try {
+    const { baseUrl, headers } = resolveZenskarRequestContext(userContext)
+    const res = await fetch(
+      `${baseUrl}/rawmetric/slug/${encodeURIComponent(rawMetricSlug)}`,
+      { headers, signal: AbortSignal.timeout(8000) }
+    )
+    if (res.status === 404) return { notFound: true }
+    if (!res.ok) return { schema: null }
+    const body = await res.json()
+    // The real backend never 404s here — an unknown slug returns 200 with a bare
+    // `null` body. The 404 branch above stays as defense-in-depth in case that changes.
+    if (body === null || typeof body !== 'object') return { notFound: true }
+    return { schema: body.dataschema || null }
+  } catch {
+    return { schema: null }
+  }
+}
+
+const isMissing = (value) =>
+  value === undefined || value === null || value === ''
+
+// Schema-independent shape checks — must still run when the schema fetch fails open.
+// Mirrors UsageEventPayload (backend): customer_id/timestamp/data are all required,
+// though data may be an empty object — the backend does not require it non-empty.
+function checkEventsStructure(events) {
+  const errors = []
+  events.forEach((event, i) => {
+    if (typeof event !== 'object' || event === null) {
+      errors.push(`Event ${i}: must be an object.`)
+      return
+    }
+    if (isMissing(event.customer_id))
+      errors.push(`Event ${i}: missing required field 'customer_id'.`)
+    if (isMissing(event.timestamp))
+      errors.push(`Event ${i}: missing required field 'timestamp'.`)
+    if (
+      event.data === undefined ||
+      typeof event.data !== 'object' ||
+      event.data === null ||
+      Array.isArray(event.data)
+    ) {
+      errors.push(
+        `Event ${i}: missing required field 'data' (must be an object; an empty object is fine).`
+      )
+    }
+  })
+  return errors
+}
+
+function checkEventsAgainstSchema(events, schema) {
+  const dataFields = schema.data || {}
+  const errors = []
+  events.forEach((event, i) => {
+    // Bad shape already reported by checkEventsStructure.
+    if (typeof event !== 'object' || event === null) return
+    const data = event.data
+    if (
+      data === undefined ||
+      typeof data !== 'object' ||
+      data === null ||
+      Array.isArray(data)
+    )
+      return
+    Object.keys(data).forEach((key) => {
+      if (!Object.prototype.hasOwnProperty.call(dataFields, key)) {
+        errors.push(
+          `Event ${i}: unknown field 'data.${key}' — not part of this raw metric's schema. ` +
+            `Valid fields: ${Object.keys(dataFields).join(', ') || '(none)'}.`
+        )
+        return
+      }
+      if (data[key] === null) return // schema carries no nullability info; don't flag null
+      const expectedType = dataFields[key]
+      const expectedFamily = clickHouseTypeFamily(expectedType)
+      const actual = Array.isArray(data[key]) ? 'array' : typeof data[key]
+      if (actual !== expectedFamily) {
+        errors.push(
+          `Event ${i}: 'data.${key}' expected ${expectedType} (${expectedFamily}), got ${actual}.`
+        )
+      }
+    })
+  })
+  return errors
+}
+
+function capErrors(errors) {
+  if (errors.length > MAX_SCHEMA_ERRORS_REPORTED) {
+    const shown = errors.slice(0, MAX_SCHEMA_ERRORS_REPORTED)
+    shown.push(`... and ${errors.length - MAX_SCHEMA_ERRORS_REPORTED} more schema errors.`)
+    return shown
+  }
+  return errors
+}
+
 const TOOL_VALIDATORS = {
   generateInvoice(args) {
     const errors = []
@@ -142,6 +300,45 @@ const TOOL_VALIDATORS = {
         'Day-first formats such as 24/08/2026 are not accepted.',
     ]
   },
+
+  async ingestRawMetricEventsBulk(args) {
+    const events = args.events
+    // Also covers a dialog edit whose modifiedArguments dropped `events` entirely —
+    // this validator re-runs post-approval against the swapped-in args (server.js),
+    // so a missing array here must be a hard error, not "nothing to validate".
+    if (!Array.isArray(events)) {
+      return ["'events' is required and must be an array of Usage Event payloads."]
+    }
+    const errors = []
+    if (events.length === 0) {
+      errors.push("'events' is empty — nothing to ingest.")
+    }
+    if (events.length > MAX_BULK_INGEST_EVENTS) {
+      errors.push(
+        `'events' has ${events.length} entries. The limit is ${MAX_BULK_INGEST_EVENTS} per call. ` +
+          `ingestRawMetricEventsBulk sends all events in a single request. Split the events into ` +
+          `multiple calls of up to ${MAX_BULK_INGEST_EVENTS} events each.`
+      )
+    }
+    // Size errors already make this call a no-op; skip the network round-trip.
+    if (errors.length > 0 || !args.rawMetricSlug) return errors
+
+    errors.push(...checkEventsStructure(events))
+
+    const { notFound, schema } = await fetchRawMetricSchema(
+      args.rawMetricSlug,
+      args.__userContext
+    )
+    if (notFound) {
+      errors.push(
+        `Raw metric slug '${args.rawMetricSlug}' was not found — check it via listRawMetrics ` +
+          'or getRawMetricBySlug before ingesting.'
+      )
+      return capErrors(errors)
+    }
+    if (schema) errors.push(...checkEventsAgainstSchema(events, schema))
+    return capErrors(errors)
+  },
 }
 
 // One approval covers every id, so the list must be correct before the dialog opens.
@@ -175,10 +372,9 @@ function validateBulkArgs(tool, args) {
 }
 
 // Return shape matches validateToolLimits: {valid, errors[]}.
-export function validateToolArgs(tool, args) {
-  const errors = TOOL_VALIDATORS[tool.name]
-    ? TOOL_VALIDATORS[tool.name](args)
-    : []
+export async function validateToolArgs(tool, args) {
+  const validator = TOOL_VALIDATORS[tool.name]
+  const errors = validator ? await validator(args) : []
   if (tool.bulkOver) errors.push(...validateBulkArgs(tool, args))
   return { valid: errors.length === 0, errors }
 }

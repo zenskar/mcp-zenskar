@@ -905,6 +905,7 @@ async function executeAPICall(tool, args) {
       return v
     }
     const bodyParams = {}
+    let bulkEventsArrayBody = null
     tool.args.forEach((arg) => {
       if (arg.position === 'body' && cleanArgs[arg.name] !== undefined) {
         if (arg.type === 'datetime') {
@@ -927,6 +928,17 @@ async function executeAPICall(tool, args) {
           } else {
             bodyParams[arg.name] = eventPayload
           }
+        } else if (
+          tool.name === 'ingestRawMetricEventsBulk' &&
+          arg.name === 'events'
+        ) {
+          // /usage/{slug} bulk contract wants a bare array body — bypass bodyParams.
+          const events = Array.isArray(cleanArgs[arg.name])
+            ? cleanArgs[arg.name]
+            : []
+          bulkEventsArrayBody = events.map((event) =>
+            normalizeUsageEventPayload(event)
+          )
         } else {
           bodyParams[arg.name] = cleanArgs[arg.name]
         }
@@ -1048,7 +1060,10 @@ async function executeAPICall(tool, args) {
       bodyParams.column_order = ['timestamp']
     }
 
-    if (Object.keys(bodyParams).length > 0) {
+    if (tool.name === 'ingestRawMetricEventsBulk') {
+      // Bare array body per the /usage/{slug} bulk contract — never wrap in {}.
+      body = JSON.stringify(bulkEventsArrayBody || [])
+    } else if (Object.keys(bodyParams).length > 0) {
       body = JSON.stringify(bodyParams)
     } else if (method === 'PATCH' || method === 'POST' || method === 'PUT') {
       // Always send at least an empty JSON body for non-GET methods
@@ -1478,13 +1493,26 @@ function resolveApprovedArgs(approval, tokenEntry) {
   return { args: tokenEntry.args, source: 'tokenSnapshot' }
 }
 
-// The approval dialog edits every field as text, so an array arrives joined.
+// The approval dialog edits every field as text: a simple scalar array (e.g. tag
+// lists, contract ids) arrives comma-joined, but any array-of-objects arg (phases,
+// payment_parts, journal_lines, tax_info, bulk events, ...) may arrive as JSON text.
+// This tool never accepts CSV — MCP args are JSON-only; a CSV-driven caller (e.g. an
+// LLM importing a spreadsheet) must convert rows to JSON before calling the tool.
 function coerceDialogArgs(tool, resolvedArgs) {
   const coerced = { ...resolvedArgs }
   for (const arg of tool.args || []) {
     if (arg.type !== 'array') continue
     const value = coerced[arg.name]
     if (typeof value !== 'string') continue
+    try {
+      const parsed = JSON.parse(value)
+      if (Array.isArray(parsed)) {
+        coerced[arg.name] = parsed
+        continue
+      }
+    } catch {
+      // Not JSON — fall through to comma-split.
+    }
     coerced[arg.name] = value
       .split(',')
       .map((part) => part.trim())
@@ -1661,7 +1689,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           })
 
           // Validate args BEFORE the approval gate so users do not approve broken calls.
-          const earlyArgValidation = validateToolArgs(tool, args)
+          const earlyArgValidation = await validateToolArgs(tool, args)
           if (!earlyArgValidation.valid) {
             logger.error(
               `[${tool.name}] Tool execution blocked due to invalid arguments (pre-approval):`,
@@ -1737,7 +1765,7 @@ if (mcpConfig.tools && mcpConfig.tools.length > 0) {
           // (host dialog edits), which were not part of the pre-approval
           // validation pass. Bypass attempts via crafted modifiedArguments
           // get caught here.
-          const postApprovalValidation = validateToolArgs(tool, args)
+          const postApprovalValidation = await validateToolArgs(tool, args)
           if (!postApprovalValidation.valid) {
             logger.error(
               `[${tool.name}] Approved arguments failed validation:`,

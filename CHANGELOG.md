@@ -78,6 +78,7 @@ Added 61 new tools (42 → 103 total) covering contracts, invoices, credit notes
 | `getRawMetricLogs`                 | Get logs for a usage event                                 |
 | `getRawMetricBySlug`               | Get a usage event by API slug                              |
 | `ingestRawMetricEvent`             | Ingest a usage event                                       |
+| `ingestRawMetricEventsBulk`        | Ingest multiple usage events in one call                   |
 | `getChartOfAccounts`               | Get the full chart of accounts                             |
 | `listAccounts`                     | List GL accounts with filtering                            |
 | `createAccount`                    | Create a GL account                                        |
