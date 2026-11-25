@@ -3,7 +3,6 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { fmtInvoiceDetailMoney } from '../components/InvoiceDetail'
 import { fmtMoney } from '../components/format'
 import { customerFixture } from '../fixtures/customers'
 import { setClientName } from '../server/client-detection.js'
@@ -68,7 +67,7 @@ check('stub y -> ies', () => assert(stub('entity', 3).includes('entities')))
 
 console.log('• formatters')
 check('invoice detail renders API totals as major currency units', () => {
-  assert.equal(fmtInvoiceDetailMoney(489.94, 'USD'), '$489.94')
+  assert.equal(fmtMoney(489.94, 'USD'), '$489.94')
 })
 
 console.log('• resourceUriFor()')
@@ -583,9 +582,6 @@ console.log('• wrapToolResponse() — client-class branching')
 
 console.log('• money units (widget-host)')
 {
-  // Zenskar returns invoice totals in major units and credit notes, payments
-  // and journal lines in minor units. Widgets and the model both read the
-  // payload, so every payload amount must already be in major units.
   const asWidgetHost = (tool: string, raw: unknown) => {
     setClientName('claude-desktop')
     const r = wrapToolResponse(tool, raw, 'fallback', {}) as UIResult
@@ -631,11 +627,11 @@ console.log('• money units (widget-host)')
     assert.equal(cn.credits_returned, 50.5)
   })
 
-  check('listAllPayments: 1200 cents reaches the payload as 12', () => {
+  check('listAllPayments: stays in cents, matching createPayment', () => {
     const r = asWidgetHost('listAllPayments', {
       results: [{ id: 'p-1', amount: 1200, currency: 'USD' }],
     })
-    assert.equal((r.structuredContent as any).payments[0].amount, 12)
+    assert.equal((r.structuredContent as any).payments[0].amount_cents, 1200)
   })
 
   check('listJournalEntries: debit/credit cents reach the payload as major', () => {

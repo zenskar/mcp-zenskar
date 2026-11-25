@@ -67,22 +67,19 @@ export function daysBetween(
   return Math.floor((to.getTime() - d.getTime()) / 86400000)
 }
 
-// Zenskar API returns monetary amounts in minor units (cents). Convert at the
-// render boundary so callers can pass raw API values directly.
 export function fmtMoney(
-  amount: number | null | undefined,
+  majorAmount: number | null | undefined,
   currency: string = 'USD'
 ): string | JSX.Element {
-  if (amount == null || !Number.isFinite(amount)) return <Dim>—</Dim>
-  const dollars = amount / 100
+  if (majorAmount == null || !Number.isFinite(majorAmount)) return <Dim>—</Dim>
   try {
     return new Intl.NumberFormat(undefined, {
       style: 'currency',
       currency,
       maximumFractionDigits: 2,
-    }).format(dollars)
+    }).format(majorAmount)
   } catch {
-    return `${currency} ${dollars.toLocaleString()}`
+    return `${currency} ${majorAmount.toLocaleString()}`
   }
 }
 

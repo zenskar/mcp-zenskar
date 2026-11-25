@@ -119,7 +119,7 @@ export interface PaymentRow {
   customer_name: string | null
   invoice_id: string | null
   invoice_name: string | null
-  amount: number | null
+  amount_cents: number | null
   currency: string | null
   payment_method: string | null
   type: string | null
