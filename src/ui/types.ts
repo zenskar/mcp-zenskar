@@ -145,7 +145,7 @@ export interface CreditNoteRow {
   invoice_id: string | null
   invoice_name: string | null
   status: string | null
-  amount: number | null
+  amount_cents: number | null
   currency: string | null
   repayment_method: string | null
   created_at: string | null
@@ -305,7 +305,7 @@ export interface ContractDetailPayload {
 export interface CreditNoteDetailPayload {
   credit_note: CreditNoteRow & {
     line_items_url?: string | null
-    credits_returned?: number | null
+    credits_returned_cents?: number | null
     custom_data?: Record<string, unknown> | null
     customer_name?: string | null
     invoice_number?: string | null
@@ -352,8 +352,8 @@ export interface JournalEntryRow {
   description: string | null
   status_type: string | null
   currency: string | null
-  total_debit: number | null
-  total_credit: number | null
+  total_debit_cents: number | null
+  total_credit_cents: number | null
   line_count: number | null
   created_at: string | null
 }

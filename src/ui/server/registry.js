@@ -425,7 +425,7 @@ function normalizeCreditNote(c) {
       invoice_id: null,
       invoice_name: null,
       status: null,
-      amount: null,
+      amount_cents: null,
       currency: null,
       repayment_method: null,
       created_at: null,
@@ -440,7 +440,7 @@ function normalizeCreditNote(c) {
     invoice_id: inv?.id ?? c.invoice_id ?? null,
     invoice_name: inv?.name ?? inv?.invoice_number ?? null,
     status: c.status ?? null,
-    amount: centsToMajor(c.amount ?? c.total ?? c.value),
+    amount_cents: numOrNull(c.amount ?? c.total ?? c.value),
     currency: c.currency_code ?? c.currency ?? null,
     repayment_method: c.repayment_method ?? null,
     created_at: c.created_at ?? null,
@@ -794,7 +794,7 @@ function creditNoteDetailToPayload(raw) {
     credit_note: {
       ...base,
       line_items_url: c.line_items_url ?? null,
-      credits_returned: centsToMajor(c.credits_returned),
+      credits_returned_cents: numOrNull(c.credits_returned),
       custom_data: c.custom_data ?? null,
       customer_name:
         (cust && typeof cust === 'object' ? cust.name : null) ?? null,
@@ -913,8 +913,8 @@ function normalizeJournalEntry(e) {
       description: null,
       status_type: null,
       currency: null,
-      total_debit: null,
-      total_credit: null,
+      total_debit_cents: null,
+      total_credit_cents: null,
       line_count: null,
       created_at: null,
     }
@@ -932,8 +932,8 @@ function normalizeJournalEntry(e) {
     description: e.description ?? null,
     status_type: e.status_type ?? null,
     currency: e.currency ?? e.currency_code ?? null,
-    total_debit: lines.length ? centsToMajor(totalDebit) : null,
-    total_credit: lines.length ? centsToMajor(totalCredit) : null,
+    total_debit_cents: lines.length ? totalDebit : null,
+    total_credit_cents: lines.length ? totalCredit : null,
     line_count: lines.length || null,
     created_at: e.created_at ?? null,
   }
@@ -1299,9 +1299,6 @@ function pickMoney(v) {
 }
 function numOrNull(v) {
   return Number.isFinite(v) ? v : null
-}
-function centsToMajor(v) {
-  return Number.isFinite(v) ? v / 100 : null
 }
 
 function invoicePreviewToPayload(raw, args) {

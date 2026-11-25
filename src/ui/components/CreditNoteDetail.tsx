@@ -1,6 +1,6 @@
 import type { CreditNoteDetailPayload } from '../types'
 import { Field, Section, Stat } from './DetailScaffold'
-import { Dim, fmtDate, fmtMoney, StatusPill } from './format'
+import { Dim, fmtCents, fmtDate, StatusPill } from './format'
 
 export function CreditNoteDetail({
   payload,
@@ -23,20 +23,11 @@ export function CreditNoteDetail({
       </header>
 
       <div className="border-border grid grid-cols-2 gap-3 rounded-md border p-3 sm:grid-cols-4">
-        <Stat
-          label="Amount"
-          value={cn.amount != null ? fmtMoney(cn.amount, cur) : <Dim>—</Dim>}
-        />
+        <Stat label="Amount" value={fmtCents(cn.amount_cents, cur)} />
         <Stat label="Currency" value={cur} />
         <Stat
           label="Credits Returned"
-          value={
-            cn.credits_returned != null ? (
-              cn.credits_returned.toLocaleString()
-            ) : (
-              <Dim>—</Dim>
-            )
-          }
+          value={fmtCents(cn.credits_returned_cents, cur)}
         />
         <Stat label="Created" value={fmtDate(cn.created_at)} />
       </div>

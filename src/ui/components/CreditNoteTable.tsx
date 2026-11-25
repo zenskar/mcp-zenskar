@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import type { CreditNoteRow, CreditNoteTablePayload } from '../types'
 import { type ColumnDef, DataTable, type SortDir, sortByKey } from './DataTable'
-import { Dim, fmtDateTime, fmtMoney, shortId, StatusPill } from './format'
+import { Dim, fmtCents, fmtDateTime, shortId, StatusPill } from './format'
 
 type SortKey = 'amount' | 'created_at' | 'status'
 
@@ -22,7 +22,7 @@ export function CreditNoteTable({
         (r) => {
           switch (sortKey) {
             case 'amount':
-              return r.amount
+              return r.amount_cents
             case 'created_at':
               return r.created_at
             case 'status':
@@ -87,7 +87,7 @@ export function CreditNoteTable({
       sortable: true,
       align: 'right',
       className: 'text-destructive',
-      render: (r) => fmtMoney(r.amount, r.currency || cur),
+      render: (r) => fmtCents(r.amount_cents, r.currency || cur),
     },
     {
       key: 'repayment',
