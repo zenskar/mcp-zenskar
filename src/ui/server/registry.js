@@ -357,7 +357,7 @@ function normalizePayment(p) {
       customer_name: null,
       invoice_id: null,
       invoice_name: null,
-      amount: null,
+      amount_cents: null,
       currency: null,
       payment_method: null,
       type: null,
@@ -380,7 +380,7 @@ function normalizePayment(p) {
     customer_name: cust?.customer_name ?? cust?.name ?? null,
     invoice_id: inv?.id ?? firstInvoiceId,
     invoice_name: inv?.name ?? inv?.invoice_number ?? null,
-    amount: numOrNull(p.amount ?? p.value),
+    amount_cents: numOrNull(p.amount ?? p.value),
     currency: p.currency_code ?? p.currency ?? null,
     payment_method: p.payment_method ?? null,
     type: p.type ?? null,
@@ -440,7 +440,7 @@ function normalizeCreditNote(c) {
     invoice_id: inv?.id ?? c.invoice_id ?? null,
     invoice_name: inv?.name ?? inv?.invoice_number ?? null,
     status: c.status ?? null,
-    amount: numOrNull(c.amount ?? c.total ?? c.value),
+    amount: centsToMajor(c.amount ?? c.total ?? c.value),
     currency: c.currency_code ?? c.currency ?? null,
     repayment_method: c.repayment_method ?? null,
     created_at: c.created_at ?? null,
@@ -794,7 +794,7 @@ function creditNoteDetailToPayload(raw) {
     credit_note: {
       ...base,
       line_items_url: c.line_items_url ?? null,
-      credits_returned: numOrNull(c.credits_returned),
+      credits_returned: centsToMajor(c.credits_returned),
       custom_data: c.custom_data ?? null,
       customer_name:
         (cust && typeof cust === 'object' ? cust.name : null) ?? null,
@@ -932,8 +932,8 @@ function normalizeJournalEntry(e) {
     description: e.description ?? null,
     status_type: e.status_type ?? null,
     currency: e.currency ?? e.currency_code ?? null,
-    total_debit: lines.length ? totalDebit : null,
-    total_credit: lines.length ? totalCredit : null,
+    total_debit: lines.length ? centsToMajor(totalDebit) : null,
+    total_credit: lines.length ? centsToMajor(totalCredit) : null,
     line_count: lines.length || null,
     created_at: e.created_at ?? null,
   }
@@ -1299,6 +1299,9 @@ function pickMoney(v) {
 }
 function numOrNull(v) {
   return Number.isFinite(v) ? v : null
+}
+function centsToMajor(v) {
+  return Number.isFinite(v) ? v / 100 : null
 }
 
 function invoicePreviewToPayload(raw, args) {

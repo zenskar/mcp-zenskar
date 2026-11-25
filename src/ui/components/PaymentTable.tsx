@@ -35,7 +35,7 @@ export function PaymentTable({ payload }: { payload: PaymentTablePayload }) {
         (r) => {
           switch (sortKey) {
             case 'amount':
-              return r.amount
+              return r.amount_cents
             case 'payment_date':
               return r.payment_date
             case 'created_at':
@@ -122,11 +122,14 @@ export function PaymentTable({ payload }: { payload: PaymentTablePayload }) {
       sortable: true,
       align: 'right',
       render: (r) => {
-        const negative = r.amount != null && r.amount < 0
+        const negative = r.amount_cents != null && r.amount_cents < 0
         const refund = r.type === 'refund' || r.type === 'payment_reversal'
         return (
           <span className={negative || refund ? 'text-destructive' : ''}>
-            {fmtMoney(r.amount, r.currency || cur)}
+            {fmtMoney(
+              r.amount_cents == null ? null : r.amount_cents / 100,
+              r.currency || cur
+            )}
           </span>
         )
       },
