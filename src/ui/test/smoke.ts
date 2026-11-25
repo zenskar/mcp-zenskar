@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { fmtInvoiceDetailMoney } from '../components/InvoiceDetail'
+import { fmtMoney } from '../components/format'
 import { customerFixture } from '../fixtures/customers'
 import { setClientName } from '../server/client-detection.js'
 import { resourceUriFor, SHAPES } from '../server/registry.js'
@@ -578,6 +579,81 @@ console.log('• wrapToolResponse() — client-class branching')
 
   // Reset for remaining tests
   setClientName(null as any)
+}
+
+console.log('• money units (widget-host)')
+{
+  // Zenskar returns invoice totals in major units and credit notes, payments
+  // and journal lines in minor units. Widgets and the model both read the
+  // payload, so every payload amount must already be in major units.
+  const asWidgetHost = (tool: string, raw: unknown) => {
+    setClientName('claude-desktop')
+    const r = wrapToolResponse(tool, raw, 'fallback', {}) as UIResult
+    setClientName(null as any)
+    return r
+  }
+
+  check('listInvoices: 15,000 USD invoice renders as $15,000.00', () => {
+    const r = asWidgetHost('listInvoices', {
+      results: [
+        {
+          id: 'inv-1',
+          invoice_number: 'INV-1',
+          net_invoice_total: 15000,
+          amount_due: 15000,
+          currency: 'USD',
+        },
+      ],
+    })
+    const inv = (r.structuredContent as any).invoices[0]
+    assert.equal(fmtMoney(inv.invoice_total, 'USD'), '$15,000.00')
+    assert.equal(fmtMoney(inv.amount_due, 'USD'), '$15,000.00')
+  })
+
+  check('listCreditNotes: 200000 cents EUR reaches widget and model as 2000', () => {
+    const r = asWidgetHost('listCreditNotes', {
+      results: [{ id: 'cn-1', amount: 200000, currency: 'EUR' }],
+    })
+    const cn = (r.structuredContent as any).credit_notes[0]
+    assert.equal(cn.amount, 2000)
+    assert(!r.content[0]!.text!.includes('200000'), 'model text carries cents')
+  })
+
+  check('getCreditNoteById: amount and credits_returned in major units', () => {
+    const r = asWidgetHost('getCreditNoteById', {
+      id: 'cn-1',
+      amount: 200000,
+      credits_returned: 5050,
+      currency: 'EUR',
+    })
+    const cn = (r.structuredContent as any).credit_note
+    assert.equal(cn.amount, 2000)
+    assert.equal(cn.credits_returned, 50.5)
+  })
+
+  check('listAllPayments: 1200 cents reaches the payload as 12', () => {
+    const r = asWidgetHost('listAllPayments', {
+      results: [{ id: 'p-1', amount: 1200, currency: 'USD' }],
+    })
+    assert.equal((r.structuredContent as any).payments[0].amount, 12)
+  })
+
+  check('listJournalEntries: debit/credit cents reach the payload as major', () => {
+    const r = asWidgetHost('listJournalEntries', {
+      results: [
+        {
+          id: 'je-1',
+          journal_lines: [
+            { debits: 184550, credits: 0 },
+            { debits: 0, credits: 184550 },
+          ],
+        },
+      ],
+    })
+    const e = (r.structuredContent as any).entries[0]
+    assert.equal(e.total_debit, 1845.5)
+    assert.equal(e.total_credit, 1845.5)
+  })
 }
 
 console.log('• Built bundles (Pattern B: static, no placeholders)')
