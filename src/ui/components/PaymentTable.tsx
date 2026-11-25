@@ -6,7 +6,7 @@ import {
   Dim,
   fmtDate,
   fmtDateTime,
-  fmtMoney,
+  fmtCents,
   shortId,
   StatusPill,
 } from './format'
@@ -126,10 +126,7 @@ export function PaymentTable({ payload }: { payload: PaymentTablePayload }) {
         const refund = r.type === 'refund' || r.type === 'payment_reversal'
         return (
           <span className={negative || refund ? 'text-destructive' : ''}>
-            {fmtMoney(
-              r.amount_cents == null ? null : r.amount_cents / 100,
-              r.currency || cur
-            )}
+            {fmtCents(r.amount_cents, r.currency || cur)}
           </span>
         )
       },

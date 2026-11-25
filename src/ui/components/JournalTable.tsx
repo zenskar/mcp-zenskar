@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 
 import type { JournalEntryRow, JournalTablePayload } from '../types'
 import { type ColumnDef, DataTable } from './DataTable'
-import { Dim, fmtDateTime, fmtMoney, StatusPill } from './format'
+import { Dim, fmtDateTime, fmtCents, StatusPill } from './format'
 
 export function JournalTable({ payload }: { payload: JournalTablePayload }) {
   const cur = payload.default_currency || 'USD'
@@ -12,15 +12,15 @@ export function JournalTable({ payload }: { payload: JournalTablePayload }) {
     let d = 0
     let c = 0
     for (const r of rows) {
-      if (Number.isFinite(r.total_debit)) d += r.total_debit!
-      if (Number.isFinite(r.total_credit)) c += r.total_credit!
+      if (Number.isFinite(r.total_debit_cents)) d += r.total_debit_cents!
+      if (Number.isFinite(r.total_credit_cents)) c += r.total_credit_cents!
     }
     return { d, c }
   }, [rows])
 
   const totalsHint = (
     <>
-      Σ debit {fmtMoney(totals.d, cur)} · Σ credit {fmtMoney(totals.c, cur)}
+      Σ debit {fmtCents(totals.d, cur)} · Σ credit {fmtCents(totals.c, cur)}
     </>
   )
 
@@ -49,23 +49,23 @@ export function JournalTable({ payload }: { payload: JournalTablePayload }) {
       render: (r) => r.line_count ?? <Dim>—</Dim>,
     },
     {
-      key: 'total_debit',
+      key: 'total_debit_cents',
       header: 'Σ Debit',
       align: 'right',
       render: (r) =>
-        r.total_debit != null ? (
-          fmtMoney(r.total_debit, r.currency || cur)
+        r.total_debit_cents != null ? (
+          fmtCents(r.total_debit_cents, r.currency || cur)
         ) : (
           <Dim>—</Dim>
         ),
     },
     {
-      key: 'total_credit',
+      key: 'total_credit_cents',
       header: 'Σ Credit',
       align: 'right',
       render: (r) =>
-        r.total_credit != null ? (
-          fmtMoney(r.total_credit, r.currency || cur)
+        r.total_credit_cents != null ? (
+          fmtCents(r.total_credit_cents, r.currency || cur)
         ) : (
           <Dim>—</Dim>
         ),

@@ -262,7 +262,7 @@
     },
     {
       "name": "listInvoices",
-      "description": "Retrieve a paginated list of invoices, with options for filtering by customer, status, amounts, due date, creation date, and related customer/contract details.",
+      "description": "Retrieve a paginated list of invoices, with options for filtering by customer, status, amounts, due date, creation date, and related customer/contract details. Invoice amounts and amount filters are in major units (25 means $25.00).",
       "args": [
         {
           "name": "customer_id",
@@ -411,7 +411,7 @@
     },
     {
       "name": "getInvoiceById",
-      "description": "Retrieve details for a specific invoice by its ID.",
+      "description": "Retrieve details for a specific invoice by its ID. Invoice amounts are in major units (25 means $25.00).",
       "args": [
         {
           "name": "invoiceId",
@@ -563,7 +563,7 @@
     },
     {
       "name": "getInvoicePayments",
-      "description": "Get successful payments currently associated with a specific invoice. This view may omit refund records and non-success payment states.",
+      "description": "Get successful payments currently associated with a specific invoice. This view may omit refund records and non-success payment states. Payment amounts are in cents.",
       "args": [
         {
           "name": "invoiceId",
@@ -594,7 +594,7 @@
         },
         {
           "name": "amount",
-          "description": "Custom amount to be charged for the invoice (must be less than the amount due).",
+          "description": "Custom amount to charge for the invoice, in cents. Must be less than the invoice's amount due, which is in major units.",
           "type": "integer",
           "required": false,
           "position": "query"
@@ -1320,7 +1320,7 @@
     },
     {
       "name": "getInvoicePaymentsById",
-      "description": "Get successful payments associated with a specific invoice ID. This endpoint is success-only and may not show refund rows.",
+      "description": "Get successful payments associated with a specific invoice ID. This endpoint is success-only and may not show refund rows. Payment amounts are in cents.",
       "args": [
         {
           "name": "invoiceId",
@@ -1340,7 +1340,7 @@
     },
     {
       "name": "getInvoicePaymentsWithoutRefunds",
-      "description": "Get original payment records for an invoice, excluding refund payment rows. Refunded or partially refunded original payments may still appear here.",
+      "description": "Get original payment records for an invoice, excluding refund payment rows. Refunded or partially refunded original payments may still appear here. Payment amounts are in cents.",
       "args": [
         {
           "name": "invoiceId",
@@ -1360,7 +1360,7 @@
     },
     {
       "name": "getPaymentById",
-      "description": "Retrieve details for a specific payment by its ID.",
+      "description": "Retrieve details for a specific payment by its ID. Payment amounts are in cents.",
       "args": [
         {
           "name": "paymentId",
@@ -1392,7 +1392,7 @@
     },
     {
       "name": "listAllPayments",
-      "description": "Retrieve a paginated list of all payments, including refund records, with extensive filtering and sorting options.",
+      "description": "Retrieve a paginated list of all payments, including refund records, with extensive filtering and sorting options. Payment amounts and amount filters are in cents.",
       "args": [
         {
           "name": "cursor",
@@ -3895,7 +3895,7 @@
     },
     {
       "name": "createInvoiceCreditNote",
-      "description": "Create a credit note against a specific invoice. The credit_note_amount is in the invoice's currency (e.g. 25 for $25). The API stores amounts in cents internally. Returns the created credit note.",
+      "description": "Create a credit note against a specific invoice. Returns the created credit note.",
       "args": [
         {
           "name": "invoiceId",
@@ -3906,7 +3906,7 @@
         },
         {
           "name": "credit_note_amount",
-          "description": "Amount for the credit note in the invoice's currency (e.g. 25 for $25.00).",
+          "description": "Amount for the credit note in the invoice's currency, in major units (25 means $25.00). Credit note reads return cents, so divide a read amount by 100 before you pass it here.",
           "type": "number",
           "required": true,
           "position": "body"
@@ -3990,7 +3990,7 @@
     },
     {
       "name": "listCreditNotes",
-      "description": "Retrieve a paginated list of credit notes. Supports cursor-based pagination.",
+      "description": "Retrieve a paginated list of credit notes. Supports cursor-based pagination. Credit note amounts are in cents.",
       "args": [
         {
           "name": "cursor",
@@ -4042,7 +4042,7 @@
     },
     {
       "name": "getCreditNoteById",
-      "description": "Retrieve a credit note by its ID, including amount, status, customer, invoice association, and line items URL.",
+      "description": "Retrieve a credit note by its ID, including amount, status, customer, invoice association, and line items URL. Credit note amounts are in cents.",
       "args": [
         {
           "name": "creditNoteId",
@@ -4076,7 +4076,7 @@
         },
         {
           "name": "amount",
-          "description": "Total payment amount in the smallest currency unit (e.g. cents).",
+          "description": "Total payment amount in cents. Invoice amounts are in major units, so multiply them by 100.",
           "type": "number",
           "required": true,
           "position": "body"
@@ -4090,7 +4090,7 @@
         },
         {
           "name": "payment_parts",
-          "description": "Array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}. Links the payment to one or more invoices.",
+          "description": "Array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}, with amount in cents. Links the payment to one or more invoices.",
           "type": "array",
           "required": false,
           "position": "body"
@@ -4153,7 +4153,7 @@
         },
         {
           "name": "payment_parts",
-          "description": "Updated array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}. This field is required by the API.",
+          "description": "Updated array of invoice allocations. Each element: {invoice_id: 'UUID', amount: 10000}, with amount in cents. This field is required by the API.",
           "type": "array",
           "required": true,
           "position": "body"
@@ -4229,7 +4229,7 @@
         },
         {
           "name": "refund_amount",
-          "description": "Refund amount in the smallest currency unit (integer cents/paise). Use 0 to refund the full payment, or a positive integer for a partial refund. Must not exceed the payment's remaining refundable amount.",
+          "description": "Refund amount in cents. Use 0 to refund the full payment, or a positive integer for a partial refund. Must not exceed the payment's remaining refundable amount.",
           "type": "number",
           "required": true,
           "position": "body"
@@ -4325,7 +4325,7 @@
         },
         {
           "name": "amount",
-          "description": "Updated payment amount.",
+          "description": "Updated payment amount in cents.",
           "type": "number",
           "required": false,
           "position": "body"
@@ -4339,7 +4339,7 @@
         },
         {
           "name": "payment_parts",
-          "description": "Updated invoice allocations. Array of {invoice_id, amount}.",
+          "description": "Updated invoice allocations. Array of {invoice_id, amount}, with amount in cents.",
           "type": "array",
           "required": false,
           "position": "body"
@@ -4742,7 +4742,7 @@
     },
     {
       "name": "listJournalEntries",
-      "description": "Retrieve a paginated list of journal entries with optional filtering by date, status, account, or job. Filters use fastapi-filter conventions (e.g. posted_at__gte=YYYY-MM-DD, lines__account_id=<uuid>).",
+      "description": "Retrieve a paginated list of journal entries with optional filtering by date, status, account, or job. Filters use fastapi-filter conventions (e.g. posted_at__gte=YYYY-MM-DD, lines__account_id=<uuid>). Debits and credits are in cents.",
       "args": [
         {
           "name": "cursor",
@@ -4860,7 +4860,7 @@
         },
         {
           "name": "journal_lines",
-          "description": "Array of journal lines. Each line requires: {account_id, debits, credits, currency}. Use 'debits' and 'credits' (plural, integers in cents). Example: [{account_id:'...', debits:10000, credits:0, currency:'USD'}, {account_id:'...', debits:0, credits:10000, currency:'USD'}]. Optional tags: customer_id, contract_id, invoice_id, custom_tags.",
+          "description": "Array of journal lines. Each line requires: {account_id, debits, credits, currency}. Use 'debits' and 'credits' (plural), as integers in cents. Example: [{account_id:'...', debits:10000, credits:0, currency:'USD'}, {account_id:'...', debits:0, credits:10000, currency:'USD'}]. Optional tags: customer_id, contract_id, invoice_id, custom_tags.",
           "type": "array",
           "required": true,
           "position": "body"
@@ -4894,7 +4894,7 @@
     },
     {
       "name": "getJournalEntry",
-      "description": "Retrieve a journal entry by its ID, including all journal lines.",
+      "description": "Retrieve a journal entry by its ID, including all journal lines. Debits and credits are in cents.",
       "args": [
         {
           "name": "journalEntryId",
@@ -4917,7 +4917,7 @@
     },
     {
       "name": "listJournalLines",
-      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries. Supports filtering by customer, contract, account, currency, and parent journal entry posted date.",
+      "description": "Retrieve a paginated list of journal lines (individual debit/credit entries) across all journal entries. Supports filtering by customer, contract, account, currency, and parent journal entry posted date. Debits and credits are in cents.",
       "args": [
         {
           "name": "cursor",

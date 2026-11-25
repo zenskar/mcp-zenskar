@@ -83,6 +83,13 @@ export function fmtMoney(
   }
 }
 
+export function fmtCents(
+  cents: number | null | undefined,
+  currency: string = 'USD'
+): string | JSX.Element {
+  return fmtMoney(cents == null ? null : cents / 100, currency)
+}
+
 export function fmtMoneyObj(m: Money | null | undefined): string | JSX.Element {
   if (!m) return <Dim>—</Dim>
   if (m.display) return m.display

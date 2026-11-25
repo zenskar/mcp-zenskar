@@ -3,7 +3,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { fmtMoney } from '../components/format'
+import { fmtCents, fmtMoney } from '../components/format'
 import { customerFixture } from '../fixtures/customers'
 import { setClientName } from '../server/client-detection.js'
 import { resourceUriFor, SHAPES } from '../server/registry.js'
@@ -606,26 +606,30 @@ console.log('• money units (widget-host)')
     assert.equal(fmtMoney(inv.amount_due, 'USD'), '$15,000.00')
   })
 
-  check('listCreditNotes: 200000 cents EUR reaches widget and model as 2000', () => {
+  check('listCreditNotes: the model sees cents under a cents label', () => {
     const r = asWidgetHost('listCreditNotes', {
       results: [{ id: 'cn-1', amount: 200000, currency: 'EUR' }],
     })
     const cn = (r.structuredContent as any).credit_notes[0]
-    assert.equal(cn.amount, 2000)
-    assert(!r.content[0]!.text!.includes('200000'), 'model text carries cents')
+    assert.equal(cn.amount_cents, 200000)
+    assert.equal(fmtCents(cn.amount_cents, 'EUR'), '€2,000.00')
+    assert(!/\bamount\b/.test(r.content[0]!.text!), 'unlabeled amount')
   })
 
-  check('getCreditNoteById: amount and credits_returned in major units', () => {
-    const r = asWidgetHost('getCreditNoteById', {
-      id: 'cn-1',
-      amount: 200000,
-      credits_returned: 5050,
-      currency: 'EUR',
-    })
-    const cn = (r.structuredContent as any).credit_note
-    assert.equal(cn.amount, 2000)
-    assert.equal(cn.credits_returned, 50.5)
-  })
+  check(
+    'getCreditNoteById: amount and credits_returned labeled as cents',
+    () => {
+      const r = asWidgetHost('getCreditNoteById', {
+        id: 'cn-1',
+        amount: 200000,
+        credits_returned: 5050,
+        currency: 'EUR',
+      })
+      const cn = (r.structuredContent as any).credit_note
+      assert.equal(cn.amount_cents, 200000)
+      assert.equal(cn.credits_returned_cents, 5050)
+    }
+  )
 
   check('listAllPayments: stays in cents, matching createPayment', () => {
     const r = asWidgetHost('listAllPayments', {
@@ -634,7 +638,7 @@ console.log('• money units (widget-host)')
     assert.equal((r.structuredContent as any).payments[0].amount_cents, 1200)
   })
 
-  check('listJournalEntries: debit/credit cents reach the payload as major', () => {
+  check('listJournalEntries: debit and credit totals labeled as cents', () => {
     const r = asWidgetHost('listJournalEntries', {
       results: [
         {
@@ -647,8 +651,8 @@ console.log('• money units (widget-host)')
       ],
     })
     const e = (r.structuredContent as any).entries[0]
-    assert.equal(e.total_debit, 1845.5)
-    assert.equal(e.total_credit, 1845.5)
+    assert.equal(e.total_debit_cents, 184550)
+    assert.equal(e.total_credit_cents, 184550)
   })
 }
 
